@@ -600,7 +600,6 @@ public partial class MusicView : UserControl
                 && string.Equals(previous.Track.UpdatedAt, track.UpdatedAt, StringComparison.Ordinal)
                 && previous.NeedsAnalysis == needsAnalysis)
             {
-                previous.IsPlaying = previous.Track.Id == _engine.ActiveTrackId;
                 newItems.Add(previous);
                 continue;
             }
@@ -706,26 +705,10 @@ public partial class MusicView : UserControl
         var ratingName = track.RatingId is int ratingId ? ratingMap.GetValueOrDefault(ratingId, "") : "None";
         var durationText = track.DurationSeconds.HasValue ? FormatDuration(track.DurationSeconds.Value) : "";
 
-        var selectedRatingSortOrder = track.RatingId is int selectedRatingId
-            ? Values.Ratings.FirstOrDefault(rating => rating.Id == selectedRatingId)?.SortOrder ?? int.MinValue
-            : int.MinValue;
-        var quickRatingOptions = Values.Ratings
-            .OrderBy(rating => rating.SortOrder)
-            .Select(rating => new QuickRatingOption(
-                track.Id,
-                rating.Id,
-                rating.Name,
-                rating.SortOrder <= selectedRatingSortOrder
-                    ? new SolidColorBrush(Color.FromRgb(235, 194, 83))
-                    : new SolidColorBrush(Color.FromArgb(68, 255, 255, 255))))
-            .ToList();
-
         var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, genreDisplays, tagDisplays, track.ChannelName ?? "")
         {
             NeedsReview = track.NeedsReview,
-            NeedsAnalysis = needsAnalysis,
-            IsPlaying = track.Id == _engine.ActiveTrackId,
-            QuickRatingOptions = quickRatingOptions
+            NeedsAnalysis = needsAnalysis
         };
         item.ApplyAppearance(_appearanceSettings);
         return item;
@@ -998,9 +981,6 @@ public partial class MusicView : UserControl
         RestoreSavedQueueOrder();
 
         SyncPlaybackQueueWithLoadedPlaylist();
-
-        foreach (var item in _filteredItems)
-            item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
 
         var selectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
 
@@ -3571,61 +3551,6 @@ public partial class MusicView : UserControl
 
     private void OnPlayPauseClicked(object? sender, RoutedEventArgs e) => TogglePlayPause();
 
-    private void OnPlayingTrackBandLowClicked(object? sender, RoutedEventArgs e) =>
-        SetPlayingTrackRatingBand(sender, RatingBand.Low, e);
-
-    private void OnPlayingTrackBandMidClicked(object? sender, RoutedEventArgs e) =>
-        SetPlayingTrackRatingBand(sender, RatingBand.Mid, e);
-
-    private void OnPlayingTrackBandHighClicked(object? sender, RoutedEventArgs e) =>
-        SetPlayingTrackRatingBand(sender, RatingBand.High, e);
-
-    private void SetPlayingTrackRatingBand(object? sender, RatingBand ratingBand, RoutedEventArgs e)
-    {
-        e.Handled = true;
-        if (sender is not Control { DataContext: TrackDisplayItem item })
-            return;
-        if (item.Track.RatingId is null)
-        {
-            ShowToast("Choose a rating before setting Low, Mid or High");
-            return;
-        }
-
-        RatingBand? nextRatingBand = item.Track.RatingBand == ratingBand ? null : ratingBand;
-        MusicLibraryService.Current.SetTrackRatingBand(item.Track.Id, nextRatingBand);
-        UpdateTrackInList(item.Track.Id);
-    }
-
-    private void OnPlayingTrackQuickRatingClicked(object? sender, RoutedEventArgs e)
-    {
-        e.Handled = true;
-        if (sender is not Control { DataContext: QuickRatingOption option })
-            return;
-
-        MusicLibraryService.Current.SetTrackRating(option.TrackId, option.RatingId);
-        UpdateTrackInList(option.TrackId);
-        ShowToast($"Rating changed to {option.Name}");
-    }
-
-    private void OnPlayingTrackReviewClicked(object? sender, RoutedEventArgs e)
-    {
-        e.Handled = true;
-        if (sender is not Control { DataContext: TrackDisplayItem item })
-            return;
-
-        var needsReview = !item.Track.NeedsReview;
-        MusicLibraryService.Current.SetTrackNeedsReview(item.Track.Id, needsReview);
-        UpdateTrackInList(item.Track.Id);
-        ShowToast(needsReview ? "Marked for review" : "Review mark removed");
-    }
-
-    private async void OnPlayingTrackDeleteClicked(object? sender, RoutedEventArgs e)
-    {
-        e.Handled = true;
-        if (sender is Control { DataContext: TrackDisplayItem item })
-            await DeleteTrackFromEditorAsync(item.Track);
-    }
-
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (IsTextEntry(e.Source)) return;
@@ -4592,9 +4517,6 @@ public partial class MusicView : UserControl
         if (_filteredItems.Count == 0) return;
 
         var selectedId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id ?? -1;
-
-        foreach (var item in _filteredItems)
-            item.IsPlaying = item.Track.Id == _engine.ActiveTrackId;
 
         var targetId = selectedId >= 0 ? selectedId : _engine.ActiveTrackId;
         if (targetId >= 0)

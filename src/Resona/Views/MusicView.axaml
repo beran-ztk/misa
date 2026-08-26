@@ -465,7 +465,7 @@
                                     DoubleTapped="OnTrackCardDoubleTapped"
                                     CornerRadius="12,4,4,12"
                                     ClipToBounds="True"
-                                    MinHeight="{Binding TrackCardHeight}"
+                                    MinHeight="58"
                                     Padding="0,0">
                                 <Panel>
                                 <views:TrackColorWashControl
@@ -492,17 +492,9 @@
                                         <BlurEffect Radius="{Binding TrackArtworkBlur}"/>
                                     </Image.Effect>
                                 </Image>
-                                <Border Background="{Binding PlayingBackground}"
-                                        CornerRadius="7"
-                                        IsHitTestVisible="False"/>
                                 <Grid ColumnDefinitions="2,20,52,*"
                                       Height="58"
                                       VerticalAlignment="Top">
-
-                                    <Border Grid.Column="0"
-                                            Width="2" Height="200"
-                                            Background="{Binding PlayingAccent}"
-                                            VerticalAlignment="Center"/>
 
                                     <Grid Grid.Column="1"
                                           Width="20" Height="20"
@@ -579,7 +571,7 @@
                                           VerticalAlignment="Top"
                                           RowDefinitions="24,24"
                                           ColumnDefinitions="70,*"
-                                          Margin="{Binding TrackContentMargin}"
+                                          Margin="0,4,100,0"
                                           RowSpacing="0">
                                         <TextBlock Grid.RowSpan="2"
                                                    Grid.Column="0"
@@ -604,7 +596,6 @@
                                         <views:TrackTitleTagPanel Grid.Row="0"
                                                                   Grid.Column="1"
                                                                   Gap="6"
-                                                                  Margin="{Binding TrackTitleActionsMargin}"
                                                                   HorizontalAlignment="Stretch">
                                             <TextBlock
                                                        Text="{Binding Track.DisplayTitle}"
@@ -649,7 +640,6 @@
                                             Spacing="2"
                                             HorizontalAlignment="Right"
                                             VerticalAlignment="Center"
-                                            IsVisible="{Binding ShowCompactDuration}"
                                             IsHitTestVisible="False">
                                     <TextBlock Text="{Binding DownloadedDateText}"
                                                IsVisible="{Binding ShowDownloadedDate}"
@@ -667,119 +657,6 @@
                                                TextAlignment="Center"/>
                                 </StackPanel>
 
-                                <StackPanel Orientation="Horizontal"
-                                            Spacing="3"
-                                            Margin="0,6,8,0"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            IsVisible="{Binding IsPlaying}">
-                                    <Button Width="25" Height="25" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            HorizontalContentAlignment="Center"
-                                            VerticalContentAlignment="Center"
-                                            Click="OnPlayingTrackBandLowClicked"
-                                            ToolTip.Tip="Set rating position to Low">
-                                        <Border Width="8" Height="14"
-                                                Background="#E85C5C"
-                                                RenderTransformOrigin="50%,50%">
-                                            <Border.OpacityMask>
-                                                <ImageBrush Source="avares://Resona/Assets/rating-band-arrow.png" Stretch="Uniform"/>
-                                            </Border.OpacityMask>
-                                            <Border.RenderTransform>
-                                                <RotateTransform Angle="180"/>
-                                            </Border.RenderTransform>
-                                        </Border>
-                                    </Button>
-                                    <Button Width="25" Height="25" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            HorizontalContentAlignment="Center"
-                                            VerticalContentAlignment="Center"
-                                            Click="OnPlayingTrackBandMidClicked"
-                                            ToolTip.Tip="Set rating position to Mid">
-                                        <Ellipse Width="6" Height="6" Fill="#F5F5EE"/>
-                                    </Button>
-                                    <Button Width="25" Height="25" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            HorizontalContentAlignment="Center"
-                                            VerticalContentAlignment="Center"
-                                            Click="OnPlayingTrackBandHighClicked"
-                                            ToolTip.Tip="Set rating position to High">
-                                        <Border Width="8" Height="14" Background="#53D27C">
-                                            <Border.OpacityMask>
-                                                <ImageBrush Source="avares://Resona/Assets/rating-band-arrow.png" Stretch="Uniform"/>
-                                            </Border.OpacityMask>
-                                        </Border>
-                                    </Button>
-                                    <Button Width="25" Height="25" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            HorizontalContentAlignment="Center"
-                                            VerticalContentAlignment="Center"
-                                            Click="OnPlayingTrackReviewClicked"
-                                            ToolTip.Tip="{Binding ReviewActionTooltip}">
-                                        <Grid Width="17" Height="17"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center">
-                                            <Image Source="{SvgImage /Assets/review.svg}"
-                                                   Width="16" Height="16" Opacity="0.62"
-                                                   IsVisible="{Binding IsNotMarkedForReview}"/>
-                                            <Image Source="{SvgImage /Assets/review-active.svg}"
-                                                   Width="16" Height="16"
-                                                   IsVisible="{Binding NeedsReview}"/>
-                                        </Grid>
-                                    </Button>
-                                    <Button Width="25" Height="25" Padding="0"
-                                            Background="Transparent" BorderThickness="0"
-                                            HorizontalContentAlignment="Center"
-                                            VerticalContentAlignment="Center"
-                                            Click="OnPlayingTrackDeleteClicked"
-                                            ToolTip.Tip="Delete track">
-                                        <Image Source="{SvgImage /Assets/trash.svg}"
-                                               Width="13" Height="13" Opacity="0.72"/>
-                                    </Button>
-                                    <Border Width="76" Height="25"
-                                            Margin="8,0,0,0">
-                                        <TextBlock Text="{Binding DurationText}"
-                                                   LineHeight="25"
-                                                   FontFamily="Consolas"
-                                                   FontSize="10.5"
-                                                   Foreground="#E2DAC0"
-                                                   TextAlignment="Center"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                </StackPanel>
-
-                                <ItemsControl Height="20"
-                                              Margin="0,31,8,0"
-                                              ItemsSource="{Binding QuickRatingOptions}"
-                                              HorizontalAlignment="Right"
-                                              VerticalAlignment="Top"
-                                              IsVisible="{Binding IsPlaying}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" Spacing="1"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="models:QuickRatingOption">
-                                            <Button Width="19" Height="20" Padding="0"
-                                                    Background="Transparent" BorderThickness="0"
-                                                    HorizontalContentAlignment="Center"
-                                                    VerticalContentAlignment="Center"
-                                                    Click="OnPlayingTrackQuickRatingClicked"
-                                                    ToolTip.Tip="{Binding Name}">
-                                                <TextBlock Text="★"
-                                                           Height="20" LineHeight="20"
-                                                           FontFamily="Segoe UI Symbol"
-                                                           FontSize="16"
-                                                           Foreground="{Binding Foreground}"
-                                                           TextAlignment="Center"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"/>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
                                 </Panel>
                             </Border>
                             <Rectangle Grid.Row="1"

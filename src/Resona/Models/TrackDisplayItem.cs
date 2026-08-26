@@ -11,8 +11,6 @@ public record TrackTagDisplay(string Name, IBrush Foreground);
 
 public record TrackGenreDisplay(string Name, IBrush Foreground);
 
-public record QuickRatingOption(int TrackId, int RatingId, string Name, IBrush Foreground);
-
 public static class MainGenrePalette
 {
     private static readonly IBrush Fallback = Create("#B5BDC7");
@@ -69,19 +67,7 @@ public record TrackDisplayItem(
         _ => Brushes.Transparent
     };
 
-    public bool IsPlaying { get; set; }
-    public double TrackCardHeight => 58;
-    public bool ShowCompactDuration => !IsPlaying;
-    public Thickness TrackContentMargin => IsPlaying
-        ? new Thickness(0, 4, 135, 0)
-        : new Thickness(0, 4, 100, 0);
-    public Thickness TrackTitleActionsMargin => IsPlaying
-        ? new Thickness(0, 0, 100, 0)
-        : new Thickness(0);
-    public IReadOnlyList<QuickRatingOption> QuickRatingOptions { get; init; } = [];
     public bool NeedsReview { get; set; }
-    public bool IsNotMarkedForReview => !NeedsReview;
-    public string ReviewActionTooltip => NeedsReview ? "Remove review mark" : "Mark for review";
     public bool NeedsAnalysis { get; set; }
     public bool ShowDownloadedDate { get; set; }
     public Bitmap? Thumbnail { get; set; }
@@ -164,20 +150,10 @@ public record TrackDisplayItem(
             return downloadedAt.ToLocalTime().ToString("dd.MM.yyyy");
         }
     }
-    public IBrush PlayingBackground => IsPlaying
-        ? new SolidColorBrush(Color.FromArgb(32, 245, 245, 220))
-        : Brushes.Transparent;
-
-    public IBrush PlayingAccent => IsPlaying
-        ? new SolidColorBrush(Color.FromRgb(245, 245, 220))
-        : Brushes.Transparent;
-
     public IBrush TitleBrush => NeedsAnalysis
         ? new SolidColorBrush(Color.FromRgb(238, 92, 92))
         : NeedsReview
         ? new SolidColorBrush(Color.FromRgb(255, 210, 122))
-        : IsPlaying
-            ? new SolidColorBrush(Color.FromRgb(247, 246, 236))
         : new SolidColorBrush(Color.FromRgb(240, 239, 229));
 
     public IBrush RatingBackground => RatingText switch
