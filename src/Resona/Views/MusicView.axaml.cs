@@ -34,7 +34,6 @@ public partial class MusicView : UserControl
     private readonly GlobalMediaKeyListener _globalMediaKeys = new();
     private readonly WindowsMediaSession _windowsMediaSession = new();
     private readonly DiscordPresenceService _discordPresence = new();
-    private CancellationTokenSource? _pendingTrackClickCts;
     private static readonly AmbientPalette DefaultAmbientPalette = new(
         Color.Parse("#5865B8"),
         Color.Parse("#8051AE"));
@@ -3595,7 +3594,7 @@ public partial class MusicView : UserControl
 
     // ─── Playback control ─────────────────────────────────────────────────────
 
-    private async void OnTrackCardTapped(object? sender, TappedEventArgs e)
+    private void OnTrackCardTapped(object? sender, TappedEventArgs e)
     {
         if (sender is not Control { DataContext: TrackDisplayItem item } card)
             return;
@@ -3604,28 +3603,7 @@ public partial class MusicView : UserControl
             return;
 
         FileList.SelectedItem = item;
-        _pendingTrackClickCts?.Cancel();
-        var cancellation = new CancellationTokenSource();
-        _pendingTrackClickCts = cancellation;
-
-        var doubleTapTime = TopLevel.GetTopLevel(this)?.PlatformSettings?
-            .GetDoubleTapTime(PointerType.Mouse) ?? TimeSpan.FromMilliseconds(500);
-        try
-        {
-            await Task.Delay(doubleTapTime + TimeSpan.FromMilliseconds(25), cancellation.Token);
-            if (!cancellation.IsCancellationRequested)
-                OpenTrackEditor(item.Track);
-        }
-        catch (OperationCanceledException)
-        {
-            // A second click resolved the gesture as a double-click.
-        }
-        finally
-        {
-            if (ReferenceEquals(_pendingTrackClickCts, cancellation))
-                _pendingTrackClickCts = null;
-            cancellation.Dispose();
-        }
+        OpenTrackEditor(item.Track);
     }
 
     private void OnTrackCardDoubleTapped(object? sender, TappedEventArgs e)
@@ -3634,8 +3612,6 @@ public partial class MusicView : UserControl
             || IsInteractiveTrackCardSource(e.Source as Visual, card))
             return;
 
-        _pendingTrackClickCts?.Cancel();
-        _pendingTrackClickCts = null;
         FileList.SelectedItem = item;
         StartPlayback(resetQueue: true);
         e.Handled = true;
