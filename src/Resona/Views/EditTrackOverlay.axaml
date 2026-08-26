@@ -267,6 +267,17 @@
                           ClipToBounds="True">
                     <StackPanel Spacing="14" Margin="30,16,30,20">
 
+                        <Border x:Name="CollectionMembershipSection" Classes="edit-section" IsVisible="False">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Collections" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="Tracks can be added to collections from their context menu."
+                                           FontSize="9.5" Opacity="0.48" TextWrapping="Wrap" />
+                                <WrapPanel x:Name="CollectionMembershipPanel"
+                                           Orientation="Horizontal"
+                                           ItemHeight="30" />
+                            </StackPanel>
+                        </Border>
+
                         <Border Classes="edit-section">
                             <StackPanel Spacing="8">
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" Height="28">

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Rectangle = Avalonia.Controls.Shapes.Rectangle;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -24,7 +25,7 @@ using SkiaSharp;
 
 namespace Resona.Views;
 
-public enum LibrarySortBy { Name, Rating, DownloadedAt }
+public enum LibrarySortBy { Name, Rating, DownloadedAt, CollectionOrder }
 public enum LibrarySortDirection { Ascending, Descending }
 
 public partial class MusicView : UserControl
@@ -57,6 +58,9 @@ public partial class MusicView : UserControl
     private CancellationTokenSource? _toastCts;
     private bool _isDeletingTrack;
     private bool _libraryRefreshPending;
+    private bool _isCreatingCollection;
+    private readonly List<Bitmap> _collectionCardBitmaps = [];
+    private Bitmap? _collectionContextBitmap;
 
     // Crossfade state
     private int _lastKnownActiveId = -1;
@@ -85,6 +89,10 @@ public partial class MusicView : UserControl
     private List<TrackDisplayItem> _visibleItems = [];
     private List<int> _loadedPlaylistSourceTrackIds = [];
     private List<PortableFilterPreset> _filterPresets = [];
+    private List<TrackCollection> _collections = [];
+    private TrackCollection? _activeCollection;
+    private Dictionary<int, int> _activeCollectionOrder = [];
+    private Dictionary<int, List<string>> _allTrackCollectionNames = [];
     private string? _activeFilterPresetName;
     private LibraryMode? _activeBuiltInView = LibraryMode.Library;
     private bool _isCreatingPreset;
@@ -180,6 +188,7 @@ public partial class MusicView : UserControl
             _globalMediaKeys.Dispose();
             _windowsMediaSession.Dispose();
             _discordPresence.Dispose();
+            DisposeCollectionBitmaps();
         };
 
         // Engine events
@@ -231,6 +240,7 @@ public partial class MusicView : UserControl
 
         LoadLookups();
         InitializeFilterConditionBuilder();
+        LoadCollections();
         LoadFilterPresets();
         RebuildFilterConditionsPanel();
         RefreshTrackList();
@@ -337,6 +347,7 @@ public partial class MusicView : UserControl
             if (ChannelOverlay.IsVisible)
                 ChannelOverlay.RefreshChannels();
         };
+        EditTrackOverlay.CollectionsChanged += RefreshCollectionsAfterMembershipChange;
         EditTrackOverlay.PreviewRequested += StartTrackPreview;
         EditTrackOverlay.PreviewClosed += StopTrackPreview;
         EditTrackOverlay.ToastRequested += ShowToast;
@@ -426,6 +437,7 @@ public partial class MusicView : UserControl
         {
             LibrarySortBy.Rating => 1,
             LibrarySortBy.DownloadedAt => 2,
+            LibrarySortBy.CollectionOrder => 3,
             _ => 0
         };
         FilterSortText.Text = SortLabel(selectedIndex);
@@ -442,6 +454,7 @@ public partial class MusicView : UserControl
         {
             1 => LibrarySortBy.Rating,
             2 => LibrarySortBy.DownloadedAt,
+            3 when _activeCollection is not null => LibrarySortBy.CollectionOrder,
             _ => LibrarySortBy.Name
         };
         if (nextSort == LibrarySortBy.DownloadedAt && _sortBy != LibrarySortBy.DownloadedAt)
@@ -464,6 +477,7 @@ public partial class MusicView : UserControl
     {
         1 => "Rating",
         2 => "Downloaded at",
+        3 => "Collection order",
         _ => "Name"
     };
 
@@ -473,7 +487,8 @@ public partial class MusicView : UserControl
         {
             (FilterSortNameOption, FilterSortNameCheck),
             (FilterSortRatingOption, FilterSortRatingCheck),
-            (FilterSortDownloadedOption, FilterSortDownloadedCheck)
+            (FilterSortDownloadedOption, FilterSortDownloadedCheck),
+            (FilterSortCollectionOption, FilterSortCollectionCheck)
         };
 
         for (var index = 0; index < options.Length; index++)
@@ -488,6 +503,9 @@ public partial class MusicView : UserControl
 
     private void OnSortDirectionClicked(object? sender, RoutedEventArgs e)
     {
+        if (_sortBy == LibrarySortBy.CollectionOrder)
+            return;
+
         _sortDirection = _sortDirection == LibrarySortDirection.Ascending
             ? LibrarySortDirection.Descending
             : LibrarySortDirection.Ascending;
@@ -514,8 +532,49 @@ public partial class MusicView : UserControl
     private void UpdateSortDirectionButton()
     {
         SortDirectionButton.Content = _sortDirection == LibrarySortDirection.Ascending ? "↑" : "↓";
+        SortDirectionButton.IsEnabled = _sortBy != LibrarySortBy.CollectionOrder;
         ToolTip.SetTip(SortDirectionButton,
-            _sortDirection == LibrarySortDirection.Ascending ? "Ascending" : "Descending");
+            _sortBy == LibrarySortBy.CollectionOrder
+                ? "Collection order is edited from the track context menu"
+                : _sortDirection == LibrarySortDirection.Ascending ? "Ascending" : "Descending");
+    }
+
+    private void OnResetCollectionViewClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_activeCollection is null)
+            return;
+
+        _suppressPresetAutoSave = true;
+        try
+        {
+            _activeFilterPresetName = null;
+            _activeBuiltInView = LibraryMode.Library;
+            SearchBox.Text = string.Empty;
+            SetRatingFilterMode(manual: false, applyFilter: false);
+            _updatingLibraryMode = true;
+            ShowNeedsReviewCheckBox.IsChecked = false;
+            ShowDeclinedCheckBox.IsChecked = false;
+            _filterGroups.Clear();
+            RebuildFilterConditionsPanel();
+            ClearConditionBuilder();
+            RefreshCompletionFilterVisuals();
+            _shuffle = false;
+            _shufflePriorities.Clear();
+            _sortBy = LibrarySortBy.CollectionOrder;
+            _sortDirection = LibrarySortDirection.Ascending;
+        }
+        finally
+        {
+            _updatingLibraryMode = false;
+            _suppressPresetAutoSave = false;
+        }
+
+        UpdateShuffleButton();
+        InitializeSortControls();
+        RebuildPresetRows();
+        ApplyFilter();
+        ResetPlaybackQueueFromCurrentView();
+        PersistPlayerSession();
     }
 
     // ─── Track list ──────────────────────────────────────────────────────────
@@ -560,6 +619,7 @@ public partial class MusicView : UserControl
         var previousItems = _allItems.ToDictionary(item => item.Track.Id);
 
         var tracks = MusicLibraryService.Current.GetTracksForLibraryView();
+        _allTrackCollectionNames = MusicLibraryService.Current.GetAllTrackCollectionNames();
         var unanalyzedTrackIds = MusicLibraryService.Current.GetTrackIdsMissingAnalysis();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
         _allTrackGenreIds = MusicLibraryService.Current.GetAllTrackGenreIds();
@@ -597,11 +657,13 @@ public partial class MusicView : UserControl
                 && string.Equals(previous.Track.UpdatedAt, track.UpdatedAt, StringComparison.Ordinal)
                 && previous.NeedsAnalysis == needsAnalysis)
             {
+                ApplyCollectionDisplay(previous);
                 newItems.Add(previous);
                 continue;
             }
 
             var item = CreateTrackDisplayItem(track, needsAnalysis);
+            ApplyCollectionDisplay(item);
             if (previous?.Thumbnail is not null)
             {
                 item.Thumbnail = previous.Thumbnail;
@@ -621,6 +683,25 @@ public partial class MusicView : UserControl
         if (_engine.ActiveTrackId >= 0
             && _allItems.FirstOrDefault(item => item.Track.Id == _engine.ActiveTrackId)?.Track is { } activeTrack)
         ClearLibraryRefreshPending();
+    }
+
+    private void ApplyCollectionDisplay(TrackDisplayItem item)
+    {
+        var names = _allTrackCollectionNames.GetValueOrDefault(item.Track.Id, []);
+        if (names.Count == 0)
+        {
+            item.CollectionDisplayText = string.Empty;
+            item.CollectionOverflowText = string.Empty;
+            item.CollectionTooltip = string.Empty;
+            return;
+        }
+
+        var primary = _activeCollection is not null && names.Contains(_activeCollection.Name, StringComparer.OrdinalIgnoreCase)
+            ? _activeCollection.Name
+            : names[0];
+        item.CollectionDisplayText = primary;
+        item.CollectionOverflowText = names.Count > 1 ? $"+{names.Count - 1}" : string.Empty;
+        item.CollectionTooltip = string.Join("\n", names);
     }
 
     private TrackDisplayItem CreateTrackDisplayItem(MusicTrack track, bool needsAnalysis)
@@ -921,16 +1002,47 @@ public partial class MusicView : UserControl
         }
     }
 
+    private IEnumerable<TrackDisplayItem> CollectionScopedItems()
+    {
+        if (_activeCollection is null)
+            return _allItems;
+
+        var trackIds = _activeCollectionOrder.Keys.ToHashSet();
+        return _allItems.Where(item => trackIds.Contains(item.Track.Id));
+    }
+
+    private bool CanEditCollectionOrder() =>
+        _activeCollection is not null
+        && _sortBy == LibrarySortBy.CollectionOrder
+        && !_shuffle
+        && string.IsNullOrWhiteSpace(SearchBox.Text)
+        && !_manualRatingFilter
+        && _filterGroups.Count == 0
+        && _activeFilterPresetName is null
+        && _activeBuiltInView == LibraryMode.Library
+        && ShowNeedsReviewCheckBox.IsChecked != true
+        && ShowDeclinedCheckBox.IsChecked != true;
+
+    private void RefreshActiveCollectionOrder()
+    {
+        _activeCollectionOrder = _activeCollection is null
+            ? []
+            : MusicLibraryService.Current.GetCollectionTrackIds(_activeCollection.Id)
+                .Select((trackId, position) => (trackId, position))
+                .ToDictionary(item => item.trackId, item => item.position);
+    }
+
     private void ApplyFilterCore()
     {
         var itemById = _allItems.ToDictionary(i => i.Track.Id);
+        var sourceItems = CollectionScopedItems().ToList();
         List<MusicTrack> filtered;
 
         if (ShowDeclinedCheckBox.IsChecked == true)
         {
             // Declined mode is a global work view, independent of the user's
             // musical filters. Turning it off restores those filters unchanged.
-            filtered = _allItems
+            filtered = sourceItems
                 .Where(item => item.Track.LibraryState == TrackLibraryState.Rejected)
                 .Select(item => item.Track)
                 .ToList();
@@ -942,7 +1054,7 @@ public partial class MusicView : UserControl
             var reviewOnly = ShowNeedsReviewCheckBox.IsChecked == true;
 
             filtered = TrackFilter.Apply(
-                _allItems
+                sourceItems
                     .Where(item => item.Track.LibraryState != TrackLibraryState.Rejected
                                    && (!reviewOnly || item.NeedsReview))
                     .Select(item => item.Track),
@@ -997,6 +1109,9 @@ public partial class MusicView : UserControl
         var ratingSortById = Values.Ratings.ToDictionary(rating => rating.Id, rating => rating.SortOrder);
         IOrderedEnumerable<TrackDisplayItem> sorted = _sortBy switch
         {
+            LibrarySortBy.CollectionOrder when _activeCollection is not null =>
+                _filteredItems
+                    .OrderBy(item => _activeCollectionOrder.GetValueOrDefault(item.Track.Id, int.MaxValue)),
             LibrarySortBy.Rating when _sortDirection == LibrarySortDirection.Ascending =>
                 _filteredItems
                     .OrderBy(item => item.Track.RatingId is int ratingId
@@ -1119,6 +1234,7 @@ public partial class MusicView : UserControl
         AppSettingsStore.SavePlayerSession(new PlayerSessionSettings
         {
             ActiveFilterPresetName = _activeFilterPresetName,
+            ActiveCollectionStableId = _activeCollection?.StableId,
             ActiveTrackId = _engine.ActiveTrackId >= 0 ? _engine.ActiveTrackId : null,
             SelectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id,
             ShuffleEnabled = _shuffle,
@@ -1217,13 +1333,13 @@ public partial class MusicView : UserControl
     private List<MusicTrack> TracksMatchingSearchRatingAndGroup(FilterGroupControls group)
     {
         if (ShowDeclinedCheckBox.IsChecked == true)
-            return _allItems
+            return CollectionScopedItems()
                 .Where(item => item.Track.LibraryState == TrackLibraryState.Rejected)
                 .Select(item => item.Track)
                 .ToList();
 
         var reviewOnly = ShowNeedsReviewCheckBox.IsChecked == true;
-        IEnumerable<MusicTrack> query = _allItems
+        IEnumerable<MusicTrack> query = CollectionScopedItems()
             .Where(item => item.Track.LibraryState != TrackLibraryState.Rejected
                            && (!reviewOnly || item.NeedsReview))
             .Select(item => item.Track);
@@ -1560,6 +1676,456 @@ public partial class MusicView : UserControl
         if (!SearchBox.IsKeyboardFocusWithin && !hasSearch)
             SearchBox.IsVisible = false;
         SearchToggleBtn.Opacity = SearchBox.IsVisible || hasSearch ? 1.0 : 0.86;
+    }
+
+    private void LoadCollections()
+    {
+        _collections = MusicLibraryService.Current.GetCollections();
+        _activeCollection = string.IsNullOrWhiteSpace(_restoredPlayerSession.ActiveCollectionStableId)
+            ? null
+            : _collections.FirstOrDefault(collection => string.Equals(
+                collection.StableId,
+                _restoredPlayerSession.ActiveCollectionStableId,
+                StringComparison.OrdinalIgnoreCase));
+        RefreshActiveCollectionOrder();
+        RebuildCollectionRows();
+    }
+
+    private void ReloadCollections(bool refreshTracks = false)
+    {
+        var activeStableId = _activeCollection?.StableId;
+        _collections = MusicLibraryService.Current.GetCollections();
+        _activeCollection = activeStableId is null
+            ? null
+            : _collections.FirstOrDefault(collection => string.Equals(
+                collection.StableId, activeStableId, StringComparison.OrdinalIgnoreCase));
+        RefreshActiveCollectionOrder();
+        _allTrackCollectionNames = MusicLibraryService.Current.GetAllTrackCollectionNames();
+        foreach (var item in _allItems)
+            ApplyCollectionDisplay(item);
+        RebuildCollectionRows();
+        if (refreshTracks)
+            ApplyFilter();
+        else
+            UpdatePlaylistSummary();
+        EditTrackOverlay.RefreshCollections();
+    }
+
+    private void RebuildCollectionRows()
+    {
+        foreach (var bitmap in _collectionCardBitmaps)
+            bitmap.Dispose();
+        _collectionCardBitmaps.Clear();
+        CollectionRows.Children.Clear();
+
+        if (_isCreatingCollection)
+            CollectionRows.Children.Add(CreateNewCollectionRow());
+
+        foreach (var collection in _collections)
+            CollectionRows.Children.Add(CreateCollectionCard(collection));
+
+        if (!_isCreatingCollection && _collections.Count == 0)
+            CollectionRows.Children.Add(new TextBlock
+            {
+                Text = "No collections created yet.",
+                FontSize = 10.5,
+                Opacity = 0.48,
+                Margin = new Thickness(2, 3, 0, 1)
+            });
+        AddCollectionButton.IsEnabled = !_isCreatingCollection;
+        FilterSortCollectionOption.IsVisible = _activeCollection is not null;
+    }
+
+    private Control CreateCollectionCard(TrackCollection collection)
+    {
+        var isSelected = _activeCollection?.Id == collection.Id;
+        var coverBorder = new Border
+        {
+            Width = 38,
+            Height = 38,
+            CornerRadius = new CornerRadius(7),
+            ClipToBounds = true,
+            Background = Brush("#30322E"),
+            BorderBrush = Brush("#38FFFFFF"),
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        if (BitmapFromCollection(collection.Id) is { } bitmap)
+        {
+            _collectionCardBitmaps.Add(bitmap);
+            coverBorder.Child = new Image { Source = bitmap, Stretch = Stretch.UniformToFill };
+        }
+
+        var labels = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+        labels.Children.Add(new TextBlock
+        {
+            Text = collection.Name,
+            FontSize = 11.5,
+            FontWeight = FontWeight.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            Foreground = isSelected ? Brush("#D6F2EC") : ThemeResources.Brush("Theme.Brush.TextPrimary")
+        });
+        labels.Children.Add(new TextBlock
+        {
+            Text = $"{collection.TrackCount} tracks · {FormatPlaylistDuration(collection.DurationSeconds)}",
+            FontSize = 9.5,
+            Opacity = 0.5
+        });
+
+        var content = new Grid { ColumnDefinitions = new ColumnDefinitions("38,*"), ColumnSpacing = 9 };
+        content.Children.Add(coverBorder);
+        Grid.SetColumn(labels, 1);
+        labels.Margin = new Thickness(0, 0, 32, 0);
+        content.Children.Add(labels);
+
+        var card = new Button
+        {
+            Content = content,
+            MinHeight = 56,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Background = isSelected ? Brush("#2C2F6E63") : ThemeResources.Brush("Theme.Brush.Surface"),
+            BorderBrush = isSelected ? Brush("#9A52CBB4") : ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(8),
+            Cursor = new Cursor(StandardCursorType.Hand)
+        };
+        card.Click += (_, _) => SelectCollection(collection.Id);
+
+        var editButton = new Button
+        {
+            Content = CreateFilterSvgIcon("/Assets/pencil-simple.svg", 13),
+            Width = 26,
+            Height = 26,
+            Padding = new Thickness(0),
+            Margin = new Thickness(0, 0, 8, 0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            Cursor = new Cursor(StandardCursorType.Hand),
+            Flyout = CreateCollectionEditorFlyout(collection)
+        };
+        ToolTip.SetTip(editButton, "Edit collection");
+        var container = new Grid();
+        container.Children.Add(card);
+        container.Children.Add(editButton);
+        return container;
+    }
+
+    private Control CreateNewCollectionRow()
+    {
+        var nameBox = new TextBox
+        {
+            Watermark = "Collection name",
+            Height = 34,
+            MaxLength = 80,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+        nameBox.Classes.Add("theme-input");
+        nameBox.KeyDown += (_, e) =>
+        {
+            if (e.Key != Key.Enter)
+                return;
+            CommitNewCollection(nameBox.Text);
+            e.Handled = true;
+        };
+        var save = new Button { Content = "Create", Padding = new Thickness(10, 6), FontSize = 11 };
+        save.Click += (_, _) => CommitNewCollection(nameBox.Text);
+        var cancel = new Button
+        {
+            Content = "Cancel", Padding = new Thickness(10, 6), FontSize = 11,
+            Background = Brushes.Transparent
+        };
+        cancel.Click += (_, _) =>
+        {
+            _isCreatingCollection = false;
+            RebuildCollectionRows();
+        };
+        var actions = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*"), ColumnSpacing = 8 };
+        actions.Children.Add(save);
+        Grid.SetColumn(cancel, 1);
+        actions.Children.Add(cancel);
+        var panel = new StackPanel { Spacing = 8, Children = { nameBox, actions } };
+        Dispatcher.UIThread.Post(() => nameBox.Focus());
+        return new Border
+        {
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            Padding = new Thickness(10),
+            Child = panel
+        };
+    }
+
+    private Flyout CreateCollectionEditorFlyout(TrackCollection collection)
+    {
+        var nameBox = new TextBox
+        {
+            Text = collection.Name,
+            MaxLength = 80,
+            Height = 32,
+            VerticalContentAlignment = VerticalAlignment.Center
+        };
+        var saveName = new Button { Content = "Save name", Height = 30, FontSize = 10.5 };
+        var automaticCover = new Button { Content = "Automatic cover", Height = 30, FontSize = 10.5 };
+        var chooseImage = new Button { Content = "Choose image…", Height = 30, FontSize = 10.5 };
+        var trackSelector = new ComboBox
+        {
+            Height = 32,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            PlaceholderText = "Choose collection track"
+        };
+        foreach (var track in MusicLibraryService.Current.GetCollectionTracks(collection.Id))
+        {
+            var option = new ComboBoxItem { Content = track.Title, Tag = track.TrackId };
+            trackSelector.Items.Add(option);
+            if (track.TrackId == collection.CoverTrackId)
+                trackSelector.SelectedItem = option;
+        }
+        var useTrackCover = new Button
+        {
+            Content = "Use track artwork",
+            Height = 30,
+            FontSize = 10.5,
+            IsEnabled = trackSelector.Items.Count > 0
+        };
+        var delete = new Button
+        {
+            Content = "Delete collection…",
+            Height = 30,
+            FontSize = 10.5,
+            Foreground = ThemeResources.Brush("Theme.Brush.DangerText")
+        };
+        var flyout = new Flyout
+        {
+            Placement = PlacementMode.RightEdgeAlignedTop,
+            Content = new Border
+            {
+                Width = 260,
+                Padding = new Thickness(12),
+                Background = Brush("#FC191A1D"),
+                BorderBrush = Brush("#3EFFFFFF"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(9),
+                Child = new StackPanel
+                {
+                    Spacing = 8,
+                    Children =
+                    {
+                        new TextBlock { Text = "EDIT COLLECTION", FontSize = 9, FontWeight = FontWeight.SemiBold, Opacity = 0.45 },
+                        nameBox, saveName,
+                        new Rectangle { Height = 1, Fill = ThemeResources.Brush("Theme.Brush.Divider"), Margin = new Thickness(0, 3) },
+                        new TextBlock { Text = "COVER", FontSize = 9, FontWeight = FontWeight.SemiBold, Opacity = 0.45 },
+                        automaticCover, trackSelector, useTrackCover, chooseImage,
+                        new Rectangle { Height = 1, Fill = ThemeResources.Brush("Theme.Brush.Divider"), Margin = new Thickness(0, 3) },
+                        delete
+                    }
+                }
+            }
+        };
+        saveName.Click += (_, _) =>
+        {
+            try
+            {
+                MusicLibraryService.Current.RenameCollection(collection.Id, nameBox.Text ?? string.Empty);
+                flyout.Hide();
+                ReloadCollections(refreshTracks: true);
+            }
+            catch (Exception exception) { ShowToast($"Could not rename collection: {exception.Message}"); }
+        };
+        automaticCover.Click += (_, _) =>
+        {
+            MusicLibraryService.Current.SetCollectionCoverAutomatic(collection.Id);
+            flyout.Hide();
+            ReloadCollections();
+        };
+        useTrackCover.Click += (_, _) =>
+        {
+            if (trackSelector.SelectedItem is not ComboBoxItem { Tag: int trackId })
+                return;
+            MusicLibraryService.Current.SetCollectionCoverTrack(collection.Id, trackId);
+            flyout.Hide();
+            ReloadCollections();
+        };
+        chooseImage.Click += async (_, _) =>
+        {
+            if (await ChooseCollectionCoverAsync(collection.Id))
+            {
+                flyout.Hide();
+                ReloadCollections();
+            }
+        };
+        delete.Flyout = CreateDeleteCollectionFlyout(collection, flyout);
+        return flyout;
+    }
+
+    private Flyout CreateDeleteCollectionFlyout(TrackCollection collection, Flyout editorFlyout)
+    {
+        var confirm = new Button
+        {
+            Content = "Delete",
+            Background = ThemeResources.Brush("Theme.Brush.DangerSurface"),
+            Foreground = ThemeResources.Brush("Theme.Brush.DangerText"),
+            Padding = new Thickness(10, 5)
+        };
+        var flyout = new Flyout
+        {
+            Placement = PlacementMode.RightEdgeAlignedTop,
+            Content = new Border
+            {
+                Width = 220,
+                Padding = new Thickness(12),
+                Background = Brush("#FC191A1D"),
+                BorderBrush = Brush("#3EFFFFFF"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(8),
+                Child = new StackPanel
+                {
+                    Spacing = 9,
+                    Children =
+                    {
+                        new TextBlock { Text = $"Delete “{collection.Name}”?", FontWeight = FontWeight.SemiBold, TextWrapping = TextWrapping.Wrap },
+                        new TextBlock { Text = "The tracks remain in your library.", FontSize = 10.5, Opacity = 0.58 },
+                        confirm
+                    }
+                }
+            }
+        };
+        confirm.Click += (_, _) =>
+        {
+            flyout.Hide();
+            editorFlyout.Hide();
+            MusicLibraryService.Current.DeleteCollection(collection.Id);
+            if (_activeCollection?.Id == collection.Id)
+            {
+                _activeCollection = null;
+                _activeCollectionOrder.Clear();
+                if (_sortBy == LibrarySortBy.CollectionOrder)
+                    _sortBy = LibrarySortBy.Name;
+            }
+            ReloadCollections(refreshTracks: true);
+            InitializeSortControls();
+            PersistPlayerSession();
+        };
+        return flyout;
+    }
+
+    private async Task<bool> ChooseCollectionCoverAsync(int collectionId)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null)
+            return false;
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Choose collection cover",
+            AllowMultiple = false,
+            FileTypeFilter = [FilePickerFileTypes.ImageAll]
+        });
+        if (files.Count == 0)
+            return false;
+        try
+        {
+            await using var input = await files[0].OpenReadAsync();
+            if (input.CanSeek && input.Length > 12 * 1024 * 1024)
+                throw new InvalidDataException("Collection cover must be smaller than 12 MB.");
+            using var buffer = new MemoryStream();
+            await input.CopyToAsync(buffer);
+            var cover = ThumbnailService.CreateSquareArtwork(buffer.ToArray(), 256, 88)
+                        ?? throw new InvalidDataException("The selected image could not be decoded.");
+            MusicLibraryService.Current.SetCollectionCustomCover(collectionId, cover);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            ShowToast($"Could not use collection cover: {exception.Message}");
+            return false;
+        }
+    }
+
+    private Bitmap? BitmapFromCollection(int collectionId)
+    {
+        var bytes = MusicLibraryService.Current.GetCollectionCover(collectionId);
+        if (bytes is not { Length: > 0 })
+            return null;
+        try
+        {
+            using var stream = new MemoryStream(bytes);
+            return new Bitmap(stream);
+        }
+        catch { return null; }
+    }
+
+    private void UpdateCollectionContextCover()
+    {
+        _collectionContextBitmap?.Dispose();
+        _collectionContextBitmap = null;
+        CollectionContextCover.Source = null;
+        CollectionContextCoverBorder.IsVisible = _activeCollection is not null;
+        if (_activeCollection is null)
+            return;
+        _collectionContextBitmap = BitmapFromCollection(_activeCollection.Id);
+        CollectionContextCover.Source = _collectionContextBitmap;
+    }
+
+    private void DisposeCollectionBitmaps()
+    {
+        foreach (var bitmap in _collectionCardBitmaps)
+            bitmap.Dispose();
+        _collectionCardBitmaps.Clear();
+        _collectionContextBitmap?.Dispose();
+        _collectionContextBitmap = null;
+    }
+
+    private void OnAddCollectionClicked(object? sender, RoutedEventArgs e)
+    {
+        _isCreatingCollection = true;
+        RebuildCollectionRows();
+    }
+
+    private void CommitNewCollection(string? rawName)
+    {
+        try
+        {
+            var collection = MusicLibraryService.Current.CreateCollection(rawName ?? string.Empty);
+            _isCreatingCollection = false;
+            _collections = MusicLibraryService.Current.GetCollections();
+            SelectCollection(collection.Id);
+        }
+        catch (Exception exception) { ShowToast($"Could not create collection: {exception.Message}"); }
+    }
+
+    private void SelectCollection(int collectionId)
+    {
+        if (_activeCollection?.Id == collectionId)
+        {
+            _activeCollection = null;
+            _activeCollectionOrder.Clear();
+            if (_sortBy == LibrarySortBy.CollectionOrder)
+                _sortBy = LibrarySortBy.Name;
+        }
+        else
+        {
+            _activeCollection = _collections.FirstOrDefault(collection => collection.Id == collectionId);
+            _sortBy = LibrarySortBy.CollectionOrder;
+            _sortDirection = LibrarySortDirection.Ascending;
+            RefreshActiveCollectionOrder();
+        }
+
+        foreach (var item in _allItems)
+            ApplyCollectionDisplay(item);
+        InitializeSortControls();
+        RebuildCollectionRows();
+        ApplyFilter();
+        ResetPlaybackQueueFromCurrentView();
+        PersistPlayerSession();
+    }
+
+    private void RefreshCollectionsAfterMembershipChange()
+    {
+        ReloadCollections(refreshTracks: true);
+        EditTrackOverlay.InvalidatePreparedTrack();
     }
 
     private void LoadFilterPresets()
@@ -3990,7 +4556,31 @@ public partial class MusicView : UserControl
             .Select(item => item.Track.DurationSeconds ?? 0)
             .Sum();
 
-        PlaylistSummaryText.Text = $"{_filteredItems.Count} tracks · {FormatPlaylistDuration(totalSeconds)}";
+        if (_activeCollection is null)
+        {
+            LibraryContextTitleText.Text = _activeFilterPresetName is null
+                ? _activeBuiltInView switch
+                {
+                    LibraryMode.Review => "REVIEW",
+                    LibraryMode.Declined => "DECLINED",
+                    _ => "LIBRARY"
+                }
+                : $"PRESET · {_activeFilterPresetName.ToUpperInvariant()}";
+            PlaylistSummaryText.Text = $"{_filteredItems.Count} tracks · {FormatPlaylistDuration(totalSeconds)}";
+            CollectionOrderNotice.IsVisible = false;
+            UpdateCollectionContextCover();
+            return;
+        }
+
+        var totalTracks = _activeCollectionOrder.Count;
+        LibraryContextTitleText.Text = $"COLLECTION · {_activeCollection.Name.ToUpperInvariant()}";
+        var visible = _filteredItems.Count == totalTracks
+            ? $"{totalTracks} tracks"
+            : $"{_filteredItems.Count} of {totalTracks} tracks";
+        var preset = _activeFilterPresetName is null ? string.Empty : $" · preset: {_activeFilterPresetName}";
+        PlaylistSummaryText.Text = $"{visible} · {FormatPlaylistDuration(totalSeconds)}{preset}";
+        CollectionOrderNotice.IsVisible = !CanEditCollectionOrder();
+        UpdateCollectionContextCover();
     }
 
     private void NavigateNext(bool isManual)
@@ -4266,34 +4856,52 @@ public partial class MusicView : UserControl
             ? _playbackQueue.TrackIds.ToList().IndexOf(currentTrackId)
             : -1;
         var isCurrent = _playbackQueue.CurrentTrackId == trackId;
+        var menuItems = new List<object>
+        {
+            CreateTrackMenuItem("Open track on YouTube",
+                IsValidExternalUrl(item.Track.CanonicalUrl),
+                () => OpenExternalUrl(item.Track.CanonicalUrl)),
+            CreateTrackMenuItem("Open channel on YouTube",
+                IsValidExternalUrl(item.Track.ChannelUrl),
+                () => OpenExternalUrl(item.Track.ChannelUrl)),
+            new Separator { Classes = { "track-context-separator" } },
+            CreateTrackMenuItem("Edit", true,
+                () => OpenTrackEditor(item.Track)),
+            CreateAddToCollectionMenuItem(item.Track),
+            new Separator { Classes = { "track-context-separator" } },
+            CreateTrackMenuItem("Play next",
+                !isCurrent && index != currentIndex + 1,
+                () => ApplyTrackQueueMutation(() => _playbackQueue.MoveNext(trackId))),
+            CreateTrackMenuItem("Move up",
+                !isCurrent && index > 0 && index - 1 != currentIndex,
+                () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, -1))),
+            CreateTrackMenuItem("Move down", !isCurrent && index >= 0
+                && index < _playbackQueue.TrackIds.Count - 1 && index + 1 != currentIndex,
+                () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, 1))),
+            CreateTrackMenuItem("Remove from queue", !isCurrent,
+                () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
+        };
+
+        if (_activeCollection is not null)
+        {
+            var collectionIndex = _activeCollectionOrder.GetValueOrDefault(trackId, -1);
+            var canReorder = CanEditCollectionOrder();
+            menuItems.Add(new Separator { Classes = { "track-context-separator" } });
+            menuItems.Add(CreateTrackMenuItem(
+                "Move up in collection",
+                canReorder && collectionIndex > 0,
+                () => MoveActiveCollectionTrack(trackId, -1)));
+            menuItems.Add(CreateTrackMenuItem(
+                "Move down in collection",
+                canReorder && collectionIndex >= 0 && collectionIndex < _activeCollectionOrder.Count - 1,
+                () => MoveActiveCollectionTrack(trackId, 1)));
+        }
+
         var menu = new ContextMenu
         {
             Classes = { "track-context" },
             Placement = PlacementMode.Pointer,
-            ItemsSource = new object[]
-            {
-                CreateTrackMenuItem("Open track on YouTube",
-                    IsValidExternalUrl(item.Track.CanonicalUrl),
-                    () => OpenExternalUrl(item.Track.CanonicalUrl)),
-                CreateTrackMenuItem("Open channel on YouTube",
-                    IsValidExternalUrl(item.Track.ChannelUrl),
-                    () => OpenExternalUrl(item.Track.ChannelUrl)),
-                new Separator { Classes = { "track-context-separator" } },
-                CreateTrackMenuItem("Edit", true,
-                    () => OpenTrackEditor(item.Track)),
-                new Separator { Classes = { "track-context-separator" } },
-                CreateTrackMenuItem("Play next",
-                    !isCurrent && index != currentIndex + 1,
-                    () => ApplyTrackQueueMutation(() => _playbackQueue.MoveNext(trackId))),
-                CreateTrackMenuItem("Move up",
-                    !isCurrent && index > 0 && index - 1 != currentIndex,
-                    () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, -1))),
-                CreateTrackMenuItem("Move down", !isCurrent && index >= 0
-                    && index < _playbackQueue.TrackIds.Count - 1 && index + 1 != currentIndex,
-                    () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, 1))),
-                CreateTrackMenuItem("Remove from queue", !isCurrent,
-                    () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
-            }
+            ItemsSource = menuItems
         };
         menu.Closed += (_, _) =>
         {
@@ -4383,6 +4991,52 @@ public partial class MusicView : UserControl
         item.Classes.Add("track-context-item");
         item.Click += (_, _) => action();
         return item;
+    }
+
+    private MenuItem CreateAddToCollectionMenuItem(MusicTrack track)
+    {
+        var memberships = MusicLibraryService.Current.GetTrackCollections(track.Id)
+            .Select(collection => collection.Id)
+            .ToHashSet();
+        var parent = new MenuItem
+        {
+            Header = "Add to collection",
+            IsEnabled = _collections.Any(collection => !memberships.Contains(collection.Id))
+        };
+        parent.Classes.Add("track-context-item");
+
+        var choices = _collections
+            .Select(collection => (object)CreateTrackMenuItem(
+                collection.Name,
+                !memberships.Contains(collection.Id),
+                () => AddTrackToCollection(collection, track)))
+            .ToList();
+        if (choices.Count == 0)
+            choices.Add(CreateTrackMenuItem("No collections available", false, () => { }));
+        parent.ItemsSource = choices;
+        return parent;
+    }
+
+    private void AddTrackToCollection(TrackCollection collection, MusicTrack track)
+    {
+        if (!MusicLibraryService.Current.AddTrackToCollection(collection.Id, track.Id))
+            return;
+
+        ReloadCollections(refreshTracks: true);
+        ShowToast($"Added {track.DisplayTitle} to {collection.Name}");
+    }
+
+    private void MoveActiveCollectionTrack(int trackId, int offset)
+    {
+        if (_activeCollection is null || !CanEditCollectionOrder())
+            return;
+        if (!MusicLibraryService.Current.MoveCollectionTrack(_activeCollection.Id, trackId, offset))
+            return;
+
+        RefreshActiveCollectionOrder();
+        ReloadCollections(refreshTracks: true);
+        ResetPlaybackQueueFromCurrentView();
+        PersistPlayerSession();
     }
 
     private void ApplyTrackQueueMutation(Func<bool> mutation)

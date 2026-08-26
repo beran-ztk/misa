@@ -178,6 +178,27 @@ public class MusicDatabase
             );
             CREATE INDEX ix_tracks_library_state ON tracks(library_state, downloaded_at DESC);
 
+            CREATE TABLE collections (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                stable_id       TEXT NOT NULL UNIQUE,
+                name            TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                cover_kind      TEXT NOT NULL DEFAULT 'Automatic',
+                cover_track_id  INTEGER NULL REFERENCES tracks(id) ON DELETE SET NULL,
+                custom_cover    BLOB NULL,
+                created_at      TEXT NOT NULL,
+                updated_at      TEXT NOT NULL
+            );
+
+            CREATE TABLE collection_tracks (
+                collection_id   INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+                track_id        INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                position        INTEGER NOT NULL,
+                added_at        TEXT NOT NULL,
+                PRIMARY KEY (collection_id, track_id)
+            );
+            CREATE INDEX ix_collection_tracks_order ON collection_tracks(collection_id, position);
+            CREATE INDEX ix_collection_tracks_track ON collection_tracks(track_id);
+
             CREATE TABLE track_genres (
                 track_id                 INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
                 genre_id                 INTEGER NOT NULL REFERENCES model_subgenres(id),
@@ -335,6 +356,33 @@ public class MusicDatabase
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
         CreatePortableExportSchema(conn);
+        CreateCollectionSchema(conn);
+    }
+
+    private static void CreateCollectionSchema(SqliteConnection conn)
+    {
+        ExecuteNonQuery(conn, @"
+            CREATE TABLE IF NOT EXISTS collections (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                stable_id TEXT NOT NULL UNIQUE,
+                name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                cover_kind TEXT NOT NULL DEFAULT 'Automatic',
+                cover_track_id INTEGER NULL REFERENCES tracks(id) ON DELETE SET NULL,
+                custom_cover BLOB NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS collection_tracks (
+                collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+                track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                position INTEGER NOT NULL,
+                added_at TEXT NOT NULL,
+                PRIMARY KEY (collection_id, track_id)
+            );
+            CREATE INDEX IF NOT EXISTS ix_collection_tracks_order
+                ON collection_tracks(collection_id, position);
+            CREATE INDEX IF NOT EXISTS ix_collection_tracks_track
+                ON collection_tracks(track_id);");
     }
 
     internal static void NormalizeTrackWorkflowState(SqliteConnection conn)
@@ -3197,6 +3245,382 @@ public class MusicDatabase
         cmd.ExecuteNonQuery();
         TouchTrack(conn, tx, trackId, now);
         tx.Commit();
+    }
+
+    // --- Collections ---
+
+    public List<TrackCollection> GetCollections()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT collections.id, collections.stable_id, collections.name,
+                   CASE WHEN collections.cover_kind = 'Track' AND collections.cover_track_id IS NULL
+                        THEN 'Automatic' ELSE collections.cover_kind END,
+                   collections.cover_track_id,
+                   COUNT(collection_tracks.track_id),
+                   COALESCE(SUM(tracks.duration_seconds), 0),
+                   collections.created_at, collections.updated_at
+            FROM collections
+            LEFT JOIN collection_tracks ON collection_tracks.collection_id = collections.id
+            LEFT JOIN tracks ON tracks.id = collection_tracks.track_id
+            GROUP BY collections.id
+            ORDER BY collections.name COLLATE NOCASE";
+        using var reader = cmd.ExecuteReader();
+        var collections = new List<TrackCollection>();
+        while (reader.Read())
+            collections.Add(ReadCollection(reader));
+        return collections;
+    }
+
+    public TrackCollection? GetCollectionByStableId(string stableId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT collections.id, collections.stable_id, collections.name,
+                   CASE WHEN collections.cover_kind = 'Track' AND collections.cover_track_id IS NULL
+                        THEN 'Automatic' ELSE collections.cover_kind END,
+                   collections.cover_track_id,
+                   COUNT(collection_tracks.track_id),
+                   COALESCE(SUM(tracks.duration_seconds), 0),
+                   collections.created_at, collections.updated_at
+            FROM collections
+            LEFT JOIN collection_tracks ON collection_tracks.collection_id = collections.id
+            LEFT JOIN tracks ON tracks.id = collection_tracks.track_id
+            WHERE collections.stable_id = $stableId
+            GROUP BY collections.id";
+        cmd.Parameters.AddWithValue("$stableId", stableId);
+        using var reader = cmd.ExecuteReader();
+        return reader.Read() ? ReadCollection(reader) : null;
+    }
+
+    public TrackCollection CreateCollection(string name)
+    {
+        var normalizedName = NormalizeCollectionName(name);
+        using var conn = Open();
+        var now = DateTime.UtcNow.ToString("O");
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            INSERT INTO collections (stable_id, name, cover_kind, created_at, updated_at)
+            VALUES ($stableId, $name, 'Automatic', $now, $now);
+            SELECT last_insert_rowid();";
+        var stableId = Guid.NewGuid().ToString("D");
+        cmd.Parameters.AddWithValue("$stableId", stableId);
+        cmd.Parameters.AddWithValue("$name", normalizedName);
+        cmd.Parameters.AddWithValue("$now", now);
+        _ = Convert.ToInt32(cmd.ExecuteScalar());
+        return GetCollectionByStableId(stableId)
+               ?? throw new InvalidOperationException("The collection could not be created.");
+    }
+
+    public void RenameCollection(int collectionId, string name)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"
+            UPDATE collections SET name = $name, updated_at = $now WHERE id = $id",
+            ("$id", collectionId), ("$name", NormalizeCollectionName(name)),
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    public void DeleteCollection(int collectionId)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, "DELETE FROM collections WHERE id = $id", ("$id", collectionId));
+    }
+
+    public bool AddTrackToCollection(int collectionId, int trackId)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var now = DateTime.UtcNow.ToString("O");
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            INSERT INTO collection_tracks (collection_id, track_id, position, added_at)
+            SELECT $collectionId, $trackId,
+                   COALESCE(MAX(existing.position) + 1, 0), $now
+            FROM collections
+            LEFT JOIN collection_tracks existing ON existing.collection_id = collections.id
+            WHERE collections.id = $collectionId
+              AND EXISTS (SELECT 1 FROM tracks WHERE id = $trackId)
+            ON CONFLICT(collection_id, track_id) DO NOTHING";
+        cmd.Parameters.AddWithValue("$collectionId", collectionId);
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        cmd.Parameters.AddWithValue("$now", now);
+        var added = cmd.ExecuteNonQuery() == 1;
+        if (added)
+            ExecuteInsert(conn, tx,
+                "UPDATE collections SET updated_at = $now WHERE id = $id",
+                ("$id", collectionId), ("$now", now));
+        tx.Commit();
+        return added;
+    }
+
+    public bool RemoveTrackFromCollection(int collectionId, int trackId)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "DELETE FROM collection_tracks WHERE collection_id = $collectionId AND track_id = $trackId";
+        cmd.Parameters.AddWithValue("$collectionId", collectionId);
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        var removed = cmd.ExecuteNonQuery() == 1;
+        if (removed)
+        {
+            var now = DateTime.UtcNow.ToString("O");
+            ExecuteInsert(conn, tx, @"
+                UPDATE collections
+                SET cover_kind = CASE WHEN cover_track_id = $trackId THEN 'Automatic' ELSE cover_kind END,
+                    cover_track_id = CASE WHEN cover_track_id = $trackId THEN NULL ELSE cover_track_id END,
+                    updated_at = $now
+                WHERE id = $collectionId",
+                ("$collectionId", collectionId), ("$trackId", trackId), ("$now", now));
+            NormalizeCollectionPositions(conn, tx, collectionId);
+        }
+        tx.Commit();
+        return removed;
+    }
+
+    public bool MoveCollectionTrack(int collectionId, int trackId, int offset)
+    {
+        if (offset == 0)
+            return false;
+
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        var trackIds = ReadCollectionTrackIds(conn, tx, collectionId);
+        var index = trackIds.IndexOf(trackId);
+        if (index < 0)
+            return false;
+        var target = Math.Clamp(index + offset, 0, trackIds.Count - 1);
+        if (target == index)
+            return false;
+
+        trackIds.RemoveAt(index);
+        trackIds.Insert(target, trackId);
+        WriteCollectionPositions(conn, tx, collectionId, trackIds);
+        ExecuteInsert(conn, tx,
+            "UPDATE collections SET updated_at = $now WHERE id = $id",
+            ("$id", collectionId), ("$now", DateTime.UtcNow.ToString("O")));
+        tx.Commit();
+        return true;
+    }
+
+    public List<int> GetCollectionTrackIds(int collectionId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT track_id FROM collection_tracks
+            WHERE collection_id = $collectionId
+            ORDER BY position, added_at, track_id";
+        cmd.Parameters.AddWithValue("$collectionId", collectionId);
+        using var reader = cmd.ExecuteReader();
+        var ids = new List<int>();
+        while (reader.Read()) ids.Add(reader.GetInt32(0));
+        return ids;
+    }
+
+    public List<CollectionTrack> GetCollectionTracks(int collectionId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT tracks.id, tracks.title, collection_tracks.position
+            FROM collection_tracks
+            JOIN tracks ON tracks.id = collection_tracks.track_id
+            WHERE collection_tracks.collection_id = $collectionId
+            ORDER BY collection_tracks.position, collection_tracks.added_at, tracks.id";
+        cmd.Parameters.AddWithValue("$collectionId", collectionId);
+        using var reader = cmd.ExecuteReader();
+        var tracks = new List<CollectionTrack>();
+        while (reader.Read())
+            tracks.Add(new CollectionTrack(reader.GetInt32(0), reader.GetString(1), reader.GetInt32(2)));
+        return tracks;
+    }
+
+    public List<TrackCollection> GetTrackCollections(int trackId) => GetCollectionsForTrack(trackId);
+
+    public Dictionary<int, List<string>> GetAllTrackCollectionNames()
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT collection_tracks.track_id, collections.name
+            FROM collection_tracks
+            JOIN collections ON collections.id = collection_tracks.collection_id
+            ORDER BY collections.name COLLATE NOCASE";
+        using var reader = cmd.ExecuteReader();
+        var names = new Dictionary<int, List<string>>();
+        while (reader.Read())
+        {
+            var trackId = reader.GetInt32(0);
+            if (!names.TryGetValue(trackId, out var trackNames))
+                names[trackId] = trackNames = [];
+            trackNames.Add(reader.GetString(1));
+        }
+        return names;
+    }
+
+    public byte[]? GetCollectionCover(int collectionId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT cover_kind, cover_track_id, custom_cover FROM collections WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", collectionId);
+        using var reader = cmd.ExecuteReader();
+        if (!reader.Read())
+            return null;
+        var kind = reader.GetString(0);
+        int? coverTrackId = reader.IsDBNull(1) ? null : reader.GetInt32(1);
+        if (kind == nameof(CollectionCoverKind.Custom) && !reader.IsDBNull(2))
+            return (byte[])reader[2];
+        reader.Close();
+
+        if (coverTrackId is int preferredTrackId)
+        {
+            using var preferred = conn.CreateCommand();
+            preferred.CommandText = "SELECT thumbnail FROM tracks WHERE id = $trackId AND thumbnail IS NOT NULL";
+            preferred.Parameters.AddWithValue("$trackId", preferredTrackId);
+            if (preferred.ExecuteScalar() is byte[] preferredCover)
+                return preferredCover;
+        }
+
+        using var cover = conn.CreateCommand();
+        cover.CommandText = @"SELECT tracks.thumbnail
+            FROM collection_tracks
+            JOIN tracks ON tracks.id = collection_tracks.track_id
+            WHERE collection_tracks.collection_id = $collectionId AND tracks.thumbnail IS NOT NULL
+            ORDER BY collection_tracks.position, collection_tracks.added_at, tracks.id LIMIT 1";
+        cover.Parameters.AddWithValue("$collectionId", collectionId);
+        return cover.ExecuteScalar() as byte[];
+    }
+
+    public void SetCollectionCoverAutomatic(int collectionId) =>
+        SetCollectionCover(collectionId, CollectionCoverKind.Automatic, null, null);
+
+    public void SetCollectionCoverTrack(int collectionId, int trackId)
+    {
+        using var conn = Open();
+        using var check = conn.CreateCommand();
+        check.CommandText = @"
+            SELECT COUNT(*) FROM collection_tracks
+            WHERE collection_id = $collectionId AND track_id = $trackId";
+        check.Parameters.AddWithValue("$collectionId", collectionId);
+        check.Parameters.AddWithValue("$trackId", trackId);
+        if (Convert.ToInt32(check.ExecuteScalar()) == 0)
+            throw new InvalidOperationException("Choose a track that belongs to this collection.");
+        SetCollectionCover(collectionId, CollectionCoverKind.Track, trackId, null);
+    }
+
+    public void SetCollectionCustomCover(int collectionId, byte[] cover)
+    {
+        if (cover.Length == 0)
+            throw new ArgumentException("The collection cover is empty.", nameof(cover));
+        SetCollectionCover(collectionId, CollectionCoverKind.Custom, null, cover);
+    }
+
+    private void SetCollectionCover(int collectionId, CollectionCoverKind kind, int? trackId, byte[]? customCover)
+    {
+        using var conn = Open();
+        ExecuteNonQuery(conn, @"
+            UPDATE collections
+            SET cover_kind = $kind, cover_track_id = $trackId, custom_cover = $cover, updated_at = $now
+            WHERE id = $id",
+            ("$id", collectionId), ("$kind", kind.ToString()),
+            ("$trackId", (object?)trackId ?? DBNull.Value),
+            ("$cover", (object?)customCover ?? DBNull.Value),
+            ("$now", DateTime.UtcNow.ToString("O")));
+    }
+
+    private List<TrackCollection> GetCollectionsForTrack(int trackId)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+            SELECT collections.id, collections.stable_id, collections.name,
+                   CASE WHEN collections.cover_kind = 'Track' AND collections.cover_track_id IS NULL
+                        THEN 'Automatic' ELSE collections.cover_kind END,
+                   collections.cover_track_id,
+                   (SELECT COUNT(*) FROM collection_tracks count_rows WHERE count_rows.collection_id = collections.id),
+                   COALESCE((SELECT SUM(tracks.duration_seconds)
+                             FROM collection_tracks duration_rows
+                             JOIN tracks ON tracks.id = duration_rows.track_id
+                             WHERE duration_rows.collection_id = collections.id), 0),
+                   collections.created_at, collections.updated_at
+            FROM collection_tracks
+            JOIN collections ON collections.id = collection_tracks.collection_id
+            WHERE collection_tracks.track_id = $trackId
+            ORDER BY collections.name COLLATE NOCASE";
+        cmd.Parameters.AddWithValue("$trackId", trackId);
+        using var reader = cmd.ExecuteReader();
+        var collections = new List<TrackCollection>();
+        while (reader.Read()) collections.Add(ReadCollection(reader));
+        return collections;
+    }
+
+    private static TrackCollection ReadCollection(SqliteDataReader reader)
+    {
+        var coverKind = Enum.TryParse<CollectionCoverKind>(reader.GetString(3), true, out var parsed)
+            ? parsed
+            : CollectionCoverKind.Automatic;
+        return new TrackCollection(
+            reader.GetInt32(0), reader.GetString(1), reader.GetString(2), coverKind,
+            reader.IsDBNull(4) ? null : reader.GetInt32(4),
+            Convert.ToInt32(reader.GetInt64(5)), Convert.ToInt32(reader.GetInt64(6)),
+            reader.GetString(7), reader.GetString(8));
+    }
+
+    private static string NormalizeCollectionName(string name)
+    {
+        var normalized = name.Trim();
+        if (normalized.Length == 0)
+            throw new ArgumentException("Collection name cannot be empty.", nameof(name));
+        if (normalized.Length > 80)
+            throw new ArgumentException("Collection name cannot exceed 80 characters.", nameof(name));
+        return normalized;
+    }
+
+    private static List<int> ReadCollectionTrackIds(
+        SqliteConnection conn, SqliteTransaction tx, int collectionId)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            SELECT track_id FROM collection_tracks
+            WHERE collection_id = $collectionId
+            ORDER BY position, added_at, track_id";
+        cmd.Parameters.AddWithValue("$collectionId", collectionId);
+        using var reader = cmd.ExecuteReader();
+        var ids = new List<int>();
+        while (reader.Read()) ids.Add(reader.GetInt32(0));
+        return ids;
+    }
+
+    private static void NormalizeCollectionPositions(
+        SqliteConnection conn, SqliteTransaction tx, int collectionId) =>
+        WriteCollectionPositions(conn, tx, collectionId, ReadCollectionTrackIds(conn, tx, collectionId));
+
+    private static void WriteCollectionPositions(
+        SqliteConnection conn, SqliteTransaction tx, int collectionId, IReadOnlyList<int> trackIds)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = @"
+            UPDATE collection_tracks SET position = $position
+            WHERE collection_id = $collectionId AND track_id = $trackId";
+        var collectionParameter = cmd.Parameters.Add("$collectionId", SqliteType.Integer);
+        var trackParameter = cmd.Parameters.Add("$trackId", SqliteType.Integer);
+        var positionParameter = cmd.Parameters.Add("$position", SqliteType.Integer);
+        collectionParameter.Value = collectionId;
+        for (var position = 0; position < trackIds.Count; position++)
+        {
+            trackParameter.Value = trackIds[position];
+            positionParameter.Value = position;
+            cmd.ExecuteNonQuery();
+        }
     }
 
     // Styles are intentionally no longer part of the schema. These compatibility

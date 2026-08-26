@@ -69,6 +69,7 @@ public partial class EditTrackOverlay : UserControl
     private HashSet<int> _pendingEnabledModelGenreIds = [];
 
     public event Action<int>? TrackSaved;
+    public event Action? CollectionsChanged;
     public event Action<int>? ChannelRequested;
     public event Action<MusicTrack>? PreviewRequested;
     public event Action? PreviewClosed;
@@ -229,6 +230,7 @@ public partial class EditTrackOverlay : UserControl
         RebuildTagChips(selectedTagIds);
         RebuildLanguageChips(track.LanguageCode);
         RebuildStyleChips(selectedStyleIds);
+        RebuildCollectionMemberships(track);
         ShowAudioAnalysis(track);
         ShowExperimentalAnalysis(track);
         ShowUsageStats(track);
@@ -256,6 +258,57 @@ public partial class EditTrackOverlay : UserControl
         if (_isEditingInformation)
             CommitInformationEdit();
         SetInformationEditing(!_isEditingInformation);
+    }
+
+    public void RefreshCollections()
+    {
+        if (_track is not null)
+            RebuildCollectionMemberships(_track);
+    }
+
+    private void RebuildCollectionMemberships(MusicTrack track)
+    {
+        CollectionMembershipPanel.Children.Clear();
+        var collections = MusicLibraryService.Current.GetTrackCollections(track.Id);
+        CollectionMembershipSection.IsVisible = collections.Count > 0;
+        foreach (var collection in collections)
+        {
+            var label = new TextBlock
+            {
+                Text = $"{collection.Name}  ×",
+                FontSize = 10.5,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            var removeButton = new Button
+            {
+                Content = label,
+                Height = 28,
+                Padding = new Thickness(9, 3),
+                Margin = new Thickness(0, 0, 7, 6),
+                Background = ThemeResources.Brush("Theme.Brush.Surface"),
+                BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(6),
+                Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            ToolTip.SetTip(removeButton, $"Remove from {collection.Name}");
+            removeButton.Click += (_, _) =>
+            {
+                try
+                {
+                    if (!MusicLibraryService.Current.RemoveTrackFromCollection(collection.Id, track.Id))
+                        return;
+                    RebuildCollectionMemberships(track);
+                    CollectionsChanged?.Invoke();
+                    ToastRequested?.Invoke($"Removed from {collection.Name}");
+                }
+                catch (Exception exception)
+                {
+                    ToastRequested?.Invoke($"Could not update collection: {exception.Message}");
+                }
+            };
+            CollectionMembershipPanel.Children.Add(removeButton);
+        }
     }
 
     private void CommitInformationEdit()

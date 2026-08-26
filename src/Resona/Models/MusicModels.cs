@@ -116,6 +116,18 @@ public static class TrackLanguageCatalog
 public record Genre(int Id, string Name);
 public record Tag(int Id, string Name);
 public record TrackTag(int Id, string Name);
+public enum CollectionCoverKind { Automatic, Track, Custom }
+public sealed record TrackCollection(
+    int Id,
+    string StableId,
+    string Name,
+    CollectionCoverKind CoverKind,
+    int? CoverTrackId,
+    int TrackCount,
+    int DurationSeconds,
+    string CreatedAt,
+    string UpdatedAt);
+public sealed record CollectionTrack(int TrackId, string Title, int Position);
 public record TagSignalSource(string ModelName, string SignalKey, string Description)
 {
     public string DisplayName => $"{ModelName} · {SignalKey}";

@@ -70,6 +70,10 @@ public record TrackDisplayItem(
     public bool NeedsReview { get; set; }
     public bool NeedsAnalysis { get; set; }
     public bool ShowDownloadedDate { get; set; }
+    public string CollectionDisplayText { get; set; } = string.Empty;
+    public string CollectionOverflowText { get; set; } = string.Empty;
+    public string CollectionTooltip { get; set; } = string.Empty;
+    public bool HasCollectionDisplay => CollectionDisplayText.Length > 0;
     public Bitmap? Thumbnail { get; set; }
     public Color ArtworkPrimaryColor { get; private set; } = Colors.Transparent;
     public Color ArtworkSecondaryColor { get; private set; } = Colors.Transparent;

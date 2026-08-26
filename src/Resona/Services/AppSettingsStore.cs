@@ -159,6 +159,7 @@ public sealed class AppSettings
 public sealed class PlayerSessionSettings
 {
     public string? ActiveFilterPresetName { get; set; }
+    public string? ActiveCollectionStableId { get; set; }
     public int? ActiveTrackId { get; set; }
     public int? SelectedTrackId { get; set; }
     public bool ShuffleEnabled { get; set; }

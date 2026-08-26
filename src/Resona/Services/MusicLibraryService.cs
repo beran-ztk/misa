@@ -276,6 +276,26 @@ public class MusicLibraryService
 
     public bool TrackExistsByCanonicalUrl(string canonicalUrl) => _db.TrackExists(canonicalUrl);
 
+    // --- Collections ---
+
+    public List<TrackCollection> GetCollections() => _db.GetCollections();
+    public TrackCollection? GetCollectionByStableId(string stableId) => _db.GetCollectionByStableId(stableId);
+    public TrackCollection CreateCollection(string name) => _db.CreateCollection(name);
+    public void RenameCollection(int collectionId, string name) => _db.RenameCollection(collectionId, name);
+    public void DeleteCollection(int collectionId) => _db.DeleteCollection(collectionId);
+    public bool AddTrackToCollection(int collectionId, int trackId) => _db.AddTrackToCollection(collectionId, trackId);
+    public bool RemoveTrackFromCollection(int collectionId, int trackId) => _db.RemoveTrackFromCollection(collectionId, trackId);
+    public bool MoveCollectionTrack(int collectionId, int trackId, int offset) =>
+        _db.MoveCollectionTrack(collectionId, trackId, offset);
+    public List<int> GetCollectionTrackIds(int collectionId) => _db.GetCollectionTrackIds(collectionId);
+    public List<CollectionTrack> GetCollectionTracks(int collectionId) => _db.GetCollectionTracks(collectionId);
+    public List<TrackCollection> GetTrackCollections(int trackId) => _db.GetTrackCollections(trackId);
+    public Dictionary<int, List<string>> GetAllTrackCollectionNames() => _db.GetAllTrackCollectionNames();
+    public byte[]? GetCollectionCover(int collectionId) => _db.GetCollectionCover(collectionId);
+    public void SetCollectionCoverAutomatic(int collectionId) => _db.SetCollectionCoverAutomatic(collectionId);
+    public void SetCollectionCoverTrack(int collectionId, int trackId) => _db.SetCollectionCoverTrack(collectionId, trackId);
+    public void SetCollectionCustomCover(int collectionId, byte[] cover) => _db.SetCollectionCustomCover(collectionId, cover);
+
     public Task<string?> GetRemoteTitleAsync(string canonicalUrl) => _downloader.GetTitleAsync(
         canonicalUrl,
         YouTubeJob(

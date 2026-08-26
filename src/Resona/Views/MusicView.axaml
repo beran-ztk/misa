@@ -294,8 +294,19 @@
                             Height="30"
                             CornerRadius="1"
                             Background="Beige"/>
+                    <Border x:Name="CollectionContextCoverBorder"
+                            IsVisible="False"
+                            Width="32" Height="32"
+                            CornerRadius="7"
+                            ClipToBounds="True"
+                            Background="#2C2D29"
+                            BorderBrush="#36FFFFFF"
+                            BorderThickness="1">
+                        <Image x:Name="CollectionContextCover" Stretch="UniformToFill"/>
+                    </Border>
                     <StackPanel Spacing="1" VerticalAlignment="Center">
-                        <TextBlock Text="LIBRARY"
+                        <TextBlock x:Name="LibraryContextTitleText"
+                                   Text="LIBRARY"
                                    FontFamily="Consolas"
                                    FontSize="11"
                                    FontWeight="SemiBold"
@@ -426,6 +437,27 @@
                    Text="" TextWrapping="Wrap"
                    IsVisible="False"
                    Height="0"/>
+
+        <Border x:Name="CollectionOrderNotice"
+                DockPanel.Dock="Top"
+                IsVisible="False"
+                Background="#EA20221F"
+                BorderBrush="#3858B8A5"
+                BorderThickness="0,0,0,1"
+                Padding="20,7">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+                <TextBlock Text="Filtered collection view · reset the view to edit track order."
+                           FontSize="10.5"
+                           Foreground="#C9DCD6"
+                           VerticalAlignment="Center"/>
+                <Button Grid.Column="1"
+                        Content="Reset view"
+                        Click="OnResetCollectionViewClicked"
+                        Padding="10,4"
+                        FontSize="10"
+                        Cursor="Hand"/>
+            </Grid>
+        </Border>
 
         <!-- Library and player occupy separate rows over one continuous artwork background. -->
         <Grid RowDefinitions="*,Auto">
@@ -572,6 +604,26 @@
                                                                           Margin="0,0,8,0"
                                                                           HorizontalAlignment="Stretch"
                                                                           VerticalAlignment="Center"/>
+                                            <Border IsVisible="{Binding HasCollectionDisplay}"
+                                                    Background="#2419B5A0"
+                                                    BorderBrush="#6238C7B0"
+                                                    BorderThickness="1"
+                                                    CornerRadius="5"
+                                                    Padding="6,1"
+                                                    Margin="0,0,8,0"
+                                                    VerticalAlignment="Center"
+                                                    ToolTip.Tip="{Binding CollectionTooltip}">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{Binding CollectionDisplayText}"
+                                                               FontSize="9.5"
+                                                               Foreground="#C7EEE7"
+                                                               VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding CollectionOverflowText}"
+                                                               FontSize="9"
+                                                               Opacity="0.62"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
                                         </views:TrackTitleTagPanel>
 
                                         <Grid Grid.Row="1">
@@ -887,6 +939,29 @@
                                     </Grid>
                                     <StackPanel x:Name="PresetRows" Spacing="7"/>
                                     </StackPanel>
+
+                                    <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}" Margin="0,5,0,0"/>
+
+                                    <StackPanel Spacing="7">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <TextBlock Text="COLLECTIONS"
+                                                       FontSize="10" FontWeight="SemiBold"
+                                                       Opacity="0.42" LetterSpacing="1"
+                                                       VerticalAlignment="Center"/>
+                                            <Button Grid.Column="1"
+                                                    x:Name="AddCollectionButton"
+                                                    Classes="bare-add"
+                                                    Click="OnAddCollectionClicked"
+                                                    Width="28" Height="28" Padding="0"
+                                                    HorizontalContentAlignment="Center"
+                                                    VerticalContentAlignment="Center"
+                                                    ToolTip.Tip="Create collection">
+                                                <TextBlock Text="+" FontSize="17" Margin="0,-2,0,0"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Button>
+                                        </Grid>
+                                        <StackPanel x:Name="CollectionRows" Spacing="7"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <Rectangle Height="1" Fill="{DynamicResource Theme.Brush.Divider}"/>
@@ -933,6 +1008,15 @@
                                                                 <Image x:Name="FilterSortDownloadedCheck" Source="{SvgImage /Assets/check.svg}"
                                                                        Width="12" Height="12" Opacity="0"/>
                                                                 <TextBlock Grid.Column="1" Text="Downloaded at" FontSize="11.5" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </Button>
+                                                        <Button x:Name="FilterSortCollectionOption" Classes="filter-sort-option"
+                                                                IsVisible="False"
+                                                                Tag="3" Click="OnFilterSortOptionClicked">
+                                                            <Grid ColumnDefinitions="18,*" ColumnSpacing="8">
+                                                                <Image x:Name="FilterSortCollectionCheck" Source="{SvgImage /Assets/check.svg}"
+                                                                       Width="12" Height="12" Opacity="0"/>
+                                                                <TextBlock Grid.Column="1" Text="Collection order" FontSize="11.5" VerticalAlignment="Center"/>
                                                             </Grid>
                                                         </Button>
                                                     </StackPanel>
