@@ -90,7 +90,6 @@ public partial class SettingsOverlay : UserControl
         _loadingDiscordPresenceSettings = false;
         _appearanceSettings = appSettings.Appearance.Clone().Clamp();
         RefreshAppearanceControls();
-        RefreshAppearancePreview();
         CloudServerStatusText.IsVisible = false;
         AnalysisServerStatusText.IsVisible = false;
         _loadingBrowserCookieSettings = true;
@@ -1643,25 +1642,6 @@ public partial class SettingsOverlay : UserControl
         return row;
     }
 
-    private void RefreshAppearancePreview()
-    {
-        PreviewTrackArtworkBlur.Opacity = _appearanceSettings.TrackArtworkStrength / 100d;
-        PreviewCoverHalo.Opacity = _appearanceSettings.CoverHaloStrength / 100d;
-        SetPreviewBlur(PreviewTrackArtworkBlur, _appearanceSettings.TrackArtworkBlur);
-        SetPreviewBlur(PreviewCoverHalo, _appearanceSettings.CoverHaloBlur);
-        PreviewTrackWash.PrimaryColor = Color.Parse("#5865B8");
-        PreviewTrackWash.SecondaryColor = Color.Parse("#8051AE");
-        PreviewTrackWash.Strength = _appearanceSettings.TrackColorWashStrength / 100d;
-        PreviewTrackWash.Reach = _appearanceSettings.TrackColorWashReach;
-
-    }
-
-    private static void SetPreviewBlur(Image image, double radius)
-    {
-        if (image.Effect is BlurEffect blur)
-            blur.Radius = radius;
-    }
-
     private void BuildAppearanceControls()
     {
         AddAppearanceSlider(PlayerAppearanceRows, "Song fade duration", "Crossfade duration when playback advances automatically. Set to 0 to disable crossfading.",
@@ -1819,7 +1799,6 @@ public partial class SettingsOverlay : UserControl
     {
         _appearanceSettings.Clamp();
         AppearanceChanged?.Invoke(_appearanceSettings.Clone());
-        RefreshAppearancePreview();
         _appearanceSavePending = true;
         _appearanceSaveTimer.Stop();
         _appearanceSaveTimer.Start();
