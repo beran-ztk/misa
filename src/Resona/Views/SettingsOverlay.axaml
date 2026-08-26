@@ -701,12 +701,6 @@
                                 ClipToBounds="True">
                             <Panel>
                                 <Grid RowDefinitions="*,74">
-                                    <views:AudioSpectrumControl x:Name="PreviewSpectrumVisualizer"
-                                                                Grid.Row="0"
-                                                                Height="91"
-                                                                VerticalAlignment="Bottom"
-                                                                HorizontalAlignment="Stretch"
-                                                                IsHitTestVisible="False"/>
                                     <Border Margin="12,10,12,9" CornerRadius="7" ClipToBounds="True"
                                             Background="#53211F19" BorderBrush="#3D4A4437" BorderThickness="1">
                                         <Panel>

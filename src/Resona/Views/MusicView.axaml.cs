@@ -39,7 +39,6 @@ public partial class MusicView : UserControl
     private readonly WindowsMediaSession _windowsMediaSession = new();
     private readonly DiscordPresenceService _discordPresence = new();
     private CancellationTokenSource? _pendingTrackClickCts;
-    private readonly DispatcherTimer _spectrumTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
     private static readonly TimeSpan FilterOpenAnimationDuration = TimeSpan.FromMilliseconds(1180);
     private static readonly TimeSpan FilterCloseAnimationDuration = TimeSpan.FromMilliseconds(930);
     private static readonly IEasing FilterSlideEasing = new SplineEasing(0.25, 0.1, 0.25, 1);
@@ -183,7 +182,6 @@ public partial class MusicView : UserControl
         DetachedFromVisualTree += (_, _) =>
         {
             PersistPlayerSession();
-            _spectrumTimer.Stop();
             _engine.Dispose();
             _globalMediaKeys.Dispose();
             _windowsMediaSession.Dispose();
@@ -194,8 +192,6 @@ public partial class MusicView : UserControl
         _engine.StateChanged += OnEngineStateChanged;
         _engine.TrackNaturallyEnded += OnTrackNaturallyEnded;
         _engine.ProgressUpdated += OnProgressUpdated;
-        _engine.AudioLevelUpdated += OnAudioLevelUpdated;
-        _spectrumTimer.Tick += (_, _) => UpdateSpectrum();
         InitializeSortControls();
 
         // Seeking
@@ -3421,11 +3417,6 @@ public partial class MusicView : UserControl
         var updatedSettings = settings.Clone().Clamp();
         var trackAppearanceChanged = TrackAppearanceChanged(_appearanceSettings, updatedSettings);
         _appearanceSettings = updatedSettings;
-        SpectrumVisualizer.IsVisible = _appearanceSettings.SpectrumVisualizerEnabled;
-        SpectrumVisualizer.Height = _appearanceSettings.SpectrumVisualizerHeight;
-        SpectrumVisualizer.Opacity = _appearanceSettings.SpectrumVisualizerIntensity / 100d;
-        SpectrumVisualizer.Sensitivity = _appearanceSettings.SpectrumVisualizerSensitivity / 100d;
-        SpectrumVisualizer.Smoothing = _appearanceSettings.SpectrumVisualizerSmoothing / 100d;
 
         if (trackAppearanceChanged)
             foreach (var item in _allItems)
@@ -4159,11 +4150,6 @@ public partial class MusicView : UserControl
         UpdateSystemMediaMetadata();
         UpdateButtonStates();
         UpdateDiscordPresence();
-        if (_engine.State == EngineState.Playing)
-            StartSpectrumTimer();
-        else
-            FadeOutSpectrum();
-
         if (_engine.State == EngineState.Stopped)
         {
             _nextTrackIndex = -1;
@@ -4488,43 +4474,6 @@ public partial class MusicView : UserControl
                 ToByte(_red / Weight),
                 ToByte(_green / Weight),
                 ToByte(_blue / Weight));
-    }
-
-    // ─── Spectrum visualizer ─────────────────────────────────────────────────
-
-    private void OnAudioLevelUpdated(PlaybackAudioLevel level)
-    {
-        if (_engine.State != EngineState.Playing)
-            return;
-
-        SpectrumVisualizer.SetSpectrum(level.Spectrum);
-        SettingsOverlay.UpdateAppearancePreviewSpectrum(level.Spectrum);
-        StartSpectrumTimer();
-    }
-
-    private void StartSpectrumTimer()
-    {
-        if (!_spectrumTimer.IsEnabled)
-            _spectrumTimer.Start();
-    }
-
-    private void FadeOutSpectrum()
-    {
-        SpectrumVisualizer.SetSpectrum(null);
-        SettingsOverlay.UpdateAppearancePreviewSpectrum(null);
-        StartSpectrumTimer();
-    }
-
-    private void UpdateSpectrum()
-    {
-        SpectrumVisualizer.Advance();
-        SettingsOverlay.AdvanceAppearancePreviewSpectrum();
-
-        if (_engine.State == EngineState.Playing)
-            return;
-
-        if (SpectrumVisualizer.IsAtRest)
-            _spectrumTimer.Stop();
     }
 
     // ─── Listening telemetry ─────────────────────────────────────────────────

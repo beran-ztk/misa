@@ -1,6 +1,5 @@
 #if !WINDOWS
 using System;
-using System.Threading.Tasks;
 using Avalonia.Threading;
 using LibVLCSharp.Shared;
 
@@ -17,7 +16,6 @@ public sealed class PlaybackEngine : IDisposable
         public readonly string FilePath;
         public readonly int TrackId;
         public readonly float LoudnessGain;
-        public readonly Task<PlaybackAudioLevel[]> LevelAnalysis;
 
         public float TransitionVolume;
         public float FadeTarget;
@@ -33,7 +31,6 @@ public sealed class PlaybackEngine : IDisposable
             FilePath = filePath;
             TrackId = trackId;
             LoudnessGain = loudnessGain;
-            LevelAnalysis = LinuxPlaybackLevelAnalyzer.Start(filePath);
             TransitionVolume = transitionVolume;
             FadeTarget = transitionVolume;
             Media = new Media(libVlc, filePath, FromType.FromPath);
@@ -61,7 +58,6 @@ public sealed class PlaybackEngine : IDisposable
     public event Action? TrackNaturallyEnded;
     public event Action? StateChanged;
     public event Action? ProgressUpdated;
-    public event Action<PlaybackAudioLevel>? AudioLevelUpdated;
 
     public EngineState State { get; private set; } = EngineState.Stopped;
     public int ActiveTrackId { get; private set; } = -1;
@@ -342,13 +338,6 @@ public sealed class PlaybackEngine : IDisposable
         TotalTime = PlayerDuration(_primary.Player);
         ProgressUpdated?.Invoke();
 
-        var visualAmplitude = _masterVolume
-                              * _primary.LoudnessGain
-                              * _primary.TransitionVolume;
-        AudioLevelUpdated?.Invoke(LinuxPlaybackLevelAnalyzer.At(
-            _primary.LevelAnalysis,
-            CurrentTime,
-            visualAmplitude));
     }
 
     private void OnPrimaryEnded(object? sender, EventArgs e)

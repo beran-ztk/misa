@@ -1643,21 +1643,8 @@ public partial class SettingsOverlay : UserControl
         return row;
     }
 
-    public void AdvanceAppearancePreviewSpectrum()
-    {
-        PreviewSpectrumVisualizer.Advance();
-    }
-
-    public void UpdateAppearancePreviewSpectrum(IReadOnlyList<float>? spectrum) =>
-        PreviewSpectrumVisualizer.SetSpectrum(spectrum);
-
     private void RefreshAppearancePreview()
     {
-        PreviewSpectrumVisualizer.IsVisible = _appearanceSettings.SpectrumVisualizerEnabled;
-        PreviewSpectrumVisualizer.Height = _appearanceSettings.SpectrumVisualizerHeight * 0.65;
-        PreviewSpectrumVisualizer.Opacity = _appearanceSettings.SpectrumVisualizerIntensity / 100d;
-        PreviewSpectrumVisualizer.Sensitivity = _appearanceSettings.SpectrumVisualizerSensitivity / 100d;
-        PreviewSpectrumVisualizer.Smoothing = _appearanceSettings.SpectrumVisualizerSmoothing / 100d;
         PreviewTrackArtworkBlur.Opacity = _appearanceSettings.TrackArtworkStrength / 100d;
         PreviewCoverHalo.Opacity = _appearanceSettings.CoverHaloStrength / 100d;
         SetPreviewBlur(PreviewTrackArtworkBlur, _appearanceSettings.TrackArtworkBlur);
@@ -1686,22 +1673,6 @@ public partial class SettingsOverlay : UserControl
         AddAppearanceSlider(TrackAppearanceRows, "Color wash reach", "How far the artwork color extends across the row.",
             20, 100, settings => settings.TrackColorWashReach,
             (settings, value) => settings.TrackColorWashReach = value, PercentValue);
-
-        AddAppearanceToggle(AudioAppearanceRows, "Frequency visualizer", "Show the live 20 Hz - 20 kHz spectrum behind the track list.",
-            settings => settings.SpectrumVisualizerEnabled,
-            (settings, value) => settings.SpectrumVisualizerEnabled = value);
-        AddAppearanceSlider(AudioAppearanceRows, "Visualizer height", "Maximum height of the spectrum above the player.",
-            40, 220, settings => settings.SpectrumVisualizerHeight,
-            (settings, value) => settings.SpectrumVisualizerHeight = value, PixelValue);
-        AddAppearanceSlider(AudioAppearanceRows, "Visualizer intensity", "Opacity and visible color strength of the frequency visualizer.",
-            0, 100, settings => settings.SpectrumVisualizerIntensity,
-            (settings, value) => settings.SpectrumVisualizerIntensity = value, PercentValue);
-        AddAppearanceSlider(AudioAppearanceRows, "Visualizer sensitivity", "Amplifies or reduces the displayed frequency levels.",
-            25, 250, settings => settings.SpectrumVisualizerSensitivity,
-            (settings, value) => settings.SpectrumVisualizerSensitivity = value, PercentValue);
-        AddAppearanceSlider(AudioAppearanceRows, "Visualizer smoothing", "Higher values make movement calmer and more fluid.",
-            0, 95, settings => settings.SpectrumVisualizerSmoothing,
-            (settings, value) => settings.SpectrumVisualizerSmoothing = value, PercentValue);
 
         AddAppearanceSlider(TrackArtworkAppearanceRows, "Row artwork strength", "Visibility of the blurred cover inside each row.",
             0, 50, settings => settings.TrackArtworkStrength,

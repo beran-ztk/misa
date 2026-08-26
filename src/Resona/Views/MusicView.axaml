@@ -445,12 +445,6 @@
         <Grid RowDefinitions="*,Auto">
             <Panel Grid.Row="0">
 
-            <views:AudioSpectrumControl x:Name="SpectrumVisualizer"
-                                        Height="140"
-                                        VerticalAlignment="Bottom"
-                                        HorizontalAlignment="Stretch"
-                                        IsHitTestVisible="False"/>
-
             <ListBox x:Name="FileList"
                      Background="Transparent"
                      BorderThickness="0"
