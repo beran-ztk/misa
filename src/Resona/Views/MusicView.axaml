@@ -570,31 +570,9 @@
                                           Height="48"
                                           VerticalAlignment="Top"
                                           RowDefinitions="24,24"
-                                          ColumnDefinitions="70,*"
                                           Margin="0,4,100,0"
                                           RowSpacing="0">
-                                        <TextBlock Grid.RowSpan="2"
-                                                   Grid.Column="0"
-                                                   Text="{Binding RatingText}"
-                                                   FontFamily="Segoe Print"
-                                                   FontSize="12"
-                                                   LetterSpacing="0.2"
-                                                   Margin="0,0,4,0"
-                                                   FontWeight="SemiBold"
-                                                   HorizontalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{Binding RatingForeground}">
-                                            <TextBlock.Effect>
-                                                <DropShadowEffect OffsetX="0"
-                                                                  OffsetY="0"
-                                                                  BlurRadius="1"
-                                                                  Color="Black"/>
-                                            </TextBlock.Effect>
-                                        </TextBlock>
-
                                         <views:TrackTitleTagPanel Grid.Row="0"
-                                                                  Grid.Column="1"
                                                                   Gap="6"
                                                                   HorizontalAlignment="Stretch">
                                             <TextBlock
@@ -610,8 +588,7 @@
                                                                           VerticalAlignment="Center"/>
                                         </views:TrackTitleTagPanel>
 
-                                        <Grid Grid.Row="1"
-                                              Grid.Column="1">
+                                        <Grid Grid.Row="1">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
@@ -655,6 +632,21 @@
                                                Opacity="0.88"
                                                HorizontalAlignment="Center"
                                                TextAlignment="Center"/>
+                                    <TextBlock Text="{Binding RatingText}"
+                                               FontFamily="Segoe Print"
+                                               FontSize="12"
+                                               LetterSpacing="0.2"
+                                               FontWeight="SemiBold"
+                                               HorizontalAlignment="Center"
+                                               TextAlignment="Center"
+                                               Foreground="{Binding RatingForeground}">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect OffsetX="0"
+                                                              OffsetY="0"
+                                                              BlurRadius="1"
+                                                              Color="Black"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
                                 </StackPanel>
 
                                 </Panel>
