@@ -259,6 +259,9 @@ public class MusicLibraryService
     public void RejectTrackTagSuggestion(int trackId, int ruleGroupId) =>
         _db.RejectTrackTagSuggestion(trackId, ruleGroupId);
     public List<Style> GetStyles() => _db.GetStyles();
+    public void AddStyle(string name) => _db.AddStyle(name);
+    public void RenameStyle(int id, string name) => _db.RenameStyle(id, name);
+    public string? DeleteStyleIfUnused(int id) => _db.DeleteStyleIfUnused(id);
     public List<Rating> GetRatings() => _db.GetRatings();
     public List<ModelGenre> GetModelGenres() => _db.GetModelGenres();
     public List<ModelSubgenre> GetModelSubgenres(int? modelGenreId = null) => _db.GetModelSubgenres(modelGenreId);

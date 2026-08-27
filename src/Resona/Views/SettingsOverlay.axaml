@@ -183,6 +183,9 @@
                             <ToggleButton x:Name="TagsNavButton" Classes="settings-nav"
                                           Content="Tags" Tag="tags"
                                           Click="OnSettingsNavigationClicked"/>
+                            <ToggleButton x:Name="StylesNavButton" Classes="settings-nav"
+                                          Content="Styles" Tag="styles"
+                                          Click="OnSettingsNavigationClicked"/>
                             <ToggleButton x:Name="TagRulesNavButton" Classes="settings-nav"
                                           IsVisible="False"
                                           Content="Tag rules" Tag="tag_rules"
@@ -832,6 +835,62 @@
                                         Click="OnCancelCreateTagClicked"/>
                                 <Button Classes="settings-action" Content="Create"
                                         Click="OnAddTagClicked"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Border>
+            </Grid>
+
+            <Grid x:Name="StylesPage" Grid.Row="2" IsVisible="False" RowDefinitions="Auto,*" Margin="30,22,30,0">
+                <Grid Grid.RowSpan="2"
+                      RowDefinitions="Auto,*"
+                      MinWidth="280"
+                      MaxWidth="380"
+                      HorizontalAlignment="Stretch">
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                        <TextBlock x:Name="StyleVocabularyHintText"
+                                   FontSize="10.5"
+                                   Opacity="0.5"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Classes="settings-action"
+                                Content="Create style"
+                                Click="OnShowCreateStyleClicked"/>
+                    </Grid>
+
+                    <ScrollViewer Grid.Row="1" Padding="0" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="StyleRows"
+                                    HorizontalAlignment="Stretch"
+                                    Spacing="8"
+                                    Margin="0,0,0,18"/>
+                    </ScrollViewer>
+                </Grid>
+
+                <Border x:Name="CreateStyleOverlay"
+                        Grid.RowSpan="2"
+                        ZIndex="10"
+                        IsVisible="False"
+                        Background="#99000000">
+                    <Border MinWidth="260"
+                            MaxWidth="340"
+                            Margin="24"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource Theme.Brush.Surface}"
+                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"
+                            BorderThickness="1"
+                            CornerRadius="7"
+                            Padding="16">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Create style" FontSize="14" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"/>
+                            <TextBox x:Name="NewStyleBox" Classes="settings-input"
+                                     Watermark="Enter style name"
+                                     KeyDown="OnNewStyleKeyDown"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                <Button Classes="settings-action" Content="Cancel"
+                                        Click="OnCancelCreateStyleClicked"/>
+                                <Button Classes="settings-action" Content="Create"
+                                        Click="OnAddStyleClicked"/>
                             </StackPanel>
                         </StackPanel>
                     </Border>

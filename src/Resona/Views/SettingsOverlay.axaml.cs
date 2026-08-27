@@ -28,6 +28,8 @@ public partial class SettingsOverlay : UserControl
     private Dictionary<int, List<ModelSubgenreDistinction>> _distinctionsBySubgenreId = [];
     private List<Tag> _tags = [];
     private Dictionary<int, int> _tagUsageCounts = [];
+    private List<Style> _styles = [];
+    private Dictionary<int, int> _styleUsageCounts = [];
     private List<TagSignalSource> _tagSignalSources = [];
     private List<TagRuleGroup> _tagRuleGroups = [];
     private bool _isLoading;
@@ -421,6 +423,7 @@ public partial class SettingsOverlay : UserControl
             "profile" => SettingsPage.Profile,
             "servers" => SettingsPage.Servers,
             "tags" => SettingsPage.Tags,
+            "styles" => SettingsPage.Styles,
             "tag_rules" => SettingsPage.TagRules,
             _ => SettingsPage.GenreVocabulary
         };
@@ -452,6 +455,7 @@ public partial class SettingsOverlay : UserControl
         ProfilePage.IsVisible = isProfilePage;
         ServersPage.IsVisible = isServersPage;
         TagsPage.IsVisible = page == SettingsPage.Tags;
+        StylesPage.IsVisible = page == SettingsPage.Styles;
         TagRulesPage.IsVisible = page == SettingsPage.TagRules;
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
         HealthNavButton.IsChecked = isHealthPage;
@@ -463,6 +467,7 @@ public partial class SettingsOverlay : UserControl
         ProfileNavButton.IsChecked = isProfilePage;
         ServersNavButton.IsChecked = isServersPage;
         TagsNavButton.IsChecked = page == SettingsPage.Tags;
+        StylesNavButton.IsChecked = page == SettingsPage.Styles;
         TagRulesNavButton.IsChecked = page == SettingsPage.TagRules;
 
         PageTitleText.Text = page switch
@@ -476,6 +481,7 @@ public partial class SettingsOverlay : UserControl
             SettingsPage.Profile => "Account",
             SettingsPage.Servers => "Connections",
             SettingsPage.Tags => "Tags",
+            SettingsPage.Styles => "Styles",
             SettingsPage.TagRules => "Tag rules",
             _ => "Genres"
         };
@@ -499,6 +505,8 @@ public partial class SettingsOverlay : UserControl
                                 ? "Check, download and install application releases from GitHub."
                             : page == SettingsPage.Tags
                                 ? "Maintain your curated labels. Tags can describe mood, themes, situations or workflow states without turning them into genres."
+                                : page == SettingsPage.Styles
+                                    ? "Maintain track-version styles such as Nightcore, Reverb, Sped Up or Slowed."
                                 : page == SettingsPage.TagRules
                                     ? "Turn model signals into reviewable tag suggestions. Rules never assign tags automatically in this first version."
                                     : "Compare current system interpretations before turning them into filters.";
@@ -506,6 +514,7 @@ public partial class SettingsOverlay : UserControl
         if (isGenreVocabularyPage) RebuildGenreVocabularyRows();
         if (isBackupPage) RebuildBackupDirectoryRows();
         if (page == SettingsPage.Tags) ReloadTagManagement();
+        if (page == SettingsPage.Styles) ReloadStyleManagement();
         if (page == SettingsPage.TagRules) ReloadTagRules();
         if (isUpdatesPage) RefreshUpdatePage(AppUpdateService.Current.State);
     }
@@ -952,6 +961,21 @@ public partial class SettingsOverlay : UserControl
         NewTagBox.Text = string.Empty;
         TagVocabularyHintText.Text = _tags.Count == 1 ? "1 tag" : $"{_tags.Count} tags";
         RebuildTagRows();
+    }
+
+    private void ReloadStyleManagement()
+    {
+        if (!IsInitialized) return;
+        _styles = MusicLibraryService.Current.GetStyles();
+        _styleUsageCounts = MusicLibraryService.Current.GetAllTrackStyleIds()
+            .Values
+            .SelectMany(styleIds => styleIds)
+            .GroupBy(styleId => styleId)
+            .ToDictionary(group => group.Key, group => group.Count());
+        CreateStyleOverlay.IsVisible = false;
+        NewStyleBox.Text = string.Empty;
+        StyleVocabularyHintText.Text = _styles.Count == 1 ? "1 style" : $"{_styles.Count} styles";
+        RebuildStyleRows();
     }
 
     private void ReloadTagRules()
@@ -1448,6 +1472,208 @@ public partial class SettingsOverlay : UserControl
         catch (Exception exception) { ToastRequested?.Invoke($"Could not add tag: {exception.Message}"); }
     }
 
+    private void RebuildStyleRows()
+    {
+        if (!IsInitialized) return;
+        StyleRows.Children.Clear();
+        var styles = _styles
+            .OrderBy(style => style.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var style in styles)
+            StyleRows.Children.Add(CreateStyleVocabularyRow(style));
+
+        if (styles.Count == 0)
+            StyleRows.Children.Add(new TextBlock
+            {
+                Text = "No styles yet.",
+                Opacity = .52,
+                Margin = new Thickness(0, 18, 0, 0)
+            });
+    }
+
+    private Control CreateStyleVocabularyRow(Style style)
+    {
+        var row = new Border
+        {
+            Background = ThemeResources.Brush("Theme.Brush.SurfaceTranslucent"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7)
+        };
+        var panel = new StackPanel();
+        var current = style;
+        StackPanel? editorPanel = null;
+        var header = new Button
+        {
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(12, 9),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch
+        };
+        var headerContent = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,*") };
+        var titleText = new TextBlock
+        {
+            Text = style.Name,
+            FontSize = 13.5,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = ThemeResources.Brush("Theme.Brush.TextPrimary"),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(titleText, 1);
+        headerContent.Children.Add(titleText);
+        var usageCount = _styleUsageCounts.GetValueOrDefault(style.Id);
+        var usageText = new TextBlock
+        {
+            Text = usageCount == 1 ? "1 track" : $"{usageCount} tracks",
+            FontSize = 10,
+            Opacity = 0.5,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        Grid.SetColumn(usageText, 2);
+        headerContent.Children.Add(usageText);
+        header.Content = headerContent;
+        panel.Children.Add(header);
+
+        header.Click += (_, _) =>
+        {
+            if (editorPanel is null)
+            {
+                editorPanel = CreateStyleVocabularyEditor(
+                    current,
+                    updated =>
+                    {
+                        current = updated;
+                        titleText.Text = updated.Name;
+                    });
+                panel.Children.Add(editorPanel);
+            }
+
+            editorPanel.IsVisible = !editorPanel.IsVisible;
+            row.Background = ThemeResources.Brush(editorPanel.IsVisible
+                ? "Theme.Brush.SurfaceSelected"
+                : "Theme.Brush.SurfaceTranslucent");
+        };
+
+        row.Child = panel;
+        return row;
+    }
+
+    private StackPanel CreateStyleVocabularyEditor(Style style, Action<Style> onSaved)
+    {
+        var nameBox = CreateSettingsTextBox(style.Name, "Style name");
+        var editor = new StackPanel
+        {
+            Spacing = 8,
+            IsVisible = false,
+            Margin = new Thickness(12, 0, 12, 12)
+        };
+        var fields = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"), ColumnSpacing = 8 };
+        fields.Children.Add(CreateLabeledField("Style", nameBox));
+        var save = new Button
+        {
+            Content = CreateSvgIcon("/Assets/save.svg", 15),
+            Width = 30,
+            Height = 30,
+            Padding = new Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            VerticalAlignment = VerticalAlignment.Bottom
+        };
+        ToolTip.SetTip(save, "Save style");
+        var remove = new Button
+        {
+            Content = CreateSvgIcon("/Assets/trash.svg", 15),
+            Width = 30,
+            Height = 30,
+            Padding = new Thickness(0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Opacity = .7
+        };
+        ToolTip.SetTip(remove, "Delete style");
+        Grid.SetColumn(save, 1);
+        Grid.SetColumn(remove, 2);
+        fields.Children.Add(save);
+        fields.Children.Add(remove);
+        editor.Children.Add(fields);
+
+        save.Click += (_, _) =>
+        {
+            try
+            {
+                MusicLibraryService.Current.RenameStyle(style.Id, nameBox.Text ?? style.Name);
+                var updated = style with { Name = (nameBox.Text ?? style.Name).Trim() };
+                var index = _styles.FindIndex(item => item.Id == style.Id);
+                if (index >= 0) _styles[index] = updated;
+                onSaved(updated);
+                ToastRequested?.Invoke("Style updated.");
+                ReloadStyleManagement();
+                LibraryMetadataChanged?.Invoke();
+            }
+            catch (Exception exception) { ToastRequested?.Invoke($"Could not update style: {exception.Message}"); }
+        };
+        remove.Click += (_, _) =>
+        {
+            var error = MusicLibraryService.Current.DeleteStyleIfUnused(style.Id);
+            ToastRequested?.Invoke(error ?? "Style deleted.");
+            ReloadStyleManagement();
+            if (error is null) LibraryMetadataChanged?.Invoke();
+        };
+        return editor;
+    }
+
+    private void OnAddStyleClicked(object? sender, RoutedEventArgs e)
+    {
+        var name = NewStyleBox.Text?.Trim() ?? string.Empty;
+        if (name.Length == 0)
+        {
+            ToastRequested?.Invoke("Style name is required.");
+            return;
+        }
+        try
+        {
+            MusicLibraryService.Current.AddStyle(name);
+            NewStyleBox.Text = string.Empty;
+            ReloadStyleManagement();
+            ToastRequested?.Invoke("Style added.");
+            LibraryMetadataChanged?.Invoke();
+        }
+        catch (Exception exception) { ToastRequested?.Invoke($"Could not add style: {exception.Message}"); }
+    }
+
+    private void OnShowCreateStyleClicked(object? sender, RoutedEventArgs e)
+    {
+        NewStyleBox.Text = string.Empty;
+        CreateStyleOverlay.IsVisible = true;
+        Dispatcher.UIThread.Post(() => NewStyleBox.Focus());
+    }
+
+    private void OnCancelCreateStyleClicked(object? sender, RoutedEventArgs e)
+    {
+        NewStyleBox.Text = string.Empty;
+        CreateStyleOverlay.IsVisible = false;
+    }
+
+    private void OnNewStyleKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            e.Handled = true;
+            OnAddStyleClicked(sender, new RoutedEventArgs());
+        }
+        else if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            OnCancelCreateStyleClicked(sender, new RoutedEventArgs());
+        }
+    }
+
     private void OnShowCreateTagClicked(object? sender, RoutedEventArgs e)
     {
         NewTagBox.Text = string.Empty;
@@ -1854,5 +2080,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Servers, Backup, Export, Updates, Tags, TagRules }
+    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Servers, Backup, Export, Updates, Tags, Styles, TagRules }
 }

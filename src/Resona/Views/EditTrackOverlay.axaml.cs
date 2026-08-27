@@ -18,7 +18,7 @@ namespace Resona.Views;
 public partial class EditTrackOverlay : UserControl
 {
     private sealed record RatingButtonVisual(Rating Rating, Button Button, TextBlock Icon);
-    private static readonly string[] BuiltInEditStyles = ["Nightcore", "Reverb", "Sped Up", "Slowed"];
+    private static readonly string[] FallbackEditStyles = ["Nightcore", "Reverb", "Sped Up", "Slowed"];
 
     private MusicTrack? _track;
     private List<Tag> _tags = [];
@@ -196,7 +196,7 @@ public partial class EditTrackOverlay : UserControl
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
         _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
-        StylesSection.IsVisible = _styles.Count > 0;
+        StylesSection.IsVisible = false;
 
         BuildRatingButtons();
         _lookupsLoaded = true;
@@ -232,7 +232,6 @@ public partial class EditTrackOverlay : UserControl
         RebuildEditStyleChips(track.Edits);
         RebuildTagChips(selectedTagIds);
         RebuildLanguageChips(track.LanguageCode);
-        RebuildStyleChips(selectedStyleIds);
         RebuildCollectionMemberships(track);
         ShowAudioAnalysis(track);
         ShowExperimentalAnalysis(track);
@@ -449,7 +448,10 @@ public partial class EditTrackOverlay : UserControl
         _editStyleChips.Clear();
         var selectedStyles = TrackTitleFormatter.ParseEdits(edits);
 
-        foreach (var style in BuiltInEditStyles)
+        var availableStyles = _styles.Count > 0
+            ? _styles.Select(style => style.Name)
+            : FallbackEditStyles;
+        foreach (var style in availableStyles)
         {
             var button = CreateEditStyleButton(
                 style,
@@ -499,7 +501,7 @@ public partial class EditTrackOverlay : UserControl
     private void ApplySelectedEditStyles()
     {
         var customEdits = TrackTitleFormatter.ParseEdits(EditsBox.Text)
-            .Where(edit => !BuiltInEditStyles.Any(style => IsEditStyle(edit, style)));
+            .Where(edit => !_editStyleChips.Any(style => IsEditStyle(edit, style.Style)));
         var selectedStyles = _editStyleChips
             .Where(item => item.Btn.IsChecked == true)
             .Select(item => item.Style);
@@ -510,7 +512,9 @@ public partial class EditTrackOverlay : UserControl
     private static bool IsEditStyle(string edit, string style) =>
         string.Equals(edit, style, StringComparison.OrdinalIgnoreCase)
         || string.Equals(style, "Sped Up", StringComparison.OrdinalIgnoreCase)
-           && string.Equals(edit, "Speed Up", StringComparison.OrdinalIgnoreCase);
+           && string.Equals(edit, "Speed Up", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(style, "Slowed", StringComparison.OrdinalIgnoreCase)
+           && string.Equals(edit, "Slow", StringComparison.OrdinalIgnoreCase);
 
     private void RebuildTagChips(IReadOnlySet<int> selectedTagIds)
     {
@@ -742,9 +746,10 @@ public partial class EditTrackOverlay : UserControl
             .ToHashSet();
 
     private HashSet<int> SelectedStyleIds() =>
-        _styleChips
-            .Where(c => c.Btn.IsChecked == true)
-            .Select(c => c.Style.Id)
+        _styles
+            .Where(style => _editStyleChips.Any(item =>
+                item.Btn.IsChecked == true && IsEditStyle(item.Style, style.Name)))
+            .Select(style => style.Id)
             .ToHashSet();
 
     private int? SelectedRatingId() => _selectedRatingId;

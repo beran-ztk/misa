@@ -13,6 +13,7 @@ public class MusicDatabase
 {
     private const string AssetBaseUri = "avares://Resona/Assets/";
     private const string RemovedMoodThemeModelName = "mtg_" + "jamen" + "do_" + "mood" + "theme";
+    private static readonly string[] DefaultStyleNames = ["Nightcore", "Reverb", "Sped Up", "Slowed"];
     private readonly string _databasePath;
     private readonly string _connectionString;
 
@@ -139,6 +140,11 @@ public class MusicDatabase
             CREATE TABLE tags (
                 id           INTEGER PRIMARY KEY AUTOINCREMENT,
                 name         TEXT NOT NULL UNIQUE
+            );
+
+            CREATE TABLE style_definitions (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                name         TEXT NOT NULL COLLATE NOCASE UNIQUE
             );
 
             CREATE TABLE tracks (
@@ -355,6 +361,7 @@ public class MusicDatabase
         CreateModelMetadataSchema(conn);
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
+        CreateStyleSchema(conn);
         CreatePortableExportSchema(conn);
         CreateCollectionSchema(conn);
     }
@@ -536,6 +543,18 @@ public class MusicDatabase
             CREATE INDEX IF NOT EXISTS ix_track_tags_tag_id ON track_tags(tag_id);
             ";
         cmd.ExecuteNonQuery();
+    }
+
+    private static void CreateStyleSchema(SqliteConnection conn)
+    {
+        ExecuteNonQuery(conn, @"
+            CREATE TABLE IF NOT EXISTS style_definitions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL COLLATE NOCASE UNIQUE
+            );");
+        using var tx = conn.BeginTransaction();
+        SeedDefaultStyles(conn, tx);
+        tx.Commit();
     }
 
     private static void SimplifyTagSchemaIfNeeded(SqliteConnection conn)
@@ -1412,7 +1431,17 @@ public class MusicDatabase
                 ("$name", rating.Name), ("$sortOrder", rating.SortOrder));
         }
 
+        SeedDefaultStyles(conn, tx);
+
         SynchronizeModelMetadata(conn, tx);
+    }
+
+    private static void SeedDefaultStyles(SqliteConnection conn, SqliteTransaction tx)
+    {
+        foreach (var name in DefaultStyleNames)
+            ExecuteInsert(conn, tx,
+                "INSERT OR IGNORE INTO style_definitions (name) VALUES ($name)",
+                ("$name", name));
     }
 
     /// <summary>
@@ -3623,11 +3652,152 @@ public class MusicDatabase
         }
     }
 
-    // Styles are intentionally no longer part of the schema. These compatibility
-    // methods keep the current UI operational until its dedicated filter redesign.
-    public Dictionary<int, List<int>> GetAllTrackStyleIds() => [];
-    public List<int> GetTrackStyleIds(int trackId) => [];
-    public List<Style> GetStyles() => [];
+    public Dictionary<int, List<int>> GetAllTrackStyleIds()
+    {
+        using var conn = Open();
+        var styles = ReadStyles(conn);
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, edits FROM tracks WHERE edits IS NOT NULL AND TRIM(edits) <> ''";
+        using var reader = cmd.ExecuteReader();
+        var result = new Dictionary<int, List<int>>();
+        while (reader.Read())
+        {
+            var ids = StyleIdsForEdits(reader.GetString(1), styles);
+            if (ids.Count > 0)
+                result[reader.GetInt32(0)] = ids;
+        }
+        return result;
+    }
+
+    public List<int> GetTrackStyleIds(int trackId)
+    {
+        using var conn = Open();
+        var styles = ReadStyles(conn);
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT edits FROM tracks WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", trackId);
+        return cmd.ExecuteScalar() is string edits ? StyleIdsForEdits(edits, styles) : [];
+    }
+
+    public List<Style> GetStyles()
+    {
+        using var conn = Open();
+        return ReadStyles(conn);
+    }
+
+    public void AddStyle(string name)
+    {
+        using var conn = Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "INSERT INTO style_definitions (name) VALUES ($name)";
+        cmd.Parameters.AddWithValue("$name", RequiredStyleName(name));
+        cmd.ExecuteNonQuery();
+    }
+
+    public void RenameStyle(int id, string name)
+    {
+        var newName = RequiredStyleName(name);
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        string oldName;
+        using (var find = conn.CreateCommand())
+        {
+            find.Transaction = tx;
+            find.CommandText = "SELECT name FROM style_definitions WHERE id = $id";
+            find.Parameters.AddWithValue("$id", id);
+            oldName = find.ExecuteScalar() as string
+                ?? throw new InvalidOperationException("Style no longer exists.");
+        }
+
+        ExecuteInsert(conn, tx,
+            "UPDATE style_definitions SET name = $name WHERE id = $id",
+            ("$name", newName), ("$id", id));
+        foreach (var track in ReadTracksUsingStyle(conn, tx, oldName))
+        {
+            var updatedEdits = TrackTitleFormatter.ParseEdits(track.Edits)
+                .Select(edit => StyleNameMatches(edit, oldName) ? newName : edit)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            ExecuteInsert(conn, tx,
+                "UPDATE tracks SET edits = $edits, updated_at = $now WHERE id = $id",
+                ("$edits", updatedEdits.Count == 0 ? DBNull.Value : string.Join(", ", updatedEdits)),
+                ("$now", DateTime.UtcNow.ToString("O")),
+                ("$id", track.Id));
+        }
+        tx.Commit();
+    }
+
+    public string? DeleteStyleIfUnused(int id)
+    {
+        using var conn = Open();
+        using var tx = conn.BeginTransaction();
+        string? name;
+        using (var find = conn.CreateCommand())
+        {
+            find.Transaction = tx;
+            find.CommandText = "SELECT name FROM style_definitions WHERE id = $id";
+            find.Parameters.AddWithValue("$id", id);
+            name = find.ExecuteScalar() as string;
+        }
+        if (name is null)
+            return null;
+
+        var usageCount = ReadTracksUsingStyle(conn, tx, name).Count;
+        if (usageCount > 0)
+            return $"Cannot delete: used by {usageCount} track(s).";
+
+        ExecuteInsert(conn, tx, "DELETE FROM style_definitions WHERE id = $id", ("$id", id));
+        tx.Commit();
+        return null;
+    }
+
+    private static List<Style> ReadStyles(SqliteConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT id, name FROM style_definitions ORDER BY name";
+        return ReadLookupList(cmd, (id, name) => new Style(id, name));
+    }
+
+    private static List<int> StyleIdsForEdits(string? edits, IReadOnlyList<Style> styles) =>
+        styles
+            .Where(style => TrackTitleFormatter.ParseEdits(edits)
+                .Any(edit => StyleNameMatches(edit, style.Name)))
+            .Select(style => style.Id)
+            .ToList();
+
+    private static List<(int Id, string Edits)> ReadTracksUsingStyle(
+        SqliteConnection conn, SqliteTransaction tx, string styleName)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
+        cmd.CommandText = "SELECT id, edits FROM tracks WHERE edits IS NOT NULL AND TRIM(edits) <> ''";
+        using var reader = cmd.ExecuteReader();
+        var tracks = new List<(int Id, string Edits)>();
+        while (reader.Read())
+        {
+            var edits = reader.GetString(1);
+            if (TrackTitleFormatter.ParseEdits(edits).Any(edit => StyleNameMatches(edit, styleName)))
+                tracks.Add((reader.GetInt32(0), edits));
+        }
+        return tracks;
+    }
+
+    private static bool StyleNameMatches(string value, string styleName) =>
+        string.Equals(value, styleName, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(styleName, "Sped Up", StringComparison.OrdinalIgnoreCase)
+           && string.Equals(value, "Speed Up", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(styleName, "Slowed", StringComparison.OrdinalIgnoreCase)
+           && string.Equals(value, "Slow", StringComparison.OrdinalIgnoreCase);
+
+    private static string RequiredStyleName(string? value)
+    {
+        var name = value?.Trim() ?? string.Empty;
+        if (name.Length == 0)
+            throw new ArgumentException("Style name is required.", nameof(value));
+        if (name.Contains(','))
+            throw new ArgumentException("Style names cannot contain commas.", nameof(value));
+        return name;
+    }
 
     public void UpdateTrack(
         int id,
