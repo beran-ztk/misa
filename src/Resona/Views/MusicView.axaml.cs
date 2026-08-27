@@ -1868,59 +1868,114 @@ public partial class MusicView : UserControl
             Height = 32,
             VerticalContentAlignment = VerticalAlignment.Center
         };
-        var saveName = new Button { Content = "Save name", Height = 30, FontSize = 10.5 };
-        var automaticCover = new Button { Content = "Automatic cover", Height = 30, FontSize = 10.5 };
-        var chooseImage = new Button { Content = "Choose image…", Height = 30, FontSize = 10.5 };
-        var trackSelector = new ComboBox
+        nameBox.Classes.Add("theme-input");
+        var saveName = new Button
         {
+            Content = "Save",
             Height = 32,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            PlaceholderText = "Choose collection track"
+            MinWidth = 58,
+            Padding = new Thickness(12, 4),
+            FontSize = 10.5
         };
-        foreach (var track in MusicLibraryService.Current.GetCollectionTracks(collection.Id))
+        var nameRow = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), ColumnSpacing = 8 };
+        nameRow.Children.Add(nameBox);
+        Grid.SetColumn(saveName, 1);
+        nameRow.Children.Add(saveName);
+
+        var automaticCover = new Button
         {
-            var option = new ComboBoxItem { Content = track.Title, Tag = track.TrackId };
-            trackSelector.Items.Add(option);
-            if (track.TrackId == collection.CoverTrackId)
-                trackSelector.SelectedItem = option;
-        }
-        var useTrackCover = new Button
-        {
-            Content = "Use track artwork",
+            Content = "Automatic cover",
             Height = 30,
-            FontSize = 10.5,
-            IsEnabled = trackSelector.Items.Count > 0
+            Padding = new Thickness(10, 4),
+            FontSize = 10.5
         };
+        automaticCover.Classes.Add("auto-toggle");
+        if (collection.CoverKind == CollectionCoverKind.Automatic)
+            automaticCover.Classes.Add("active");
+        var chooseImage = new Button
+        {
+            Content = "Choose image…",
+            Height = 30,
+            Padding = new Thickness(10, 4),
+            FontSize = 10.5,
+            HorizontalAlignment = HorizontalAlignment.Left
+        };
+        chooseImage.Classes.Add("auto-toggle");
+        if (collection.CoverKind == CollectionCoverKind.Custom)
+            chooseImage.Classes.Add("active");
+        var coverActions = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 7,
+            Children = { automaticCover, chooseImage }
+        };
+
         var delete = new Button
         {
-            Content = "Delete collection…",
-            Height = 30,
-            FontSize = 10.5,
-            Foreground = ThemeResources.Brush("Theme.Brush.DangerText")
+            Content = "Delete collection",
+            Height = 28,
+            Padding = new Thickness(9, 3),
+            FontSize = 10,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = Brush("#FFFF5364"),
+            Background = Brushes.Transparent,
+            BorderBrush = Brush("#66FF465B"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(5),
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Top
         };
+
+        var coverPreview = new Border
+        {
+            Width = 46,
+            Height = 46,
+            Background = Brush("#30322E"),
+            BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7),
+            ClipToBounds = true
+        };
+        if (BitmapFromCollection(collection.Id) is { } previewBitmap)
+        {
+            _collectionCardBitmaps.Add(previewBitmap);
+            coverPreview.Child = new Image { Source = previewBitmap, Stretch = Stretch.UniformToFill };
+        }
+        var heading = new StackPanel
+        {
+            Spacing = 2,
+            VerticalAlignment = VerticalAlignment.Center,
+            Children =
+            {
+                new TextBlock { Text = collection.Name, FontSize = 13, FontWeight = FontWeight.SemiBold },
+                new TextBlock { Text = "Collection", FontSize = 9.5, Opacity = 0.48 }
+            }
+        };
+        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("46,*,Auto"), ColumnSpacing = 10 };
+        header.Children.Add(coverPreview);
+        Grid.SetColumn(heading, 1);
+        header.Children.Add(heading);
+        Grid.SetColumn(delete, 2);
+        header.Children.Add(delete);
+
         var flyout = new Flyout
         {
             Placement = PlacementMode.RightEdgeAlignedTop,
             Content = new Border
             {
-                Width = 260,
-                Padding = new Thickness(12),
-                Background = Brush("#FC191A1D"),
-                BorderBrush = Brush("#3EFFFFFF"),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(9),
+                Width = 320,
+                Padding = new Thickness(3),
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
                 Child = new StackPanel
                 {
-                    Spacing = 8,
+                    Spacing = 11,
                     Children =
                     {
-                        new TextBlock { Text = "EDIT COLLECTION", FontSize = 9, FontWeight = FontWeight.SemiBold, Opacity = 0.45 },
-                        nameBox, saveName,
-                        new Rectangle { Height = 1, Fill = ThemeResources.Brush("Theme.Brush.Divider"), Margin = new Thickness(0, 3) },
+                        header,
+                        nameRow,
                         new TextBlock { Text = "COVER", FontSize = 9, FontWeight = FontWeight.SemiBold, Opacity = 0.45 },
-                        automaticCover, trackSelector, useTrackCover, chooseImage,
-                        new Rectangle { Height = 1, Fill = ThemeResources.Brush("Theme.Brush.Divider"), Margin = new Thickness(0, 3) },
-                        delete
+                        coverActions
                     }
                 }
             }
@@ -1938,14 +1993,6 @@ public partial class MusicView : UserControl
         automaticCover.Click += (_, _) =>
         {
             MusicLibraryService.Current.SetCollectionCoverAutomatic(collection.Id);
-            flyout.Hide();
-            ReloadCollections();
-        };
-        useTrackCover.Click += (_, _) =>
-        {
-            if (trackSelector.SelectedItem is not ComboBoxItem { Tag: int trackId })
-                return;
-            MusicLibraryService.Current.SetCollectionCoverTrack(collection.Id, trackId);
             flyout.Hide();
             ReloadCollections();
         };
@@ -4867,7 +4914,19 @@ public partial class MusicView : UserControl
             new Separator { Classes = { "track-context-separator" } },
             CreateTrackMenuItem("Edit", true,
                 () => OpenTrackEditor(item.Track)),
-            CreateAddToCollectionMenuItem(item.Track),
+            CreateAddToCollectionMenuItem(item.Track)
+        };
+
+        if (_activeCollection is not null)
+        {
+            menuItems.Add(CreateTrackMenuItem(
+                "Use this artwork as collection cover",
+                _activeCollection.CoverKind != CollectionCoverKind.Track
+                || _activeCollection.CoverTrackId != trackId,
+                () => UseTrackArtworkAsActiveCollectionCover(item.Track)));
+        }
+
+        menuItems.AddRange([
             new Separator { Classes = { "track-context-separator" } },
             CreateTrackMenuItem("Play next",
                 !isCurrent && index != currentIndex + 1,
@@ -4880,7 +4939,7 @@ public partial class MusicView : UserControl
                 () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, 1))),
             CreateTrackMenuItem("Remove from queue", !isCurrent,
                 () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
-        };
+        ]);
 
         if (_activeCollection is not null)
         {
@@ -5001,13 +5060,15 @@ public partial class MusicView : UserControl
         var parent = new MenuItem
         {
             Header = "Add to collection",
-            IsEnabled = _collections.Any(collection => !memberships.Contains(collection.Id))
+            IsEnabled = true
         };
         parent.Classes.Add("track-context-item");
 
         var choices = _collections
             .Select(collection => (object)CreateTrackMenuItem(
-                collection.Name,
+                memberships.Contains(collection.Id)
+                    ? $"{collection.Name}  ·  Already added"
+                    : collection.Name,
                 !memberships.Contains(collection.Id),
                 () => AddTrackToCollection(collection, track)))
             .ToList();
@@ -5015,6 +5076,24 @@ public partial class MusicView : UserControl
             choices.Add(CreateTrackMenuItem("No collections available", false, () => { }));
         parent.ItemsSource = choices;
         return parent;
+    }
+
+    private void UseTrackArtworkAsActiveCollectionCover(MusicTrack track)
+    {
+        if (_activeCollection is null)
+            return;
+
+        try
+        {
+            var collectionName = _activeCollection.Name;
+            MusicLibraryService.Current.SetCollectionCoverTrack(_activeCollection.Id, track.Id);
+            ReloadCollections();
+            ShowToast($"Using {track.DisplayTitle} artwork for {collectionName}");
+        }
+        catch (Exception exception)
+        {
+            ShowToast($"Could not use track artwork: {exception.Message}");
+        }
     }
 
     private void AddTrackToCollection(TrackCollection collection, MusicTrack track)

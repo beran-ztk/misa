@@ -273,18 +273,34 @@ public partial class EditTrackOverlay : UserControl
         CollectionMembershipSection.IsVisible = collections.Count > 0;
         foreach (var collection in collections)
         {
-            var label = new TextBlock
+            var label = new Grid
             {
-                Text = $"{collection.Name}  ×",
-                FontSize = 10.5,
+                ColumnDefinitions = new ColumnDefinitions("Auto,Auto"),
+                ColumnSpacing = 7,
                 VerticalAlignment = VerticalAlignment.Center
             };
+            label.Children.Add(new TextBlock
+            {
+                Text = collection.Name,
+                FontSize = 10.5,
+                FontWeight = FontWeight.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            var removeIcon = new TextBlock
+            {
+                Text = "×",
+                FontSize = 14,
+                Opacity = 0.62,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            Grid.SetColumn(removeIcon, 1);
+            label.Children.Add(removeIcon);
             var removeButton = new Button
             {
                 Content = label,
-                Height = 28,
-                Padding = new Thickness(9, 3),
-                Margin = new Thickness(0, 0, 7, 6),
+                Height = 26,
+                Padding = new Thickness(8, 2),
+                Margin = new Thickness(0, 0, 6, 4),
                 Background = ThemeResources.Brush("Theme.Brush.Surface"),
                 BorderBrush = ThemeResources.Brush("Theme.Brush.BorderSubtle"),
                 BorderThickness = new Thickness(1),
