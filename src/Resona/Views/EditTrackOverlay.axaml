@@ -426,6 +426,31 @@
                         <Border Classes="edit-section">
                             <StackPanel Spacing="9">
                             <TextBlock Text="Classification" FontSize="13" FontWeight="SemiBold" />
+                            <StackPanel x:Name="EditStylesSection" Spacing="6" Margin="0,3,0,5">
+                                <Grid ColumnDefinitions="Auto,*"
+                                      ColumnSpacing="7"
+                                      Margin="0,4">
+                                    <Border Width="14" Height="14" VerticalAlignment="Center">
+                                        <Path Width="5" Height="9"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Data="M 0 0 L 4 4.5 L 0 9"
+                                              Stroke="{DynamicResource Theme.Brush.TextSecondary}"
+                                              StrokeThickness="1" RenderTransformOrigin="50%,50%">
+                                            <Path.RenderTransform>
+                                                <RotateTransform Angle="90" />
+                                            </Path.RenderTransform>
+                                        </Path>
+                                    </Border>
+                                    <TextBlock Grid.Column="1"
+                                               Text="Style" FontSize="11" Opacity="0.72"
+                                               VerticalAlignment="Center" />
+                                </Grid>
+                                <UniformGrid x:Name="EditStylesPanel"
+                                             Columns="4"
+                                             ColumnSpacing="7"
+                                             RowSpacing="7"
+                                             Margin="22,0,0,2" />
+                            </StackPanel>
                             <StackPanel Spacing="6" Margin="0,3,0,5">
                                 <Grid ColumnDefinitions="Auto,*"
                                       ColumnSpacing="7"

@@ -18,6 +18,7 @@ namespace Resona.Views;
 public partial class EditTrackOverlay : UserControl
 {
     private sealed record RatingButtonVisual(Rating Rating, Button Button, TextBlock Icon);
+    private static readonly string[] BuiltInEditStyles = ["Nightcore", "Reverb", "Sped Up", "Slowed"];
 
     private MusicTrack? _track;
     private List<Tag> _tags = [];
@@ -25,6 +26,7 @@ public partial class EditTrackOverlay : UserControl
     private List<Style> _styles = [];
 
     private readonly List<(Tag Tag, ToggleButton Btn)> _tagChips = [];
+    private readonly List<(string Style, ToggleButton Btn)> _editStyleChips = [];
     private readonly List<(TrackLanguage Language, ToggleButton Btn)> _languageChips = [];
     private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
     private readonly List<RatingButtonVisual> _ratingButtons = [];
@@ -227,6 +229,7 @@ public partial class EditTrackOverlay : UserControl
         ShowDetectedGenres(track);
         RebuildModelGenreChoices();
         BuildFrequentManualGenreChoices();
+        RebuildEditStyleChips(track.Edits);
         RebuildTagChips(selectedTagIds);
         RebuildLanguageChips(track.LanguageCode);
         RebuildStyleChips(selectedStyleIds);
@@ -335,6 +338,7 @@ public partial class EditTrackOverlay : UserControl
         if (string.IsNullOrWhiteSpace(TitleBox.Text))
             TitleBox.Text = _track.Title;
         AutoSaveChanges();
+        RebuildEditStyleChips(EditsBox.Text);
         UpdateInformationDisplay(_track);
     }
 
@@ -438,6 +442,75 @@ public partial class EditTrackOverlay : UserControl
         await clipboard.SetTextAsync(url.Trim());
         ToastRequested?.Invoke($"{label} copied");
     }
+
+    private void RebuildEditStyleChips(string? edits)
+    {
+        EditStylesPanel.Children.Clear();
+        _editStyleChips.Clear();
+        var selectedStyles = TrackTitleFormatter.ParseEdits(edits);
+
+        foreach (var style in BuiltInEditStyles)
+        {
+            var button = CreateEditStyleButton(
+                style,
+                selectedStyles.Any(edit => IsEditStyle(edit, style)));
+            button.IsCheckedChanged += (_, _) =>
+            {
+                ApplyTagVisual(button);
+                ApplySelectedEditStyles();
+                AutoSaveChanges();
+                if (_track is not null)
+                    UpdateInformationDisplay(_track);
+            };
+            _editStyleChips.Add((style, button));
+            EditStylesPanel.Children.Add(button);
+        }
+    }
+
+    private static ToggleButton CreateEditStyleButton(string style, bool isSelected)
+    {
+        var label = new TextBlock
+        {
+            Text = style,
+            FontSize = 10.5,
+            FontWeight = FontWeight.SemiBold,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextAlignment = TextAlignment.Center
+        };
+        var button = new ToggleButton
+        {
+            Content = label,
+            IsChecked = isSelected,
+            Height = 34,
+            Padding = new Thickness(8, 3),
+            CornerRadius = new CornerRadius(5),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Tag = label
+        };
+        button.Classes.Add("edit-chip");
+        ApplyTagVisual(button);
+        return button;
+    }
+
+    private void ApplySelectedEditStyles()
+    {
+        var customEdits = TrackTitleFormatter.ParseEdits(EditsBox.Text)
+            .Where(edit => !BuiltInEditStyles.Any(style => IsEditStyle(edit, style)));
+        var selectedStyles = _editStyleChips
+            .Where(item => item.Btn.IsChecked == true)
+            .Select(item => item.Style);
+        var edits = selectedStyles.Concat(customEdits).ToList();
+        EditsBox.Text = edits.Count == 0 ? null : string.Join(", ", edits);
+    }
+
+    private static bool IsEditStyle(string edit, string style) =>
+        string.Equals(edit, style, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(style, "Sped Up", StringComparison.OrdinalIgnoreCase)
+           && string.Equals(edit, "Speed Up", StringComparison.OrdinalIgnoreCase);
 
     private void RebuildTagChips(IReadOnlySet<int> selectedTagIds)
     {
