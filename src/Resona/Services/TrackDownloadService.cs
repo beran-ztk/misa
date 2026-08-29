@@ -21,7 +21,7 @@ public class TrackDownloadService
         CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(Values.TracksDirectory);
-        var outputTemplate = Path.Combine(Values.TracksDirectory, "%(title)s [%(id)s].%(ext)s");
+        var outputTemplate = Path.Combine(Values.TracksDirectory, "%(id)s.%(ext)s");
 
         var options = jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeDownload, "Download audio", url);
         var args = YtDlpDownloadArgs(
@@ -60,7 +60,7 @@ public class TrackDownloadService
         BackgroundJobOptions? jobOptions = null)
     {
         Directory.CreateDirectory(Values.TracksDirectory);
-        var outputTemplate = Path.Combine(Values.TracksDirectory, $"channel-{videoId}.%(ext)s");
+        var outputTemplate = Path.Combine(Values.TracksDirectory, $"{videoId}.%(ext)s");
         var result = await RunYouTubeProcessAsync(
             jobOptions ?? DefaultJob(BackgroundJobKind.YouTubeDownload, "Channel download", url),
             YtDlpDownloadArgs(
@@ -74,7 +74,7 @@ public class TrackDownloadService
                 url),
             cancellationToken);
 
-        var filePath = Path.Combine(Values.TracksDirectory, $"channel-{videoId}.m4a");
+        var filePath = Path.Combine(Values.TracksDirectory, $"{videoId}.m4a");
         return (result.ExitCode == 0 && File.Exists(filePath), result.Error,
             File.Exists(filePath) ? filePath : null);
     }
@@ -389,8 +389,12 @@ public class TrackDownloadService
 
     public string? FindDownloadedFile(string videoId)
     {
-        return Directory.GetFiles(Values.TracksDirectory, "*.m4a")
-                        .FirstOrDefault(f => Path.GetFileNameWithoutExtension(f).EndsWith($"[{videoId}]"));
+        return Directory.EnumerateFiles(Values.TracksDirectory)
+                   .FirstOrDefault(file => string.Equals(
+                       Path.GetFileNameWithoutExtension(file), videoId, StringComparison.Ordinal))
+               ?? Directory.EnumerateFiles(Values.TracksDirectory)
+                   .FirstOrDefault(file => Path.GetFileNameWithoutExtension(file)
+                       .EndsWith($"[{videoId}]", StringComparison.Ordinal));
     }
 
     public void DeleteDownloadArtifacts(string videoId)
@@ -401,7 +405,10 @@ public class TrackDownloadService
         foreach (var filePath in Directory.EnumerateFiles(Values.TracksDirectory))
         {
             var fileName = Path.GetFileName(filePath);
-            if (!fileName.Contains($"[{videoId}]", StringComparison.OrdinalIgnoreCase))
+            var baseName = Path.GetFileNameWithoutExtension(fileName);
+            if (!string.Equals(baseName, videoId, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(baseName, $"channel-{videoId}", StringComparison.OrdinalIgnoreCase)
+                && !baseName.EndsWith($"[{videoId}]", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             try { File.Delete(filePath); }

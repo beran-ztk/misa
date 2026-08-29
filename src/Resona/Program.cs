@@ -14,6 +14,16 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (Array.Exists(args, argument => string.Equals(
+                argument, "--migrate-track-filenames", StringComparison.OrdinalIgnoreCase)))
+        {
+            var result = TrackFileNameMigration.Run(Values.DbPath, Values.TracksDirectory);
+            Console.WriteLine(
+                $"Renamed={result.Renamed}; Recovered={result.Recovered}; AlreadyCanonical={result.AlreadyCanonical}; " +
+                $"MissingFiles={result.MissingFiles}; Backup={result.BackupPath ?? "none"}");
+            return;
+        }
+
         VelopackApp.Build()
             .SetAutoApplyOnStartup(false)
             .Run();

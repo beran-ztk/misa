@@ -26,6 +26,11 @@ public class MusicLibraryService
 
         _channelMaxDownloadDurationMinutes = AppSettingsStore.Load().ChannelDownloadMaxDurationMinutes;
         _db.Initialize();
+        var fileNameMigration = TrackFileNameMigration.Run(Values.DbPath, Values.TracksDirectory);
+        if (fileNameMigration.Renamed > 0 || fileNameMigration.Recovered > 0)
+            WorkflowLog.Info(
+                "migration",
+                $"Canonicalized {fileNameMigration.Renamed} track file names and recovered {fileNameMigration.Recovered} interrupted moves.");
     }
 
     // --- Tracks ---
@@ -632,6 +637,16 @@ public class MusicLibraryService
 
         try
         {
+            var canonicalFilePath = Path.Combine(
+                Values.TracksDirectory,
+                TrackFileNameMigration.CanonicalFileName(videoId, Path.GetFileName(filePath)));
+            if (!string.Equals(filePath, canonicalFilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                if (File.Exists(canonicalFilePath))
+                    throw new IOException($"Canonical track file already exists: {Path.GetFileName(canonicalFilePath)}");
+                File.Move(filePath, canonicalFilePath);
+                filePath = canonicalFilePath;
+            }
             var fileName = Path.GetFileName(filePath);
             var duration = await _downloader.GetDurationAsync(filePath);
             var metadata = previewMetadata ?? await _downloader.GetMetadataAsync(
