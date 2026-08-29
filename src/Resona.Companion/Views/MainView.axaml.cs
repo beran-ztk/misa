@@ -457,8 +457,6 @@ public partial class MainView : UserControl
 
     private void ApplyFilterPreset(PortableFilterPreset preset)
     {
-        RatingFilter.SetSelectedItems(preset.Ratings, notify: false);
-
         _filterGroups.Clear();
         FilterGroupsPanel.Children.Clear();
 

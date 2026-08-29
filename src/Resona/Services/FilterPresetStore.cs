@@ -27,15 +27,6 @@ public static class FilterPresetStore
 
             using var stream = File.OpenRead(Values.FilterPresetsPath);
             return (JsonSerializer.Deserialize<List<PortableFilterPreset>>(stream, JsonOptions) ?? [])
-                .Select(preset => preset with
-                {
-                    Ratings = preset.Ratings
-                        .Select(rating => string.Equals(rating, "Favorite", StringComparison.OrdinalIgnoreCase)
-                            ? "Timeless"
-                            : rating)
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .ToList()
-                })
                 .OrderBy(preset => string.Equals(preset.Name, "Default", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
                 .ThenBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();

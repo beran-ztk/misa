@@ -71,12 +71,9 @@ public sealed record PortableRating(string Name, int SortOrder);
 
 public sealed record PortableFilterPreset(
     string Name,
-    List<string> Ratings,
     List<PortableFilterGroup> Groups,
     bool ShowNeedsReview = false,
-    bool ShowNeedsAnalysis = false,
-    bool ManualRatings = false,
-    bool UnratedOnly = false);
+    bool ShowNeedsAnalysis = false);
 
 public sealed record PortableTrack(
     string Title,

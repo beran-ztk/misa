@@ -105,6 +105,7 @@ public partial class MusicView : UserControl
     private bool _suppressSelectionSessionSave;
     private readonly HashSet<string> _selectedRatingNames = new(StringComparer.OrdinalIgnoreCase);
     private MultiSelectFilterControl? _conditionGenreCtrl;
+    private MultiSelectFilterControl? _conditionStyleCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
     private MultiSelectFilterControl? _conditionLanguageCtrl;
     private bool _conditionNegate;
@@ -112,12 +113,14 @@ public partial class MusicView : UserControl
     private readonly Dictionary<string, EmotionalRangeState> _conditionEmotionalCharacters =
         EmotionalCharacterCatalog.All.ToDictionary(item => item.Adjectives, _ => new EmotionalRangeState(), StringComparer.OrdinalIgnoreCase);
     private FilterSection? _conditionGenreSection;
+    private FilterSection? _conditionStyleSection;
     private FilterSection? _conditionTagSection;
     private FilterSection? _conditionLanguageSection;
     private FilterSection? _conditionEmotionalSection;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreCtrl,
+        MultiSelectFilterControl StyleCtrl,
         MultiSelectFilterControl TagCtrl,
         MultiSelectFilterControl LanguageCtrl,
         Dictionary<string, EmotionalRangeState> EmotionalCharacters,
@@ -127,8 +130,7 @@ public partial class MusicView : UserControl
     private sealed class EmotionalRangeState
     {
         public double? MinimumPercent { get; set; }
-        public double? MaximumPercent { get; set; }
-        public bool IsActive => MinimumPercent is not null || MaximumPercent is not null;
+        public bool IsActive => MinimumPercent is not null;
     }
     private sealed record FilterSection(Control Control, Action Refresh);
     private enum LibraryMode
@@ -239,6 +241,10 @@ public partial class MusicView : UserControl
         UpdateImportBounds();
 
         LoadLookups();
+        SetRatingFilterMode(
+            _restoredPlayerSession.ManualRatingFilter,
+            _restoredPlayerSession.SelectedRatingNames,
+            applyFilter: false);
         InitializeFilterConditionBuilder();
         LoadCollections();
         LoadFilterPresets();
@@ -550,7 +556,6 @@ public partial class MusicView : UserControl
             _activeFilterPresetName = null;
             _activeBuiltInView = LibraryMode.Library;
             SearchBox.Text = string.Empty;
-            SetRatingFilterMode(manual: false, applyFilter: false);
             _updatingLibraryMode = true;
             ShowNeedsReviewCheckBox.IsChecked = false;
             ShowDeclinedCheckBox.IsChecked = false;
@@ -594,9 +599,10 @@ public partial class MusicView : UserControl
                 _selectedRatingNames.Add(rating.Name);
         RefreshRatingFilterControls();
 
-        if (_conditionGenreCtrl is not null && _conditionTagCtrl is not null && _conditionLanguageCtrl is not null)
+        if (_conditionGenreCtrl is not null && _conditionStyleCtrl is not null && _conditionTagCtrl is not null && _conditionLanguageCtrl is not null)
         {
             _conditionGenreCtrl.SetItems(GenreFilterOptions());
+            _conditionStyleCtrl.SetItems(StyleFilterOptions());
             _conditionTagCtrl.SetItems(TagFilterOptions());
             _conditionLanguageCtrl.SetItems(LanguageFilterOptions());
             RefreshConditionBuilder();
@@ -605,6 +611,7 @@ public partial class MusicView : UserControl
         foreach (var fg in _filterGroups)
         {
             fg.GenreCtrl.SetItems(GenreFilterOptions());
+            fg.StyleCtrl.SetItems(StyleFilterOptions());
             fg.TagCtrl.SetItems(TagFilterOptions());
             fg.LanguageCtrl.SetItems(LanguageFilterOptions());
         }
@@ -871,12 +878,12 @@ public partial class MusicView : UserControl
         _filterGroups
             .Select(fg => new FilterGroup(
                 SelectedIds(fg.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id),
-                new HashSet<int>(),
+                SelectedIds(fg.StyleCtrl.SelectedItems, Values.Styles, style => style.Name, style => style.Id),
                 SelectedIds(fg.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id),
                 fg.LanguageCtrl.SelectedItems.ToHashSet(StringComparer.OrdinalIgnoreCase),
                 fg.EmotionalCharacters
                     .Where(pair => pair.Value.IsActive)
-                    .Select(pair => new EmotionalCharacterRange(pair.Key, pair.Value.MinimumPercent, pair.Value.MaximumPercent))
+                    .Select(pair => new EmotionalCharacterRange(pair.Key, pair.Value.MinimumPercent, null))
                     .ToList(),
                 fg.Negate,
                 Values.Genres
@@ -918,6 +925,11 @@ public partial class MusicView : UserControl
         Values.Tags.Select(tag => new MultiSelectFilterControl.FilterOption(
             TagFilterName(tag),
             tag.Name));
+
+    private static IEnumerable<MultiSelectFilterControl.FilterOption> StyleFilterOptions() =>
+        Values.Styles.Select(style => new MultiSelectFilterControl.FilterOption(
+            style.Name,
+            style.Name));
 
     private static IEnumerable<MultiSelectFilterControl.FilterOption> LanguageFilterOptions() =>
         TrackLanguageCatalog.All.Select(language => new MultiSelectFilterControl.FilterOption(
@@ -1235,6 +1247,8 @@ public partial class MusicView : UserControl
         {
             ActiveFilterPresetName = _activeFilterPresetName,
             ActiveCollectionStableId = _activeCollection?.StableId,
+            ManualRatingFilter = _manualRatingFilter,
+            SelectedRatingNames = SortedNames(_selectedRatingNames),
             ActiveTrackId = _engine.ActiveTrackId >= 0 ? _engine.ActiveTrackId : null,
             SelectedTrackId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id,
             ShuffleEnabled = _shuffle,
@@ -1318,14 +1332,18 @@ public partial class MusicView : UserControl
             var groupTrackIds = groupTracks.Select(track => track.Id).ToList();
 
             var genreFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackGenreIds);
+            var styleFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackStyleIds);
             var tagFacetCounts = MetadataCountService.FacetCounts(groupTrackIds, _allTrackTagIds);
 
             var genreCountByName = Values.Genres.ToDictionary(g => g.Name,
                 g => genreFacetCounts.GetValueOrDefault(g.Id, 0));
+            var styleCountByName = Values.Styles.ToDictionary(style => style.Name,
+                style => styleFacetCounts.GetValueOrDefault(style.Id, 0));
             var tagCountByName = Values.Tags.ToDictionary(TagFilterName,
                 t => tagFacetCounts.GetValueOrDefault(t.Id, 0));
 
             fg.GenreCtrl.UpdateCounts(genreCountByName);
+            fg.StyleCtrl.UpdateCounts(styleCountByName);
             fg.TagCtrl.UpdateCounts(tagCountByName);
         }
     }
@@ -1345,6 +1363,7 @@ public partial class MusicView : UserControl
             .Select(item => item.Track);
         var selectedRatingIds = SelectedRatingIds();
         var selectedGenreIds = SelectedIds(group.GenreCtrl.SelectedItems, Values.Genres, g => g.Name, g => g.Id);
+        var selectedStyleIds = SelectedIds(group.StyleCtrl.SelectedItems, Values.Styles, style => style.Name, style => style.Id);
         var anyGenreIds = Values.Genres
             .Where(genre => group.MainGenres.Contains(MainGenreName(genre.Name)))
             .Select(genre => genre.Id)
@@ -1378,6 +1397,9 @@ public partial class MusicView : UserControl
         if (anyGenreIds.Count > 0)
             query = query.Where(track => TrackHasAnyTag(track.Id, _allTrackGenreIds, anyGenreIds));
 
+        if (selectedStyleIds.Count > 0)
+            query = query.Where(track => TrackHasAllTags(track.Id, _allTrackStyleIds, selectedStyleIds));
+
         if (selectedTagIds.Count > 0)
             query = query.Where(track => TrackHasAllTags(track.Id, _allTrackTagIds, selectedTagIds));
 
@@ -1389,8 +1411,7 @@ public partial class MusicView : UserControl
             query = query.Where(track => emotionalRanges.All(range =>
                 _allTrackMirexScores.TryGetValue(track.Id, out var scores)
                 && scores.TryGetValue(range.Key, out var score)
-                && (range.Value.MinimumPercent is not double minimum || score * 100d >= minimum)
-                && (range.Value.MaximumPercent is not double maximum || score * 100d <= maximum)));
+                && (range.Value.MinimumPercent is not double minimum || score * 100d >= minimum)));
 
         return query.ToList();
     }
@@ -1462,7 +1483,10 @@ public partial class MusicView : UserControl
 
         RefreshRatingFilterControls();
         if (applyFilter)
-            ApplyFilterDefinitionChange();
+        {
+            ApplyFilter();
+            PersistPlayerSession();
+        }
     }
 
     private void RefreshRatingFilterControls()
@@ -1515,7 +1539,8 @@ public partial class MusicView : UserControl
                 if (!_selectedRatingNames.Add(rating.Name))
                     _selectedRatingNames.Remove(rating.Name);
                 RefreshRatingFilterControls();
-                ApplyFilterDefinitionChange();
+                ApplyFilter();
+                PersistPlayerSession();
             };
             RatingButtonsPanel.Children.Add(button);
         }
@@ -2297,7 +2322,6 @@ public partial class MusicView : UserControl
             _activeBuiltInView = mode;
             _isCreatingPreset = false;
             SearchBox.Text = string.Empty;
-            SetRatingFilterMode(manual: false, applyFilter: false);
             _updatingLibraryMode = true;
             ShowNeedsReviewCheckBox.IsChecked = mode == LibraryMode.Review;
             ShowDeclinedCheckBox.IsChecked = mode == LibraryMode.Declined;
@@ -2618,25 +2642,22 @@ public partial class MusicView : UserControl
         var groups = _filterGroups
             .Select(group => new PortableFilterGroup(
                 SortedNames(group.GenreCtrl.SelectedItems),
-                new List<string>(),
+                SortedNames(group.StyleCtrl.SelectedItems),
                 SortedNames(group.TagCtrl.SelectedItems),
                 group.Negate,
                 group.EmotionalCharacters
                     .Where(pair => pair.Value.IsActive)
-                    .Select(pair => new PortableEmotionalCharacterFilter(pair.Key, pair.Value.MinimumPercent, pair.Value.MaximumPercent))
+                    .Select(pair => new PortableEmotionalCharacterFilter(pair.Key, pair.Value.MinimumPercent, null))
                     .ToList(),
                 SortedNames(group.LanguageCtrl.SelectedItems),
                 SortedNames(group.MainGenres)))
-            .Where(group => group.Genres.Count > 0 || (group.MainGenres?.Count ?? 0) > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0 || (group.Languages?.Count ?? 0) > 0)
+            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.MainGenres?.Count ?? 0) > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0 || (group.Languages?.Count ?? 0) > 0)
             .ToList();
 
         return new PortableFilterPreset(
             name,
-            _manualRatingFilter ? SortedNames(_selectedRatingNames) : [],
             groups,
             ShowNeedsReviewCheckBox.IsChecked == true,
-            false,
-            _manualRatingFilter,
             false);
     }
 
@@ -2645,21 +2666,17 @@ public partial class MusicView : UserControl
         _suppressPresetAutoSave = true;
         try
         {
-            SetRatingFilterMode(
-                preset.ManualRatings || preset.Ratings.Count > 0,
-                preset.Ratings,
-                applyFilter: false);
             ShowDeclinedCheckBox.IsChecked = false;
             ShowNeedsReviewCheckBox.IsChecked = preset.ShowNeedsReview;
 
             _filterGroups.Clear();
 
             var groups = preset.Groups
-                .Where(group => group.Genres.Count > 0 || (group.MainGenres?.Count ?? 0) > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0 || (group.Languages?.Count ?? 0) > 0)
+                .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.MainGenres?.Count ?? 0) > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0 || (group.Languages?.Count ?? 0) > 0)
                 .ToList();
 
             foreach (var group in groups)
-                _filterGroups.Add(CreateFilterCondition(group.Genres, group.Tags ?? new List<string>(), group.Negate, group.EmotionalCharacters, group.Languages, group.MainGenres));
+                _filterGroups.Add(CreateFilterCondition(group.Genres, group.Styles, group.Tags ?? new List<string>(), group.Negate, group.EmotionalCharacters, group.Languages, group.MainGenres));
 
             RebuildFilterConditionsPanel();
             ClearConditionBuilder();
@@ -2726,6 +2743,10 @@ public partial class MusicView : UserControl
         _conditionGenreCtrl.SetItems(GenreFilterOptions());
         _conditionGenreCtrl.SelectionChanged += (_, _) => UpdateCurrentSetSummary();
 
+        _conditionStyleCtrl = new MultiSelectFilterControl { Placeholder = "All styles" };
+        _conditionStyleCtrl.SetItems(StyleFilterOptions());
+        _conditionStyleCtrl.SelectionChanged += (_, _) => UpdateCurrentSetSummary();
+
         _conditionTagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
         _conditionTagCtrl.SetItems(TagFilterOptions());
         _conditionTagCtrl.SelectionChanged += (_, _) => UpdateCurrentSetSummary();
@@ -2735,12 +2756,14 @@ public partial class MusicView : UserControl
         _conditionLanguageCtrl.SelectionChanged += (_, _) => UpdateCurrentSetSummary();
 
         _conditionGenreSection = CreateGenreFilterSection(_conditionGenreCtrl);
+        _conditionStyleSection = CreateStyleFilterSection(_conditionStyleCtrl);
         _conditionTagSection = CreateTagFilterSection(_conditionTagCtrl);
         _conditionLanguageSection = CreateLanguageFilterSection(_conditionLanguageCtrl);
         _conditionEmotionalSection = CreateEmotionalCharacterFilterSection(_conditionEmotionalCharacters);
 
         FilterBuilderPanel.Children.Clear();
         FilterBuilderPanel.Children.Add(_conditionGenreSection.Control);
+        FilterBuilderPanel.Children.Add(_conditionStyleSection.Control);
         FilterBuilderPanel.Children.Add(_conditionTagSection.Control);
         FilterBuilderPanel.Children.Add(_conditionEmotionalSection.Control);
         FilterBuilderPanel.Children.Add(_conditionLanguageSection.Control);
@@ -2750,18 +2773,19 @@ public partial class MusicView : UserControl
 
     private void AddConditionFromBuilder()
     {
-        if (_conditionGenreCtrl is null || _conditionTagCtrl is null || _conditionLanguageCtrl is null)
+        if (_conditionGenreCtrl is null || _conditionStyleCtrl is null || _conditionTagCtrl is null || _conditionLanguageCtrl is null)
             return;
 
         var selectedGenres = SortedNames(_conditionGenreCtrl.SelectedItems);
+        var selectedStyles = SortedNames(_conditionStyleCtrl.SelectedItems);
         var selectedTags = SortedNames(_conditionTagCtrl.SelectedItems);
         var selectedLanguages = SortedNames(_conditionLanguageCtrl.SelectedItems);
-        if (selectedGenres.Count == 0 && selectedTags.Count == 0 && selectedLanguages.Count == 0 && !_conditionEmotionalCharacters.Values.Any(value => value.IsActive))
+        if (selectedGenres.Count == 0 && selectedStyles.Count == 0 && selectedTags.Count == 0 && selectedLanguages.Count == 0 && !_conditionEmotionalCharacters.Values.Any(value => value.IsActive))
             return;
 
-        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedTags, _conditionNegate, _conditionEmotionalCharacters
+        _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedStyles, selectedTags, _conditionNegate, _conditionEmotionalCharacters
             .Where(pair => pair.Value.IsActive)
-            .Select(pair => new PortableEmotionalCharacterFilter(pair.Key, pair.Value.MinimumPercent, pair.Value.MaximumPercent)),
+            .Select(pair => new PortableEmotionalCharacterFilter(pair.Key, pair.Value.MinimumPercent, null)),
             selectedLanguages));
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
@@ -2769,6 +2793,7 @@ public partial class MusicView : UserControl
 
     private FilterGroupControls CreateFilterCondition(
         IEnumerable<string> genres,
+        IEnumerable<string> styles,
         IEnumerable<string> tags,
         bool negate = false,
         IEnumerable<PortableEmotionalCharacterFilter>? emotionalCharacters = null,
@@ -2778,6 +2803,10 @@ public partial class MusicView : UserControl
         var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         genreCtrl.SetItems(GenreFilterOptions());
         genreCtrl.SetSelectedItems(genres, notify: false);
+
+        var styleCtrl = new MultiSelectFilterControl { Placeholder = "All styles" };
+        styleCtrl.SetItems(StyleFilterOptions());
+        styleCtrl.SetSelectedItems(styles, notify: false);
 
         var tagCtrl = new MultiSelectFilterControl { Placeholder = "All tags" };
         tagCtrl.SetItems(TagFilterOptions());
@@ -2793,13 +2822,11 @@ public partial class MusicView : UserControl
             StringComparer.OrdinalIgnoreCase);
         foreach (var range in emotionalCharacters ?? [])
             if (emotional.TryGetValue(range.SignalKey, out var state))
-            {
                 state.MinimumPercent = range.MinimumPercent;
-                state.MaximumPercent = range.MaximumPercent;
-            }
 
         return new FilterGroupControls(
             genreCtrl,
+            styleCtrl,
             tagCtrl,
             languageCtrl,
             emotional,
@@ -2818,12 +2845,13 @@ public partial class MusicView : UserControl
                 && group.MainGenres.Count == 1
                 && group.MainGenres.Contains(mainGenre)
                 && group.GenreCtrl.SelectedItems.Count == 0
+                && group.StyleCtrl.SelectedItems.Count == 0
                 && group.TagCtrl.SelectedItems.Count == 0
                 && group.LanguageCtrl.SelectedItems.Count == 0
                 && !group.EmotionalCharacters.Values.Any(value => value.IsActive)))
             return;
 
-        _filterGroups.Add(CreateFilterCondition([], [], mainGenres: [mainGenre]));
+        _filterGroups.Add(CreateFilterCondition([], [], [], mainGenres: [mainGenre]));
         RebuildFilterConditionsPanel();
         ApplyFilterDefinitionChange();
     }
@@ -2831,13 +2859,11 @@ public partial class MusicView : UserControl
     private void ClearConditionBuilder()
     {
         _conditionGenreCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
+        _conditionStyleCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         _conditionTagCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         _conditionLanguageCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         foreach (var range in _conditionEmotionalCharacters.Values)
-        {
             range.MinimumPercent = null;
-            range.MaximumPercent = null;
-        }
         SetConditionMode(exclude: false);
         RefreshConditionBuilder();
     }
@@ -2874,6 +2900,7 @@ public partial class MusicView : UserControl
     private void RefreshConditionBuilder()
     {
         _conditionGenreSection?.Refresh();
+        _conditionStyleSection?.Refresh();
         _conditionTagSection?.Refresh();
         _conditionLanguageSection?.Refresh();
         _conditionEmotionalSection?.Refresh();
@@ -2884,6 +2911,10 @@ public partial class MusicView : UserControl
     {
         var genres = _conditionGenreCtrl?.SelectedItems
             .Select(DisplayGenreFilterName)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? [];
+        var styles = _conditionStyleCtrl?.SelectedItems
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Order(StringComparer.OrdinalIgnoreCase)
             .ToList() ?? [];
@@ -2903,15 +2934,17 @@ public partial class MusicView : UserControl
             .ToList();
 
         CurrentSetGenresRow.IsVisible = genres.Count > 0;
+        CurrentSetStylesRow.IsVisible = styles.Count > 0;
         CurrentSetTagsRow.IsVisible = tags.Count > 0;
         CurrentSetLanguagesRow.IsVisible = languages.Count > 0;
         CurrentSetEmotionalRow.IsVisible = emotional.Count > 0;
         CurrentSetGenresText.Text = FormatNaturalList(genres);
+        CurrentSetStylesText.Text = FormatNaturalList(styles);
         CurrentSetTagsText.Text = FormatNaturalList(tags);
         CurrentSetLanguagesText.Text = FormatNaturalList(languages);
         CurrentSetEmotionalText.Text = FormatNaturalList(emotional);
 
-        var hasSelection = genres.Count > 0 || tags.Count > 0 || languages.Count > 0 || emotional.Count > 0;
+        var hasSelection = genres.Count > 0 || styles.Count > 0 || tags.Count > 0 || languages.Count > 0 || emotional.Count > 0;
         CurrentSetEmptyText.IsVisible = !hasSelection;
         AddFilterGroupButton.IsEnabled = hasSelection;
     }
@@ -2924,7 +2957,7 @@ public partial class MusicView : UserControl
         {
             FilterGroupsPanel.Children.Add(new TextBlock
             {
-                Text = "No conditions yet. Select genres, tags, languages or emotional ranges above, then add a condition.",
+                Text = "No conditions yet. Select genres, styles, tags, languages or emotional ranges above, then add a condition.",
                 FontSize = 11,
                 Opacity = 0.52,
                 TextWrapping = TextWrapping.Wrap,
@@ -2978,6 +3011,7 @@ public partial class MusicView : UserControl
         var names = condition.GenreCtrl.SelectedItems
             .Select(DisplayGenreFilterName)
             .Concat(condition.MainGenres)
+            .Concat(condition.StyleCtrl.SelectedItems)
             .Concat(condition.TagCtrl.SelectedItems.Select(DisplayTagFilterName))
             .Concat(condition.LanguageCtrl.SelectedItems.Select(DisplayLanguageFilterName))
             .Concat(condition.EmotionalCharacters
@@ -3073,12 +3107,11 @@ public partial class MusicView : UserControl
             foreach (var definition in EmotionalCharacterCatalog.All)
             {
                 var state = ranges[definition.Adjectives];
-                var maximum = Math.Clamp(state.MaximumPercent ?? 100d, 0d, 100d);
-                var minimum = Math.Min(
-                    Math.Clamp(state.MinimumPercent ?? 0d, 0d, 100d),
-                    Math.Min(maximum, remainingMinimum));
+                var snapped = Math.Round(
+                    Math.Clamp(state.MinimumPercent ?? 0d, 0d, 100d) / 10d,
+                    MidpointRounding.AwayFromZero) * 10d;
+                var minimum = Math.Min(snapped, remainingMinimum);
                 state.MinimumPercent = minimum <= 0.001 ? null : minimum;
-                state.MaximumPercent = maximum >= 99.999 ? null : Math.Max(minimum, maximum);
                 remainingMinimum -= minimum;
             }
         }
@@ -3096,43 +3129,32 @@ public partial class MusicView : UserControl
                     Opacity = 0.58,
                     VerticalAlignment = VerticalAlignment.Center
                 };
-                var maximumText = new TextBlock
-                {
-                    FontSize = 9,
-                    Opacity = 0.58,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
                 var slider = new RangeSliderControl();
-                slider.SetValues(state.MinimumPercent ?? 0d, state.MaximumPercent ?? 100d);
+                slider.SetValue(state.MinimumPercent ?? 0d);
 
-                void UpdateLabels(double minimum, double maximum)
+                void UpdateLabel(double minimum)
                 {
-                    minimumText.Text = $"Min {minimum:0.#}%";
-                    maximumText.Text = $"Max {maximum:0.#}%";
+                    minimumText.Text = $"Min {minimum:0}%";
                 }
 
-                slider.ValuesChanged += (minimum, maximum) =>
+                slider.ValueChanged += minimum =>
                 {
                     var otherMinimums = ranges
                         .Where(pair => !string.Equals(pair.Key, definition.Adjectives, StringComparison.OrdinalIgnoreCase))
                         .Sum(pair => pair.Value.MinimumPercent ?? 0d);
-                    var requestedMinimum = Math.Min(minimum, Math.Max(0d, 100d - otherMinimums));
-                    var allowedMinimum = Math.Floor(requestedMinimum * 10d) / 10d;
-                    var allowedMaximum = Math.Round(Math.Max(allowedMinimum, maximum), 1);
-                    if (Math.Abs(allowedMinimum - minimum) > 0.001
-                        || Math.Abs(allowedMaximum - maximum) > 0.001)
-                        slider.SetValues(allowedMinimum, allowedMaximum);
+                    var allowedMinimum = Math.Min(minimum, Math.Max(0d, 100d - otherMinimums));
+                    if (Math.Abs(allowedMinimum - minimum) > 0.001)
+                        slider.SetValue(allowedMinimum);
 
                     state.MinimumPercent = allowedMinimum <= 0.001 ? null : allowedMinimum;
-                    state.MaximumPercent = allowedMaximum >= 99.999 ? null : allowedMaximum;
-                    UpdateLabels(allowedMinimum, allowedMaximum);
+                    UpdateLabel(allowedMinimum);
                     UpdateCurrentSetSummary();
                 };
-                UpdateLabels(slider.LowerValue, slider.UpperValue);
+                UpdateLabel(slider.Value);
 
                 var header = new Grid
                 {
-                    ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto"),
+                    ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
                     ColumnSpacing = 9
                 };
                 var name = new TextBlock
@@ -3158,8 +3180,6 @@ public partial class MusicView : UserControl
                 header.Children.Add(adjectives);
                 Grid.SetColumn(minimumText, 2);
                 header.Children.Add(minimumText);
-                Grid.SetColumn(maximumText, 3);
-                header.Children.Add(maximumText);
 
                 rows.Children.Add(new StackPanel
                 {
@@ -3191,13 +3211,9 @@ public partial class MusicView : UserControl
     private static string FormatEmotionalRange(string signalKey, EmotionalRangeState state)
     {
         var name = EmotionalCharacterCatalog.Name(signalKey);
-        return (state.MinimumPercent, state.MaximumPercent) switch
-        {
-            (double minimum, double maximum) => $"{name} {minimum:0.#}–{maximum:0.#}%",
-            (double minimum, null) => $"{name} ≥ {minimum:0.#}%",
-            (null, double maximum) => $"{name} ≤ {maximum:0.#}%",
-            _ => name
-        };
+        return state.MinimumPercent is double minimum
+            ? $"{name} ≥ {minimum:0}%"
+            : name;
     }
 
     private FilterSection CreateGenreFilterSection(MultiSelectFilterControl genreCtrl)
@@ -3347,11 +3363,18 @@ public partial class MusicView : UserControl
                 {
                     var addButton = new Button
                     {
-                        Content = "+",
+                        Content = new TextBlock
+                        {
+                            Text = "+",
+                            FontSize = 14,
+                            Margin = new Thickness(0, -2, 0, 0),
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            TextAlignment = TextAlignment.Center
+                        },
                         Width = 16,
                         Height = 25,
                         Padding = new Thickness(0),
-                        FontSize = 14,
                         FontWeight = FontWeight.Normal,
                         Background = Brushes.Transparent,
                         BorderBrush = Brushes.Transparent,
@@ -3461,6 +3484,76 @@ public partial class MusicView : UserControl
         });
     }
 
+    private FilterSection CreateStyleFilterSection(MultiSelectFilterControl styleCtrl)
+    {
+        var panel = new StackPanel { Spacing = 9 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "Styles",
+            FontSize = 12,
+            FontWeight = FontWeight.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center
+        });
+
+        void Toggle(Style style)
+        {
+            var next = styleCtrl.SelectedItems.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (!next.Add(style.Name))
+                next.Remove(style.Name);
+            styleCtrl.SetSelectedItems(next);
+            RebuildStyles();
+        }
+
+        void RebuildStyles()
+        {
+            while (panel.Children.Count > 1)
+                panel.Children.RemoveAt(1);
+
+            var styles = Values.Styles
+                .OrderBy(style => style.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var rows = new StackPanel { Spacing = 7 };
+            var rowCount = Math.Max(1, (int)Math.Ceiling(styles.Count / 4d));
+            var styleIndex = 0;
+
+            for (var rowIndex = 0; rowIndex < rowCount && styleIndex < styles.Count; rowIndex++)
+            {
+                var remainingStyles = styles.Count - styleIndex;
+                var remainingRows = rowCount - rowIndex;
+                var stylesInRow = (int)Math.Ceiling(remainingStyles / (double)remainingRows);
+                var row = new Grid { ColumnSpacing = 7 };
+
+                for (var column = 0; column < stylesInRow; column++)
+                {
+                    var style = styles[styleIndex++];
+                    row.ColumnDefinitions.Add(new ColumnDefinition
+                    {
+                        Width = new GridLength(Math.Max(6, style.Name.Length + 4), GridUnitType.Star)
+                    });
+                    var button = CreateTagFilterChoiceButton(
+                        style.Name,
+                        styleCtrl.SelectedItems.Contains(style.Name));
+                    button.Click += (_, _) => Toggle(style);
+                    Grid.SetColumn(button, column);
+                    row.Children.Add(button);
+                }
+
+                rows.Children.Add(row);
+            }
+
+            panel.Children.Add(rows);
+        }
+
+        RebuildStyles();
+        return new FilterSection(new Border
+        {
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Padding = new Thickness(0),
+            Child = panel
+        }, RebuildStyles);
+    }
+
     private FilterSection CreateTagFilterSection(MultiSelectFilterControl tagCtrl)
     {
         var panel = new StackPanel { Spacing = 9 };
@@ -3540,16 +3633,25 @@ public partial class MusicView : UserControl
     {
         var expanded = false;
         var contentPanel = new StackPanel { Spacing = 7, IsVisible = false };
-        var chevron = new TextBlock
+        var chevron = new Avalonia.Controls.Shapes.Path
         {
-            Text = "›",
-            FontSize = 18,
-            Width = 14,
-            Margin = new Thickness(0, -2, 0, 0),
+            Width = 5,
+            Height = 9,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
+            Data = Geometry.Parse("M 0 0 L 4 4.5 L 0 9"),
+            Stroke = ThemeResources.Brush("Theme.Brush.TextSecondary"),
+            StrokeThickness = 1,
             RenderTransformOrigin = RelativePoint.Center,
             RenderTransform = new RotateTransform(0)
+        };
+        var chevronContainer = new Border
+        {
+            Width = 14,
+            Height = 14,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = chevron
         };
         var selectedSummary = new TextBlock
         {
@@ -3562,7 +3664,7 @@ public partial class MusicView : UserControl
             ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto"),
             ColumnSpacing = 6
         };
-        headerGrid.Children.Add(chevron);
+        headerGrid.Children.Add(chevronContainer);
         var title = new TextBlock
         {
             Text = "Languages",

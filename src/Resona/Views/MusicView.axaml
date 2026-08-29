@@ -266,15 +266,27 @@
         </Style>
         <Style Selector="Border.track-card">
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="Border.track-card:pointerover">
             <Setter Property="Background" Value="#32262B22"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.track-card">
+            <Setter Property="Background" Value="#52253546"/>
+            <Setter Property="BorderBrush" Value="#9A78A9E6"/>
+            <Setter Property="BoxShadow" Value="0 0 16 0 #284F83C4, inset 0 1 0 0 #28FFFFFF"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected:pointerover Border.track-card">
+            <Setter Property="Background" Value="#642B3D52"/>
+            <Setter Property="BorderBrush" Value="#C078A9E6"/>
         </Style>
         <Style Selector="Border.selection-accent">
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="ListBoxItem:selected Border.selection-accent">
-            <Setter Property="Background" Value="#D0B7F000"/>
+            <Setter Property="Background" Value="#FF78A9E6"/>
+            <Setter Property="BoxShadow" Value="0 0 9 1 #8A78A9E6"/>
         </Style>
     </UserControl.Styles>
 
@@ -691,6 +703,15 @@
                                     </TextBlock>
                                 </StackPanel>
 
+                                <Border Classes="selection-accent"
+                                        Width="3"
+                                        Height="34"
+                                        CornerRadius="2"
+                                        Margin="3,0,0,0"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        IsHitTestVisible="False"/>
+
                                 </Panel>
                             </Border>
                             <Rectangle Grid.Row="1"
@@ -906,7 +927,7 @@
                         <ScrollViewer Grid.Column="0"
                                       VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled">
-                            <StackPanel Spacing="18">
+                            <StackPanel Spacing="18" Margin="0,0,14,0">
                                 <StackPanel Spacing="12">
                                     <StackPanel Spacing="7">
                                         <TextBlock Text="BUILT-IN VIEWS"
@@ -1194,13 +1215,21 @@
                                                    Opacity="0.7"/>
 
                                         <TextBlock x:Name="CurrentSetEmptyText"
-                                                   Text="Select genres, tags, languages or emotional character ranges below."
+                                                   Text="Select genres, styles, tags, languages or emotional character ranges below."
                                                    FontSize="10.5"
                                                    Opacity="0.5"/>
                                         <StackPanel x:Name="CurrentSetGenresRow" IsVisible="False" Spacing="2">
                                             <TextBlock Text="GENRES" FontSize="9" FontWeight="SemiBold"
                                                        Opacity="0.42" LetterSpacing="0.8"/>
                                             <TextBlock x:Name="CurrentSetGenresText"
+                                                       FontSize="10.5"
+                                                       Foreground="{DynamicResource Theme.Brush.TextSecondary}"
+                                                       TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <StackPanel x:Name="CurrentSetStylesRow" IsVisible="False" Spacing="2">
+                                            <TextBlock Text="STYLES" FontSize="9" FontWeight="SemiBold"
+                                                       Opacity="0.42" LetterSpacing="0.8"/>
+                                            <TextBlock x:Name="CurrentSetStylesText"
                                                        FontSize="10.5"
                                                        Foreground="{DynamicResource Theme.Brush.TextSecondary}"
                                                        TextWrapping="Wrap"/>
