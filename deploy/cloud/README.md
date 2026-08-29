@@ -57,4 +57,4 @@ Audio uploads are atomic and recorded only after the complete file has been writ
 
 The analyzer intentionally runs one analysis at a time by default because TensorFlow inference is memory intensive. It returns MAEST genre scores, BPM, EBU R128 loudness/dynamics, and the MIREX emotional-character clusters used by Resona. Increase `MAX_CONCURRENT_ANALYSES` only after checking memory usage on the server.
 
-`MUSIC_API_KEY` is optional infrastructure preparation. The current desktop client does not send this header yet, so leave it empty while the analyzer is reachable only through a trusted proxy or restricted network. Do not expose the analysis endpoint openly to the internet without adding client authentication or equivalent nginx access control.
+`MUSIC_API_KEY` is optional. When it is configured, enter the same value under **Settings → Servers → Analysis server → API key** in Resona Desktop. The client sends it as `X-Api-Key`. If no key is configured, keep the analyzer behind a trusted proxy, VPN, or restricted network instead of exposing it openly to the internet.
