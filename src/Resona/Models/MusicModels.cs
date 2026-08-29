@@ -162,15 +162,6 @@ public static class RatingNames
     public const string Timeless = "Timeless";
 }
 public record TrackUsageStats(int PlayCount, int ListenedSeconds, int SkipCount, string? LastListenedAt);
-public record PortableExportRecord(
-    int Id,
-    string ExportId,
-    int SchemaVersion,
-    string ExportedAt,
-    int TrackCountTotal,
-    int NewTrackCount,
-    string? CutoffDownloadedAt,
-    string? ArchivePath);
 public record YouTubeTrackMetadata(
     string? Title,
     string? ChannelId,

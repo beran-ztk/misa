@@ -373,7 +373,6 @@ public partial class MusicView : UserControl
             UpdateDiscordPresence();
         };
         SettingsOverlay.LibraryMetadataChanged += RefreshLibraryPresentation;
-        SettingsOverlay.ExportRequested += ExportPortableLibrary;
     }
 
     private void UpdateEditorBounds()
@@ -3965,31 +3964,6 @@ public partial class MusicView : UserControl
                 Toast.IsVisible = false;
         }
         catch (OperationCanceledException) { }
-    }
-
-    private async void ExportPortableLibrary()
-    {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
-
-        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-        {
-            Title = "Export Android library",
-            AllowMultiple = false
-        });
-        if (folders.Count == 0) return;
-
-        try
-        {
-            var archivePath = await MusicLibraryService.Current.ExportPortableLibraryAsync(folders[0].Path.LocalPath);
-            StatusText.Text = $"Exported Android library: {Path.GetFileName(archivePath)}";
-            StatusText.IsVisible = true;
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = $"Export failed: {ex.Message}";
-            StatusText.IsVisible = true;
-        }
     }
 
     private void OpenTrackEditor(MusicTrack track)

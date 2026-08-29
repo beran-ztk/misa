@@ -309,16 +309,6 @@ public class MusicDatabase
             CREATE INDEX ix_model_subgenre_distinctions_source ON model_subgenre_distinctions(model_subgenre_id);
             CREATE INDEX ix_track_genre_predictions_analysis_id ON track_genre_predictions(track_analysis_id);
             CREATE INDEX ix_track_analysis_signals_analysis_id ON track_analysis_signals(track_analysis_id);
-            CREATE TABLE portable_exports (
-                id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-                export_id             TEXT NOT NULL UNIQUE,
-                schema_version        INTEGER NOT NULL,
-                exported_at           TEXT NOT NULL,
-                track_count_total     INTEGER NOT NULL,
-                new_track_count       INTEGER NOT NULL,
-                cutoff_downloaded_at  TEXT NULL,
-                archive_path          TEXT NULL
-            );
             ";
         cmd.ExecuteNonQuery();
     }
@@ -362,7 +352,6 @@ public class MusicDatabase
         CreateTagSchema(conn);
         SimplifyTagSchemaIfNeeded(conn);
         CreateStyleSchema(conn);
-        CreatePortableExportSchema(conn);
         CreateCollectionSchema(conn);
     }
 
@@ -508,23 +497,6 @@ public class MusicDatabase
         ExecuteInsert(conn, tx, "UPDATE ratings SET sort_order = 6 WHERE name = $timeless",
             ("$timeless", RatingNames.Timeless));
         tx.Commit();
-    }
-
-    private static void CreatePortableExportSchema(SqliteConnection conn)
-    {
-        ExecuteNonQuery(conn, @"
-            CREATE TABLE IF NOT EXISTS portable_exports (
-                id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-                export_id             TEXT NOT NULL UNIQUE,
-                schema_version        INTEGER NOT NULL,
-                exported_at           TEXT NOT NULL,
-                track_count_total     INTEGER NOT NULL,
-                new_track_count       INTEGER NOT NULL,
-                cutoff_downloaded_at  TEXT NULL,
-                archive_path          TEXT NULL
-            );
-            CREATE INDEX IF NOT EXISTS ix_portable_exports_exported_at
-                ON portable_exports(exported_at);");
     }
 
     private static void CreateTagSchema(SqliteConnection conn)
@@ -980,56 +952,6 @@ public class MusicDatabase
                 reader.IsDBNull(4) ? null : reader.GetString(4));
         }
         return result;
-    }
-
-    public PortableExportRecord? GetLastPortableExport()
-    {
-        using var conn = Open();
-        using var cmd = conn.CreateCommand();
-        cmd.CommandText = @"SELECT id, export_id, schema_version, exported_at, track_count_total,
-                                   new_track_count, cutoff_downloaded_at, archive_path
-                            FROM portable_exports
-                            ORDER BY exported_at DESC, id DESC
-                            LIMIT 1";
-        using var reader = cmd.ExecuteReader();
-        return reader.Read()
-            ? new PortableExportRecord(
-                reader.GetInt32(0),
-                reader.GetString(1),
-                reader.GetInt32(2),
-                reader.GetString(3),
-                reader.GetInt32(4),
-                reader.GetInt32(5),
-                reader.IsDBNull(6) ? null : reader.GetString(6),
-                reader.IsDBNull(7) ? null : reader.GetString(7))
-            : null;
-    }
-
-    public void RecordPortableExport(
-        string exportId,
-        int schemaVersion,
-        string exportedAt,
-        int trackCountTotal,
-        int newTrackCount,
-        string? cutoffDownloadedAt,
-        string archivePath)
-    {
-        using var conn = Open();
-        EnableConcurrentReads(conn);
-        using var tx = conn.BeginTransaction();
-        ExecuteInsert(conn, tx, @"
-            INSERT INTO portable_exports
-                (export_id, schema_version, exported_at, track_count_total, new_track_count, cutoff_downloaded_at, archive_path)
-            VALUES
-                ($exportId, $schemaVersion, $exportedAt, $trackCountTotal, $newTrackCount, $cutoffDownloadedAt, $archivePath)",
-            ("$exportId", exportId),
-            ("$schemaVersion", schemaVersion),
-            ("$exportedAt", exportedAt),
-            ("$trackCountTotal", trackCountTotal),
-            ("$newTrackCount", newTrackCount),
-            ("$cutoffDownloadedAt", cutoffDownloadedAt),
-            ("$archivePath", archivePath));
-        tx.Commit();
     }
 
     public TimeSpan? EstimateAnalysisDuration(int? trackDurationSeconds, long? fileSizeBytes)

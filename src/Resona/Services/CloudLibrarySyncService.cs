@@ -19,7 +19,21 @@ public sealed record CloudSyncStatus(
     CloudSyncState State,
     string Message,
     int? TrackCount = null,
-    string? CompletedAt = null);
+    string? CompletedAt = null,
+    int? TotalAudioTracks = null,
+    int? UploadedAudioTracks = null,
+    int? PendingAudioTracks = null,
+    int? FailedAudioTracks = null);
+
+public sealed record CloudMediaSyncResult(
+    int Total,
+    int AlreadyUploaded,
+    int Uploaded,
+    int Failed)
+{
+    public int Available => AlreadyUploaded + Uploaded;
+    public int Pending => Math.Max(0, Total - Available);
+}
 
 public sealed class CloudLibrarySyncService
 {
@@ -87,14 +101,14 @@ public sealed class CloudLibrarySyncService
         await _syncGate.WaitAsync(cancellationToken);
         try
         {
-            SetStatus(new CloudSyncStatus(CloudSyncState.Synchronizing, "Preparing full public library snapshot…"));
+            SetProgressStatus("Preparing full public library snapshot…");
             var identity = CloudIdentityStore.Current.GetOrCreate();
             var snapshot = await Task.Run(
                 () => CloudLibrarySnapshotBuilder.Build(MusicLibraryService.Current, identity),
                 cancellationToken);
             await UploadSnapshotAsync(baseUri, identity, snapshot, cancellationToken);
 
-            SetStatus(new CloudSyncStatus(CloudSyncState.Synchronizing, "Uploading current device library metadata…"));
+            SetProgressStatus("Uploading current device library metadata…");
             var deviceSnapshot = await Task.Run(
                 () => CloudDeviceLibrarySnapshotBuilder.Build(MusicLibraryService.Current, identity),
                 cancellationToken);
@@ -105,10 +119,14 @@ public sealed class CloudLibrarySyncService
             return SetStatus(new CloudSyncStatus(
                 CloudSyncState.Succeeded,
                 mediaResult.Failed == 0
-                    ? $"Cloud synchronized · {snapshot.TrackCount} metadata tracks · {mediaResult.Uploaded} audio uploaded"
+                    ? $"Cloud synchronized · {deviceSnapshot.TrackCount} metadata tracks · {mediaResult.Uploaded} audio uploaded"
                     : $"Cloud metadata synchronized · {mediaResult.Failed} audio uploads failed",
-                snapshot.TrackCount,
-                DateTime.UtcNow.ToString("O")));
+                deviceSnapshot.TrackCount,
+                DateTime.UtcNow.ToString("O"),
+                mediaResult.Total,
+                mediaResult.Available,
+                mediaResult.Pending,
+                mediaResult.Failed));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -118,7 +136,14 @@ public sealed class CloudLibrarySyncService
         {
             WorkflowLog.Error("cloud", "Full library snapshot synchronization failed.", exception);
             return SetStatus(new CloudSyncStatus(
-                CloudSyncState.Failed, $"Cloud synchronization failed: {exception.Message}"));
+                CloudSyncState.Failed,
+                $"Cloud synchronization failed: {exception.Message}",
+                Status.TrackCount,
+                Status.CompletedAt,
+                Status.TotalAudioTracks,
+                Status.UploadedAudioTracks,
+                Status.PendingAudioTracks,
+                Status.FailedAudioTracks));
         }
         finally
         {
@@ -164,15 +189,17 @@ public sealed class CloudLibrarySyncService
         response.EnsureSuccessStatusCode();
     }
 
-    private async Task<(int Uploaded, int Failed)> SynchronizeMediaAsync(
+    private async Task<CloudMediaSyncResult> SynchronizeMediaAsync(
         Uri baseUri,
         CloudIdentity identity,
         CancellationToken cancellationToken)
     {
-        SetStatus(new CloudSyncStatus(CloudSyncState.Synchronizing, "Checking cloud audio inventory…"));
+        SetProgressStatus("Checking cloud audio inventory…");
         var inventory = await GetMediaInventoryAsync(baseUri, identity, cancellationToken);
         var serverFiles = inventory.Files.ToDictionary(file => file.TrackKey, StringComparer.Ordinal);
         var localFiles = new List<(string TrackKey, string FileName, string Path, long Size)>();
+        var total = 0;
+        var alreadyUploaded = 0;
         foreach (var track in MusicLibraryService.Current.GetTracks())
         {
             var trackKey = string.IsNullOrWhiteSpace(track.SourceVideoId)
@@ -183,21 +210,36 @@ public sealed class CloudLibrarySyncService
             var path = Path.Combine(Values.TracksDirectory, track.FileName);
             if (!File.Exists(path))
                 continue;
+            total++;
             var size = new FileInfo(path).Length;
             if (serverFiles.TryGetValue(trackKey, out var remote) && remote.FileSizeBytes == size)
+            {
+                alreadyUploaded++;
                 continue;
+            }
             localFiles.Add((trackKey, track.FileName, path, size));
         }
 
         var uploaded = 0;
         var failed = 0;
+        SetStatus(new CloudSyncStatus(
+            CloudSyncState.Synchronizing,
+            localFiles.Count == 0 ? "All local audio is already in the cloud." : "Audio upload queue prepared.",
+            TotalAudioTracks: total,
+            UploadedAudioTracks: alreadyUploaded,
+            PendingAudioTracks: localFiles.Count,
+            FailedAudioTracks: 0));
         for (var index = 0; index < localFiles.Count; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var file = localFiles[index];
             SetStatus(new CloudSyncStatus(
                 CloudSyncState.Synchronizing,
-                $"Uploading audio {index + 1} of {localFiles.Count} · {file.FileName}"));
+                $"Uploading audio {index + 1} of {localFiles.Count} · {file.FileName}",
+                TotalAudioTracks: total,
+                UploadedAudioTracks: alreadyUploaded + uploaded,
+                PendingAudioTracks: localFiles.Count - uploaded,
+                FailedAudioTracks: failed));
             try
             {
                 await UploadMediaAsync(baseUri, identity, file.TrackKey, file.FileName, file.Path, file.Size, cancellationToken);
@@ -214,7 +256,7 @@ public sealed class CloudLibrarySyncService
             }
         }
 
-        return (uploaded, failed);
+        return new CloudMediaSyncResult(total, alreadyUploaded, uploaded, failed);
     }
 
     private async Task<CloudMediaInventory> GetMediaInventoryAsync(
@@ -272,6 +314,16 @@ public sealed class CloudLibrarySyncService
         StatusChanged?.Invoke(status);
         return status;
     }
+
+    private void SetProgressStatus(string message) => SetStatus(new CloudSyncStatus(
+        CloudSyncState.Synchronizing,
+        message,
+        Status.TrackCount,
+        Status.CompletedAt,
+        Status.TotalAudioTracks,
+        Status.UploadedAudioTracks,
+        Status.PendingAudioTracks,
+        Status.FailedAudioTracks));
 
     private static Uri EnsureTrailingSlash(Uri uri) =>
         uri.AbsoluteUri.EndsWith('/') ? uri : new Uri(uri.AbsoluteUri + "/");

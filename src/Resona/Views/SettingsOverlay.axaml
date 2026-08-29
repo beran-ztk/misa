@@ -203,8 +203,8 @@
                             <ToggleButton x:Name="BackupNavButton" Classes="settings-nav"
                                           Content="Backup" Tag="backup"
                                           Click="OnSettingsNavigationClicked"/>
-                            <ToggleButton x:Name="ExportNavButton" Classes="settings-nav"
-                                          Content="Export" Tag="export"
+                            <ToggleButton x:Name="CloudSyncNavButton" Classes="settings-nav"
+                                          Content="Cloud sync" Tag="cloud_sync"
                                           Click="OnSettingsNavigationClicked"/>
                         </StackPanel>
 
@@ -322,7 +322,7 @@
                     <StackPanel Spacing="5">
                         <TextBlock Text="ACCOUNT" FontSize="10" FontWeight="SemiBold" Opacity="0.42"/>
                         <TextBlock Text="Local account" FontSize="15" FontWeight="SemiBold"/>
-                        <TextBlock Text="This identity belongs to this Resona installation. Nothing is uploaded until cloud synchronization is enabled later."
+                        <TextBlock Text="This identity belongs to this Resona installation and authenticates its private cloud library."
                                    FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
                     </StackPanel>
 
@@ -549,7 +549,7 @@
                                            Width="17" Height="17" Opacity="0.78"/>
                                 </Button>
                             </Grid>
-                            <TextBlock Text="Only metadata is synchronized. Audio files are not uploaded. This is not a backup, and tracks cannot be played from another device."
+                            <TextBlock Text="The latest metadata snapshot and missing audio files are synchronized for your Android library."
                                        FontSize="10.5" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Theme.Brush.Warning}"
                                        TextWrapping="Wrap"/>
@@ -692,20 +692,59 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <ScrollViewer x:Name="ExportPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
+            <ScrollViewer x:Name="CloudSyncPage" Grid.Row="2" IsVisible="False" Margin="30,22,30,0"
                           HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Spacing="22">
+                <StackPanel Spacing="22" Margin="0,0,0,24">
                     <StackPanel Spacing="5">
-                        <TextBlock Text="Portable export" FontSize="15" FontWeight="SemiBold"/>
-                        <TextBlock Text="Create a portable copy of the current music library, including audio files, covers, and metadata for external devices."
+                        <TextBlock Text="Android cloud library" FontSize="15" FontWeight="SemiBold"/>
+                        <TextBlock Text="Metadata is replaced with the current library state. Audio files are uploaded once and remain available for your phone."
                                    FontSize="11" Opacity="0.62" TextWrapping="Wrap"/>
                     </StackPanel>
-                    <Button Content="Export Android library"
-                            Click="OnExportRequestedClicked"
+
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                        <Border Grid.Column="0" Padding="14,12" CornerRadius="8"
+                                Background="{DynamicResource Theme.Brush.SurfaceHover}"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}" BorderThickness="1">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="LOCAL AUDIO" FontSize="9.5" FontWeight="SemiBold" Opacity="0.46"/>
+                                <TextBlock x:Name="CloudSyncTotalText" Text="—" FontSize="20" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Padding="14,12" CornerRadius="8"
+                                Background="{DynamicResource Theme.Brush.SurfaceHover}"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}" BorderThickness="1">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="IN CLOUD" FontSize="9.5" FontWeight="SemiBold" Opacity="0.46"/>
+                                <TextBlock x:Name="CloudSyncUploadedText" Text="—" FontSize="20" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Padding="14,12" CornerRadius="8"
+                                Background="{DynamicResource Theme.Brush.SurfaceHover}"
+                                BorderBrush="{DynamicResource Theme.Brush.BorderSubtle}" BorderThickness="1">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="PENDING" FontSize="9.5" FontWeight="SemiBold" Opacity="0.46"/>
+                                <TextBlock x:Name="CloudSyncPendingText" Text="—" FontSize="20" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Theme.Brush.Accent}"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <TextBlock x:Name="CloudSyncStateText" Text="Cloud synchronization has not run yet."
+                                       FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" x:Name="CloudSyncPercentText" Text=""
+                                       FontSize="10.5" Opacity="0.58" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ProgressBar x:Name="CloudSyncProgressBar" Minimum="0" Maximum="100" Height="4" Value="0"/>
+                        <TextBlock x:Name="CloudSyncCompletedText" Text="" FontSize="10" Opacity="0.48"/>
+                    </StackPanel>
+
+                    <Button x:Name="SynchronizeLibraryButton"
+                            Content="Synchronize now"
+                            Click="OnSynchronizeCloudClicked"
                             HorizontalAlignment="Left"
-                            Padding="14,7"
-                            Background="{DynamicResource Theme.Brush.SurfaceHover}"
-                            BorderBrush="{DynamicResource Theme.Brush.BorderStrong}"/>
+                            Classes="settings-action"/>
                 </StackPanel>
             </ScrollViewer>
 

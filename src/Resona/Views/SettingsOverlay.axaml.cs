@@ -53,7 +53,6 @@ public partial class SettingsOverlay : UserControl
 
     public event Action<string>? ToastRequested;
     public event Action? LibraryMetadataChanged;
-    public event Action? ExportRequested;
     public event Action<AppearanceSettings>? AppearanceChanged;
     public event Action? DiscordPresenceChanged;
     public event Action? CloudProfileChanged;
@@ -106,6 +105,7 @@ public partial class SettingsOverlay : UserControl
         RefreshLinuxDependencies();
         RebuildBackupDirectoryRows();
         CloudServerUrlBox.Text = appSettings.CloudServerUrl;
+        RefreshCloudSyncStatus(CloudLibrarySyncService.Current.Status);
         LoadCloudProfile();
         SelectPage(SettingsPage.Profile);
         IsVisible = true;
@@ -417,7 +417,7 @@ public partial class SettingsOverlay : UserControl
             "health" => SettingsPage.Health,
             "appearance" => SettingsPage.Appearance,
             "backup" => SettingsPage.Backup,
-            "export" => SettingsPage.Export,
+            "cloud_sync" => SettingsPage.CloudSync,
             "updates" => SettingsPage.Updates,
             "discord" => SettingsPage.Discord,
             "profile" => SettingsPage.Profile,
@@ -439,7 +439,7 @@ public partial class SettingsOverlay : UserControl
         var isGenreVocabularyPage = page == SettingsPage.GenreVocabulary;
         var isHealthPage = page == SettingsPage.Health;
         var isBackupPage = page == SettingsPage.Backup;
-        var isExportPage = page == SettingsPage.Export;
+        var isCloudSyncPage = page == SettingsPage.CloudSync;
         var isUpdatesPage = page == SettingsPage.Updates;
         var isAppearancePage = page == SettingsPage.Appearance;
         var isDiscordPage = page == SettingsPage.Discord;
@@ -448,7 +448,7 @@ public partial class SettingsOverlay : UserControl
         GenreVocabularyPage.IsVisible = isGenreVocabularyPage;
         HealthPage.IsVisible = isHealthPage;
         BackupPage.IsVisible = isBackupPage;
-        ExportPage.IsVisible = isExportPage;
+        CloudSyncPage.IsVisible = isCloudSyncPage;
         UpdatesPage.IsVisible = isUpdatesPage;
         AppearancePage.IsVisible = isAppearancePage;
         DiscordPage.IsVisible = isDiscordPage;
@@ -460,7 +460,7 @@ public partial class SettingsOverlay : UserControl
         GenreVocabularyNavButton.IsChecked = isGenreVocabularyPage;
         HealthNavButton.IsChecked = isHealthPage;
         BackupNavButton.IsChecked = isBackupPage;
-        ExportNavButton.IsChecked = isExportPage;
+        CloudSyncNavButton.IsChecked = isCloudSyncPage;
         UpdatesNavButton.IsChecked = isUpdatesPage;
         AppearanceNavButton.IsChecked = isAppearancePage;
         DiscordNavButton.IsChecked = isDiscordPage;
@@ -474,7 +474,7 @@ public partial class SettingsOverlay : UserControl
         {
             SettingsPage.Health => "Health check",
             SettingsPage.Backup => "Backup",
-            SettingsPage.Export => "Export",
+            SettingsPage.CloudSync => "Cloud sync",
             SettingsPage.Updates => "Updates",
             SettingsPage.Appearance => "Appearance",
             SettingsPage.Discord => "Discord presence",
@@ -491,8 +491,8 @@ public partial class SettingsOverlay : UserControl
                     ? "Check database integrity, workflow consistency, channel mappings and local audio files."
                 : isBackupPage
                     ? "Keep daily database snapshots in your backup locations."
-                    : isExportPage
-                        ? "Export the current library into a portable folder."
+                    : isCloudSyncPage
+                        ? "Track the Android cloud library and upload anything that is still missing."
                         : isAppearancePage
                             ? "Tune artwork, blur, color and audio-reactive visuals. Changes are applied live."
                             : isDiscordPage
@@ -513,6 +513,7 @@ public partial class SettingsOverlay : UserControl
         SummaryText.Text = isGenreVocabularyPage ? BuildSummaryText() : "";
         if (isGenreVocabularyPage) RebuildGenreVocabularyRows();
         if (isBackupPage) RebuildBackupDirectoryRows();
+        if (isCloudSyncPage) RefreshCloudSyncStatus(CloudLibrarySyncService.Current.Status);
         if (page == SettingsPage.Tags) ReloadTagManagement();
         if (page == SettingsPage.Styles) ReloadStyleManagement();
         if (page == SettingsPage.TagRules) ReloadTagRules();
@@ -728,6 +729,27 @@ public partial class SettingsOverlay : UserControl
     {
         CloudServerStatusText.Text = status.Message;
         CloudServerStatusText.IsVisible = true;
+        CloudSyncStateText.Text = status.Message;
+        CloudSyncTotalText.Text = status.TotalAudioTracks?.ToString(CultureInfo.InvariantCulture) ?? "—";
+        CloudSyncUploadedText.Text = status.UploadedAudioTracks?.ToString(CultureInfo.InvariantCulture) ?? "—";
+        CloudSyncPendingText.Text = status.PendingAudioTracks?.ToString(CultureInfo.InvariantCulture) ?? "—";
+
+        var total = status.TotalAudioTracks.GetValueOrDefault();
+        var uploaded = status.UploadedAudioTracks.GetValueOrDefault();
+        var progress = total > 0
+            ? Math.Clamp(uploaded * 100d / total, 0, 100)
+            : status.State == CloudSyncState.Succeeded ? 100 : 0;
+        CloudSyncProgressBar.IsIndeterminate = status.State == CloudSyncState.Synchronizing
+                                               && status.TotalAudioTracks is null;
+        CloudSyncProgressBar.Value = progress;
+        CloudSyncPercentText.Text = status.TotalAudioTracks is null ? "" : $"{progress:0}%";
+        SynchronizeLibraryButton.IsEnabled = status.State != CloudSyncState.Synchronizing;
+
+        CloudSyncCompletedText.Text = DateTimeOffset.TryParse(status.CompletedAt, out var completedAt)
+            ? $"Last completed {completedAt.ToLocalTime():g}"
+            : status.FailedAudioTracks is > 0
+                ? $"{status.FailedAudioTracks} uploads will be retried."
+                : "";
     }
 
     private async void OnCheckForUpdatesClicked(object? sender, RoutedEventArgs e)
@@ -757,8 +779,6 @@ public partial class SettingsOverlay : UserControl
         DownloadUpdateButton.IsVisible = state.Phase == AppUpdatePhase.UpdateAvailable;
         InstallUpdateButton.IsVisible = state.Phase == AppUpdatePhase.ReadyToInstall;
     }
-
-    private void OnExportRequestedClicked(object? sender, RoutedEventArgs e) => ExportRequested?.Invoke();
 
     private void OnSaveAnalysisServerClicked(object? sender, RoutedEventArgs e)
     {
@@ -2080,5 +2100,5 @@ public partial class SettingsOverlay : UserControl
         public override string ToString() => Name;
     }
 
-    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Servers, Backup, Export, Updates, Tags, Styles, TagRules }
+    private enum SettingsPage { GenreVocabulary, Health, Appearance, Discord, Profile, Servers, Backup, CloudSync, Updates, Tags, Styles, TagRules }
 }
