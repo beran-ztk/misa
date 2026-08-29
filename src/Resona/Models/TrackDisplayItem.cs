@@ -69,6 +69,7 @@ public record TrackDisplayItem(
 
     public bool NeedsReview { get; set; }
     public bool NeedsAnalysis { get; set; }
+    public bool IsPlaying { get; set; }
     public bool ShowDownloadedDate { get; set; }
     public string CollectionDisplayText { get; set; } = string.Empty;
     public string CollectionOverflowText { get; set; } = string.Empty;

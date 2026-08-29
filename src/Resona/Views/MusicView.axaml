@@ -272,19 +272,7 @@
         <Style Selector="Border.track-card:pointerover">
             <Setter Property="Background" Value="#32262B22"/>
         </Style>
-        <Style Selector="ListBoxItem:selected Border.track-card">
-            <Setter Property="Background" Value="#52253546"/>
-            <Setter Property="BorderBrush" Value="#9A78A9E6"/>
-            <Setter Property="BoxShadow" Value="0 0 16 0 #284F83C4, inset 0 1 0 0 #28FFFFFF"/>
-        </Style>
-        <Style Selector="ListBoxItem:selected:pointerover Border.track-card">
-            <Setter Property="Background" Value="#642B3D52"/>
-            <Setter Property="BorderBrush" Value="#C078A9E6"/>
-        </Style>
         <Style Selector="Border.selection-accent">
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-        <Style Selector="ListBoxItem:selected Border.selection-accent">
             <Setter Property="Background" Value="#FF78A9E6"/>
             <Setter Property="BoxShadow" Value="0 0 9 1 #8A78A9E6"/>
         </Style>
@@ -703,7 +691,15 @@
                                     </TextBlock>
                                 </StackPanel>
 
+                                <Border IsVisible="{Binding IsPlaying}"
+                                        CornerRadius="11,3,3,11"
+                                        Background="#52253546"
+                                        BorderBrush="#9A78A9E6"
+                                        BorderThickness="1"
+                                        BoxShadow="0 0 16 0 #284F83C4, inset 0 1 0 0 #28FFFFFF"
+                                        IsHitTestVisible="False"/>
                                 <Border Classes="selection-accent"
+                                        IsVisible="{Binding IsPlaying}"
                                         Width="3"
                                         Height="34"
                                         CornerRadius="2"

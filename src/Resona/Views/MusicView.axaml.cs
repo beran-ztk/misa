@@ -793,7 +793,8 @@ public partial class MusicView : UserControl
         var item = new TrackDisplayItem(track, genreStr, modelGenreStr, manualGenreStr, styleStr, durationText, ratingName, genreDisplays, tagDisplays, track.DisplayChannelName ?? "")
         {
             NeedsReview = track.NeedsReview,
-            NeedsAnalysis = needsAnalysis
+            NeedsAnalysis = needsAnalysis,
+            IsPlaying = _engine.ActiveTrackId == track.Id
         };
         item.ApplyAppearance(_appearanceSettings);
         return item;
@@ -5329,7 +5330,15 @@ public partial class MusicView : UserControl
 
     private void RefreshPlayingMarkers()
     {
-        if (_filteredItems.Count == 0) return;
+        var activeTrackId = _engine.ActiveTrackId;
+        foreach (var item in _allItems)
+            item.IsPlaying = activeTrackId >= 0 && item.Track.Id == activeTrackId;
+
+        if (_filteredItems.Count == 0)
+        {
+            RefreshVisibleItemsSource();
+            return;
+        }
 
         var selectedId = (FileList.SelectedItem as TrackDisplayItem)?.Track.Id ?? -1;
 
