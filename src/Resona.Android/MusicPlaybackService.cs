@@ -116,10 +116,15 @@ public sealed class MusicPlaybackService : Service
             ? new Notification.Builder(this, ChannelId)
             : new Notification.Builder(this);
 
+        var openAppIntent = new Intent(this, typeof(MainActivity));
+        openAppIntent.SetAction(Intent.ActionMain);
+        openAppIntent.AddCategory(Intent.CategoryLauncher);
+        openAppIntent.SetFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
+
         var contentIntent = PendingIntent.GetActivity(
             this,
             0,
-            new Intent(this, typeof(MainActivity)),
+            openAppIntent,
             PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
         builder
