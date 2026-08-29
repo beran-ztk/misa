@@ -6,17 +6,17 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Resona.Core;
+using Resona.Models;
 using SkiaSharp;
-using System.IO.Compression;
 
 namespace Resona.Companion.Views;
 
 public partial class MainView : UserControl
 {
     private readonly ICompanionAudioPlayer _audio = CompanionServices.AudioPlayer;
+    private readonly DeviceLibraryCloudClient _cloud = new();
     private readonly DispatcherTimer _timer;
     private readonly DispatcherTimer _artworkTimer;
     private bool _systemBarsConfigured;
@@ -54,6 +54,9 @@ public partial class MainView : UserControl
     private bool _updatingPresetUi;
     private DateTime _lastMediaUpdate = DateTime.MinValue;
     private CancellationTokenSource? _toastCts;
+    private CancellationTokenSource? _cloudDownloadCts;
+    private CloudDeviceLibrarySnapshot? _cloudSnapshot;
+    private bool _cloudBusy;
 
     private record FilterGroupControls(
         MultiSelectFilterControl GenreFilter,
@@ -187,30 +190,32 @@ public partial class MainView : UserControl
             _safeAreaBottom = safeArea.Bottom;
 
         HeaderBar.Padding = new Thickness(14, 6 + _safeAreaTop, 12, 6);
+        CloudHeaderBar.Padding = new Thickness(16, 12 + _safeAreaTop, 10, 11);
         PlayerContent.Margin = new Thickness(12, 5, 12, 6 + _safeAreaBottom);
     }
 
     private async Task LoadLibraryAsync()
     {
+        string? cloudError = null;
         try
         {
             ClearThumbnailCache();
-            var cloud = new DeviceLibraryCloudClient();
-            if (cloud.LoadConnection() is not null)
+            _cloudSnapshot = _cloud.LoadCachedSnapshot();
+            if (_cloud.LoadConnection() is not null)
             {
                 try
                 {
                     using var refreshTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    await cloud.RefreshMetadataAsync(refreshTimeout.Token);
+                    _cloudSnapshot = await _cloud.RefreshMetadataAsync(refreshTimeout.Token);
                 }
                 catch (Exception ex)
                 {
                     // A cached library remains usable while the server is unavailable.
-                    SetStatus($"Cloud refresh failed: {ex.Message}");
+                    cloudError = $"Cloud refresh failed: {ex.Message}";
                 }
             }
             _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
-            SetStatus();
+            SetStatus(cloudError);
         }
         catch (Exception ex)
         {
@@ -224,6 +229,7 @@ public partial class MainView : UserControl
         ApplyFilter();
         UpdateReviewButton();
         UpdateReviewFilterButton();
+        RefreshCloudPage();
     }
 
     private void PopulateFilters()
@@ -312,7 +318,7 @@ public partial class MainView : UserControl
         var path = _loadedLibrary.TrackPath(track);
         if (!File.Exists(path))
         {
-            SetStatus($"Missing file: {path}");
+            SetStatus("This track is not downloaded. Open the cloud library to download missing tracks.");
             return;
         }
 
@@ -1008,157 +1014,196 @@ public partial class MainView : UserControl
             : $"Reviews ({count})");
     }
 
-    private async void OnImportClicked(object? sender, RoutedEventArgs e)
+    private void OnCloudClicked(object? sender, RoutedEventArgs e)
     {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel?.StorageProvider.CanPickFolder != true)
-        {
-            SetStatus("Folder import is not available on this device.");
-            return;
-        }
-
-        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
-        {
-            Title = "Select exported MusicLibrary zip",
-            AllowMultiple = false
-        });
+        FilterDrawer.IsVisible = false;
+        CloudPage.IsVisible = true;
         ConfigureSystemBars();
-
-        if (files.Count > 0)
-        {
-            await ImportLibraryArchiveAsync(files[0]);
-            return;
-        }
-
-        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-        {
-            Title = "Select exported MusicLibrary folder",
-            AllowMultiple = false
-        });
-        ConfigureSystemBars();
-
-        if (folders.Count == 0)
-            return;
-
-        await ImportLibraryAsync(folders[0]);
+        RefreshCloudPage();
     }
 
-    private async Task ImportLibraryArchiveAsync(IStorageFile selectedFile)
-    {
-        ImportButton.IsEnabled = false;
-        SetStatus();
+    private void OnCloseCloudClicked(object? sender, RoutedEventArgs e) => CloudPage.IsVisible = false;
 
-        var targetDirectory = CompanionServices.LibraryStorage.LibraryDirectory;
-        var tempDirectory = targetDirectory + ".archive-import";
+    private async void OnConnectCloudClicked(object? sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(CloudConnectionCodeBox.Text))
+        {
+            CloudOperationStatusText.Text = "Paste the connection code from Resona Desktop first.";
+            return;
+        }
 
         try
         {
-            if (Directory.Exists(tempDirectory))
-                Directory.Delete(tempDirectory, true);
-
-            Directory.CreateDirectory(tempDirectory);
-            await using (var source = await selectedFile.OpenReadAsync())
-            using (var archive = new ZipArchive(source, ZipArchiveMode.Read))
-            {
-                foreach (var entry in archive.Entries)
-                    ExtractArchiveEntry(entry, tempDirectory);
-            }
-
-            await ImportLibraryDirectoryAsync(tempDirectory);
+            _cloud.SaveConnectionCode(CloudConnectionCodeBox.Text);
+            CloudConnectionCodeBox.Text = string.Empty;
+            await RefreshCloudMetadataAndLibraryAsync();
+            ShowToast("Cloud library connected");
         }
         catch (Exception ex)
         {
-            SetStatus($"Import failed: {ex.Message}");
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-                Directory.Delete(tempDirectory, true);
-
-            ImportButton.IsEnabled = true;
+            CloudOperationStatusText.Text = $"Connection failed: {ex.Message}";
         }
     }
 
-    private async Task ImportLibraryAsync(IStorageFolder selectedFolder)
+    private async void OnRefreshCloudClicked(object? sender, RoutedEventArgs e)
     {
-        ImportButton.IsEnabled = false;
-        SetStatus();
-        var tempDirectory = CompanionServices.LibraryStorage.LibraryDirectory + ".import";
-
-        try
+        if (_cloud.LoadConnection() is null)
         {
-            var sourceFolder = await FindLibraryFolderAsync(selectedFolder);
-            if (sourceFolder is null)
-            {
-                SetStatus("Import folder must contain library.json and a tracks folder.");
-                return;
-            }
-
-            if (Directory.Exists(tempDirectory))
-                Directory.Delete(tempDirectory, true);
-
-            Directory.CreateDirectory(tempDirectory);
-            await CopyFolderAsync(sourceFolder, tempDirectory);
-
-            await ImportLibraryDirectoryAsync(tempDirectory);
-        }
-        catch (Exception ex)
-        {
-            SetStatus($"Import failed: {ex.Message}");
-        }
-        finally
-        {
-            if (Directory.Exists(tempDirectory))
-                Directory.Delete(tempDirectory, true);
-
-            ImportButton.IsEnabled = true;
-        }
-    }
-
-    private async Task ImportLibraryDirectoryAsync(string sourceDirectory)
-    {
-        if (!File.Exists(Path.Combine(sourceDirectory, PortableLibraryStore.FileName)))
-        {
-            SetStatus("Import must contain library.json.");
+            CloudOperationStatusText.Text = "Connect this device first.";
             return;
         }
 
-        await PortableLibraryStore.LoadAsync(sourceDirectory);
-
-        var targetDirectory = CompanionServices.LibraryStorage.LibraryDirectory;
-        Directory.CreateDirectory(targetDirectory);
-
-        _audio.Stop();
-        File.Copy(
-            Path.Combine(sourceDirectory, PortableLibraryStore.FileName),
-            Path.Combine(targetDirectory, PortableLibraryStore.FileName),
-            overwrite: true);
-
-        CopyDirectoryIfExists(Path.Combine(sourceDirectory, "tracks"), Path.Combine(targetDirectory, "tracks"));
-        CopyDirectoryIfExists(Path.Combine(sourceDirectory, "covers"), Path.Combine(targetDirectory, "covers"));
-
-        await LoadLibraryAsync();
-        ShowToast($"Library imported · {_loadedLibrary.Library.Tracks.Count} tracks · {ImportedLibraryDuration()}");
+        try
+        {
+            await RefreshCloudMetadataAndLibraryAsync();
+            ShowToast("Cloud metadata updated");
+        }
+        catch (Exception ex)
+        {
+            CloudOperationStatusText.Text = $"Refresh failed: {ex.Message}";
+        }
     }
 
-    private static async Task<IStorageFolder?> FindLibraryFolderAsync(IStorageFolder selectedFolder)
+    private async Task RefreshCloudMetadataAndLibraryAsync()
     {
-        var items = await GetItemsAsync(selectedFolder);
-        if (HasLibraryFiles(items))
-            return selectedFolder;
-
-        return items
-            .OfType<IStorageFolder>()
-            .FirstOrDefault(folder => string.Equals(folder.Name, "MusicLibrary", StringComparison.OrdinalIgnoreCase));
+        SetCloudBusy(true);
+        CloudOperationStatusText.Text = "Refreshing metadata…";
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            _cloudSnapshot = await _cloud.RefreshMetadataAsync(timeout.Token);
+            ClearThumbnailCache();
+            _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
+            PopulateFilters();
+            ApplyFilter();
+            UpdateReviewButton();
+            UpdateReviewFilterButton();
+            CloudOperationStatusText.Text = $"Updated {DateTime.Now:t}";
+        }
+        finally
+        {
+            SetCloudBusy(false);
+            RefreshCloudPage();
+        }
     }
 
-    private string ImportedLibraryDuration()
+    private async void OnDownloadMissingCloudAudioClicked(object? sender, RoutedEventArgs e)
     {
-        var totalSeconds = _loadedLibrary.Library.Tracks
-            .Select(track => track.DurationSeconds ?? 0)
-            .Sum();
+        _cloudSnapshot ??= _cloud.LoadCachedSnapshot();
+        if (_cloudSnapshot is null)
+        {
+            CloudOperationStatusText.Text = "Refresh metadata before downloading audio.";
+            return;
+        }
 
-        return FormatPlaylistDuration(totalSeconds);
+        var missing = _cloud.FindMissingAudio(_cloudSnapshot);
+        if (missing.Count == 0)
+        {
+            CloudOperationStatusText.Text = "No downloadable tracks are missing.";
+            return;
+        }
+
+        _cloudDownloadCts?.Cancel();
+        _cloudDownloadCts?.Dispose();
+        _cloudDownloadCts = new CancellationTokenSource();
+        SetCloudBusy(true);
+        CloudCancelDownloadButton.IsVisible = true;
+        try
+        {
+            var progress = new Progress<(int Completed, int Total, string FileName)>(value =>
+            {
+                var percent = value.Total == 0 ? 100 : value.Completed * 100d / value.Total;
+                CloudDownloadProgressBar.Value = percent;
+                CloudDownloadProgressText.Text = $"{value.Completed} of {value.Total} · {value.FileName}";
+                RefreshCloudCountersOnly();
+            });
+            await _cloud.DownloadMissingAudioAsync(_cloudSnapshot, progress, _cloudDownloadCts.Token);
+            CloudDownloadProgressBar.Value = 100;
+            CloudDownloadProgressText.Text = $"Downloaded {missing.Count} tracks.";
+            CloudOperationStatusText.Text = "Offline library is up to date.";
+            ShowToast("Missing tracks downloaded");
+        }
+        catch (OperationCanceledException)
+        {
+            CloudOperationStatusText.Text = "Download paused. It will continue from the partial file next time.";
+        }
+        catch (Exception ex)
+        {
+            CloudOperationStatusText.Text = $"Download failed: {ex.Message}";
+        }
+        finally
+        {
+            _cloudDownloadCts.Dispose();
+            _cloudDownloadCts = null;
+            SetCloudBusy(false);
+            RefreshCloudPage();
+        }
+    }
+
+    private void OnCancelCloudDownloadClicked(object? sender, RoutedEventArgs e) => _cloudDownloadCts?.Cancel();
+
+    private void SetCloudBusy(bool busy)
+    {
+        _cloudBusy = busy;
+        CloudConnectButton.IsEnabled = !busy;
+        CloudRefreshButton.IsEnabled = !busy && _cloud.LoadConnection() is not null;
+        CloudConnectionCodeBox.IsEnabled = !busy;
+        CloudDownloadButton.IsEnabled = !busy && _cloudSnapshot is not null
+                                      && _cloud.FindMissingAudio(_cloudSnapshot).Count > 0;
+        CloudCancelDownloadButton.IsVisible = _cloudDownloadCts is not null;
+    }
+
+    private void RefreshCloudPage()
+    {
+        var connection = _cloud.LoadConnection();
+        CloudConnectionSummaryText.Text = connection is null
+            ? "Not connected"
+            : $"Connected · {new Uri(connection.ServerUrl).Host}";
+        CloudRefreshButton.IsEnabled = !_cloudBusy && connection is not null;
+        _cloudSnapshot ??= _cloud.LoadCachedSnapshot();
+        RefreshCloudCountersOnly();
+    }
+
+    private void RefreshCloudCountersOnly()
+    {
+        if (_cloudSnapshot is null)
+        {
+            CloudTotalTracksText.Text = "—";
+            CloudLocalTracksText.Text = "—";
+            CloudMissingTracksText.Text = "—";
+            CloudMissingSizeText.Text = "Refresh metadata to see available downloads.";
+            CloudDownloadButton.IsEnabled = false;
+            return;
+        }
+
+        var status = _cloud.GetAudioStatus(_cloudSnapshot);
+        CloudTotalTracksText.Text = status.TotalTracks.ToString();
+        CloudLocalTracksText.Text = status.LocalTracks.ToString();
+        CloudMissingTracksText.Text = status.MissingTracks.ToString();
+        CloudMissingSizeText.Text = status.MissingTracks > 0
+            ? $"{FormatBytes(status.MissingBytes)} available to download"
+              + (status.WaitingForDesktopUpload > 0
+                  ? $" · {status.WaitingForDesktopUpload} waiting for desktop upload"
+                  : string.Empty)
+            : status.WaitingForDesktopUpload > 0
+                ? $"{status.WaitingForDesktopUpload} tracks are still waiting for desktop upload."
+                : "All tracks are available offline.";
+        CloudDownloadButton.IsEnabled = !_cloudBusy && status.MissingTracks > 0;
+        if (_cloudDownloadCts is null && status.MissingTracks == 0)
+            CloudDownloadProgressBar.Value = 100;
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var value = (double)Math.Max(0, bytes);
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+        return $"{value:0.#} {units[unit]}";
     }
 
     private async void ShowToast(string message)
@@ -1179,89 +1224,6 @@ public partial class MainView : UserControl
         catch (TaskCanceledException)
         {
         }
-    }
-
-    private static bool HasLibraryFiles(IReadOnlyList<IStorageItem> items) =>
-        items.OfType<IStorageFile>().Any(file => string.Equals(file.Name, PortableLibraryStore.FileName, StringComparison.OrdinalIgnoreCase));
-
-    private static async Task CopyFolderAsync(IStorageFolder sourceFolder, string targetDirectory)
-    {
-        Directory.CreateDirectory(targetDirectory);
-
-        foreach (var item in await GetItemsAsync(sourceFolder))
-        {
-            var targetPath = Path.Combine(targetDirectory, Path.GetFileName(item.Name));
-            switch (item)
-            {
-                case IStorageFile file:
-                    await CopyFileAsync(file, targetPath);
-                    break;
-                case IStorageFolder folder:
-                    await CopyFolderAsync(folder, targetPath);
-                    break;
-            }
-        }
-    }
-
-    private static async Task CopyFileAsync(IStorageFile file, string targetPath)
-    {
-        await using var source = await file.OpenReadAsync();
-        await using var target = File.Create(targetPath);
-        await source.CopyToAsync(target);
-    }
-
-    private static async Task<List<IStorageItem>> GetItemsAsync(IStorageFolder folder)
-    {
-        var items = new List<IStorageItem>();
-        await foreach (var item in folder.GetItemsAsync())
-            items.Add(item);
-
-        return items;
-    }
-
-    private static void CopyDirectoryIfExists(string sourceDirectory, string targetDirectory)
-    {
-        if (!Directory.Exists(sourceDirectory))
-            return;
-
-        Directory.CreateDirectory(targetDirectory);
-        foreach (var sourceFile in Directory.EnumerateFiles(sourceDirectory, "*", SearchOption.AllDirectories))
-        {
-            var relativePath = Path.GetRelativePath(sourceDirectory, sourceFile);
-            var targetFile = Path.Combine(targetDirectory, relativePath);
-            var targetParent = Path.GetDirectoryName(targetFile);
-            if (!string.IsNullOrWhiteSpace(targetParent))
-                Directory.CreateDirectory(targetParent);
-
-            File.Copy(sourceFile, targetFile, overwrite: true);
-        }
-    }
-
-    private static void ExtractArchiveEntry(ZipArchiveEntry entry, string targetDirectory)
-    {
-        if (string.IsNullOrWhiteSpace(entry.FullName))
-            return;
-
-        var destinationPath = Path.GetFullPath(Path.Combine(targetDirectory, entry.FullName));
-        var targetRoot = Path.GetFullPath(targetDirectory);
-        var rootPrefix = targetRoot.EndsWith(Path.DirectorySeparatorChar)
-            ? targetRoot
-            : targetRoot + Path.DirectorySeparatorChar;
-        if (!destinationPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Archive contains an invalid path.");
-
-        if (entry.FullName.EndsWith("/", StringComparison.Ordinal) ||
-            entry.FullName.EndsWith("\\", StringComparison.Ordinal))
-        {
-            Directory.CreateDirectory(destinationPath);
-            return;
-        }
-
-        var parent = Path.GetDirectoryName(destinationPath);
-        if (!string.IsNullOrWhiteSpace(parent))
-            Directory.CreateDirectory(parent);
-
-        entry.ExtractToFile(destinationPath, overwrite: true);
     }
 
     private void OnProgressPressed(object? sender, PointerPressedEventArgs e)

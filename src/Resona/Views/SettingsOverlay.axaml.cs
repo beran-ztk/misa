@@ -16,6 +16,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.Svg.Skia;
+using Resona.Core;
 using Resona.Models;
 using Resona.Services;
 
@@ -716,6 +717,30 @@ public partial class SettingsOverlay : UserControl
             return;
         await clipboard.SetTextAsync(_cloudIdentity.UserId);
         ToastRequested?.Invoke("User ID copied");
+    }
+
+    private async void OnCopyAndroidConnectionCodeClicked(object? sender, RoutedEventArgs e)
+    {
+        var serverUrl = CloudServerUrlBox.Text?.Trim();
+        if (!Uri.TryCreate(serverUrl, UriKind.Absolute, out var uri)
+            || uri.Scheme is not ("http" or "https"))
+        {
+            ToastRequested?.Invoke("Configure a valid cloud server address first.");
+            return;
+        }
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null)
+            return;
+        var identity = CloudIdentityStore.Current.GetOrCreate();
+        var code = CloudConnectionCode.Encode(new CloudConnectionPayload(
+            CloudConnectionCode.CurrentSchemaVersion,
+            serverUrl!,
+            identity.UserId,
+            identity.DeviceId,
+            identity.DeviceKey));
+        await clipboard.SetTextAsync(code);
+        ToastRequested?.Invoke("Android connection code copied");
     }
 
     private async void OnSynchronizeCloudClicked(object? sender, RoutedEventArgs e)

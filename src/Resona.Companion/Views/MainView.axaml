@@ -141,9 +141,9 @@
                                    Opacity="0.78"
                                    TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
-                    <Button Grid.Column="2" x:Name="ImportButton" Classes="toolbarIcon"
-                            Click="OnImportClicked" ToolTip.Tip="Import library">
-                        <Image Source="{SvgImage /Assets/import.svg}" Width="17" Height="17"/>
+                    <Button Grid.Column="2" x:Name="CloudButton" Classes="toolbarIcon"
+                            Click="OnCloudClicked" ToolTip.Tip="Cloud library">
+                        <Image Source="{SvgImage /Assets/cloud-arrow-down.svg}" Width="17" Height="17"/>
                     </Button>
                     <Button Grid.Column="3" x:Name="SearchButton" Classes="toolbarIcon"
                             Click="OnToggleSearchClicked" Opacity="0.72" ToolTip.Tip="Search">
@@ -438,6 +438,111 @@
                     </Grid>
                 </Grid>
             </Panel>
+        </Border>
+
+        <Border x:Name="CloudPage"
+                Grid.RowSpan="3"
+                ZIndex="200"
+                IsVisible="False"
+                Background="{DynamicResource Mobile.Brush.Background}">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <Border x:Name="CloudHeaderBar"
+                        BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}"
+                        BorderThickness="0,0,0,1"
+                        Padding="16,12,10,11">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="CLOUD LIBRARY" FontSize="15" FontWeight="SemiBold" LetterSpacing="0.8"/>
+                            <TextBlock Text="Metadata and offline audio" FontSize="10.5"
+                                       Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="toolbarIcon" Click="OnCloseCloudClicked" ToolTip.Tip="Close">
+                            <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="16,18,16,24" Spacing="20">
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="CONNECTION" FontSize="9.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                            <TextBlock x:Name="CloudConnectionSummaryText"
+                                       Text="Not connected"
+                                       FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            <TextBlock Text="Copy the Android connection code in Resona Desktop under Settings → Cloud sync, then paste it here."
+                                       FontSize="10.5" Foreground="{DynamicResource Mobile.Brush.TextSecondary}"
+                                       TextWrapping="Wrap"/>
+                            <TextBox x:Name="CloudConnectionCodeBox"
+                                     Watermark="resona-cloud:…"
+                                     PasswordChar="●"
+                                     MinHeight="40"/>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <Button x:Name="CloudConnectButton" Content="Connect and refresh" Click="OnConnectCloudClicked"
+                                        HorizontalAlignment="Stretch" Padding="12,8"/>
+                                <Button Grid.Column="1" x:Name="CloudRefreshButton"
+                                        Content="Refresh" Click="OnRefreshCloudClicked" Padding="12,8"/>
+                            </Grid>
+                            <TextBlock x:Name="CloudOperationStatusText"
+                                       FontSize="10.5" Foreground="{DynamicResource Mobile.Brush.Warning}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <Border Height="1" Background="{DynamicResource Mobile.Brush.Divider}"/>
+
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="OFFLINE AUDIO" FontSize="9.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                <Border Grid.Column="0" Padding="11,10" CornerRadius="8"
+                                        Background="{DynamicResource Mobile.Brush.SurfaceRaised}"
+                                        BorderBrush="{DynamicResource Mobile.Brush.Border}" BorderThickness="1">
+                                    <StackPanel Spacing="3">
+                                        <TextBlock Text="TRACKS" FontSize="8.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                                        <TextBlock x:Name="CloudTotalTracksText" Text="—" FontSize="19" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="1" Padding="11,10" CornerRadius="8"
+                                        Background="{DynamicResource Mobile.Brush.SurfaceRaised}"
+                                        BorderBrush="{DynamicResource Mobile.Brush.Border}" BorderThickness="1">
+                                    <StackPanel Spacing="3">
+                                        <TextBlock Text="ON PHONE" FontSize="8.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                                        <TextBlock x:Name="CloudLocalTracksText" Text="—" FontSize="19" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="2" Padding="11,10" CornerRadius="8"
+                                        Background="{DynamicResource Mobile.Brush.SurfaceRaised}"
+                                        BorderBrush="{DynamicResource Mobile.Brush.Border}" BorderThickness="1">
+                                    <StackPanel Spacing="3">
+                                        <TextBlock Text="MISSING" FontSize="8.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                                        <TextBlock x:Name="CloudMissingTracksText" Text="—" FontSize="19" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource Mobile.Brush.Accent}"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <TextBlock x:Name="CloudMissingSizeText" Text="Refresh metadata to see available downloads."
+                                       FontSize="10.5" Foreground="{DynamicResource Mobile.Brush.TextSecondary}"
+                                       TextWrapping="Wrap"/>
+                            <ProgressBar x:Name="CloudDownloadProgressBar" Height="5" Minimum="0" Maximum="100" Value="0"/>
+                            <TextBlock x:Name="CloudDownloadProgressText" FontSize="10" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Padding="16,11,16,15"
+                        BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}" BorderThickness="0,1,0,0">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                        <Button x:Name="CloudDownloadButton"
+                                Content="Download missing tracks"
+                                Click="OnDownloadMissingCloudAudioClicked"
+                                HorizontalAlignment="Stretch" Padding="12,9"/>
+                        <Button Grid.Column="1" x:Name="CloudCancelDownloadButton"
+                                Content="Cancel" Click="OnCancelCloudDownloadClicked"
+                                IsVisible="False" Padding="12,9"/>
+                    </Grid>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

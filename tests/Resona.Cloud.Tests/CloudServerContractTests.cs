@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Http;
 using Resona.Cloud.Server;
+using Resona.Core;
 using Resona.Models;
 using Xunit;
 
@@ -58,6 +59,27 @@ public sealed class CloudServerContractTests
 
         Assert.False(DeviceCredentialsReader.TryRead(
             context.Request.Headers, out _, out _));
+    }
+
+    [Fact]
+    public void Android_connection_code_round_trips_private_device_credentials()
+    {
+        var payload = new CloudConnectionPayload(
+            CloudConnectionCode.CurrentSchemaVersion,
+            "https://api.resona-music.de",
+            Guid.NewGuid().ToString("D"),
+            Guid.NewGuid().ToString("D"),
+            Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)));
+
+        var decoded = CloudConnectionCode.Decode(CloudConnectionCode.Encode(payload));
+
+        Assert.Equal(payload, decoded);
+    }
+
+    [Fact]
+    public void Android_connection_code_rejects_untrusted_text()
+    {
+        Assert.Throws<InvalidDataException>(() => CloudConnectionCode.Decode("not-a-connection-code"));
     }
 
     [Theory]

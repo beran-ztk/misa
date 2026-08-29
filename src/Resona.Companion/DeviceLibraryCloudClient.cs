@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
@@ -18,6 +19,14 @@ public sealed record MissingDeviceAudio(
     string FileName,
     long FileSizeBytes,
     string Sha256);
+
+public sealed record DeviceAudioStatus(
+    int TotalTracks,
+    int AvailableInCloud,
+    int LocalTracks,
+    int MissingTracks,
+    long MissingBytes,
+    int WaitingForDesktopUpload);
 
 public sealed class DeviceLibraryCloudClient
 {
@@ -62,6 +71,33 @@ public sealed class DeviceLibraryCloudClient
         File.Move(temporaryPath, ConnectionPath, overwrite: true);
     }
 
+    public CompanionCloudConnection SaveConnectionCode(string code)
+    {
+        var payload = CloudConnectionCode.Decode(code);
+        var connection = new CompanionCloudConnection(
+            payload.ServerUrl,
+            payload.UserId,
+            payload.DeviceId,
+            payload.DeviceKey);
+        SaveConnection(connection);
+        return connection;
+    }
+
+    public CloudDeviceLibrarySnapshot? LoadCachedSnapshot()
+    {
+        if (!File.Exists(SnapshotPath))
+            return null;
+        try
+        {
+            return JsonSerializer.Deserialize<CloudDeviceLibrarySnapshot>(
+                File.ReadAllText(SnapshotPath), JsonOptions);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<CloudDeviceLibrarySnapshot> RefreshMetadataAsync(
         CancellationToken cancellationToken = default)
     {
@@ -103,6 +139,22 @@ public sealed class DeviceLibraryCloudClient
             .ToList();
     }
 
+    public DeviceAudioStatus GetAudioStatus(CloudDeviceLibrarySnapshot snapshot)
+    {
+        var tracksDirectory = Path.Combine(CompanionServices.LibraryStorage.LibraryDirectory, "tracks");
+        var available = snapshot.Tracks.Count(track => track.AudioAvailable && track.AudioFileSizeBytes is > 0);
+        var local = snapshot.Tracks.Count(track => LocalAudioMatches(tracksDirectory, track));
+        var missing = FindMissingAudio(snapshot);
+        return new DeviceAudioStatus(
+            snapshot.TrackCount,
+            available,
+            local,
+            missing.Count,
+            missing.Sum(track => track.FileSizeBytes),
+            snapshot.Tracks.Count(track => !track.AudioAvailable
+                                           && !LocalAudioMatches(tracksDirectory, track)));
+    }
+
     public async Task DownloadMissingAudioAsync(
         CloudDeviceLibrarySnapshot snapshot,
         IProgress<(int Completed, int Total, string FileName)>? progress = null,
@@ -137,20 +189,36 @@ public sealed class DeviceLibraryCloudClient
         var destinationPath = Path.Combine(tracksDirectory, safeName);
         var temporaryPath = destinationPath + ".part";
 
-        using var request = CreateRequest(
-            connection,
-            HttpMethod.Get,
-            $"api/v1/library-media/{Uri.EscapeDataString(item.TrackKey)}");
-        using var response = await _httpClient.SendAsync(
-            request,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
-        response.EnsureSuccessStatusCode();
-        await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
-        await using (var destination = new FileStream(
-                         temporaryPath, FileMode.Create, FileAccess.Write, FileShare.None,
-                         128 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
+        var existingBytes = File.Exists(temporaryPath) ? new FileInfo(temporaryPath).Length : 0;
+        if (existingBytes > item.FileSizeBytes)
         {
+            File.Delete(temporaryPath);
+            existingBytes = 0;
+        }
+
+        if (existingBytes < item.FileSizeBytes)
+        {
+            using var request = CreateRequest(
+                connection,
+                HttpMethod.Get,
+                $"api/v1/library-media/{Uri.EscapeDataString(item.TrackKey)}");
+            if (existingBytes > 0)
+                request.Headers.Range = new RangeHeaderValue(existingBytes, null);
+            using var response = await _httpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var append = existingBytes > 0 && response.StatusCode == HttpStatusCode.PartialContent;
+            await using var source = await response.Content.ReadAsStreamAsync(cancellationToken);
+            await using var destination = new FileStream(
+                temporaryPath,
+                append ? FileMode.Append : FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                128 * 1024,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
             await source.CopyToAsync(destination, cancellationToken);
             await destination.FlushAsync(cancellationToken);
         }
@@ -163,7 +231,10 @@ public sealed class DeviceLibraryCloudClient
             await using var stream = File.OpenRead(temporaryPath);
             var hash = Convert.ToHexString(await SHA256.HashDataAsync(stream, cancellationToken)).ToLowerInvariant();
             if (!string.Equals(hash, item.Sha256, StringComparison.OrdinalIgnoreCase))
+            {
+                File.Delete(temporaryPath);
                 throw new InvalidDataException($"Downloaded checksum for {item.FileName} is invalid.");
+            }
         }
         File.Move(temporaryPath, destinationPath, overwrite: true);
     }
