@@ -85,11 +85,29 @@ public partial class MainView : UserControl
         public Bitmap? Cover => _owner.LoadThumbnail(Track);
 
         public string Title => Track.Title;
-        public IReadOnlyList<SubgenreDisplay> Subgenres => Track.Genres
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Take(3)
-            .Select(value => new SubgenreDisplay(SubgenreName(value), GenreBrush(value)))
-            .ToList();
+        public IReadOnlyList<SubgenreDisplay> Subgenres
+        {
+            get
+            {
+                var genres = Track.Genres
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Take(3)
+                    .Select(value => new SubgenreDisplay(SubgenreName(value), GenreBrush(value)))
+                    .ToList();
+
+                return genres
+                    .Select((genre, index) => genre with
+                    {
+                        Text = index switch
+                        {
+                            _ when genres.Count == 1 || index == genres.Count - 1 => genre.Text,
+                            _ when index == genres.Count - 2 => $"{genre.Text} and",
+                            _ => $"{genre.Text},"
+                        }
+                    })
+                    .ToList();
+            }
+        }
         public string MetadataText => string.Join(" · ", new[]
             {
                 Track.ChannelName,
@@ -354,6 +372,7 @@ public partial class MainView : UserControl
             Padding = new Thickness(10, 7),
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
             Background = selected
                 ? new SolidColorBrush(Color.Parse("#303E6591"))
                 : CompanionTheme.Brush("Mobile.Brush.Surface"),
@@ -786,9 +805,6 @@ public partial class MainView : UserControl
         AppArtworkBackground.Source = _activeArtwork;
         AppArtworkBackground.IsVisible = _activeArtwork is not null;
         AppArtworkBackground.Opacity = 0;
-        PlayerArtworkBackground.Source = _activeArtwork;
-        PlayerArtworkBackground.IsVisible = _activeArtwork is not null;
-        PlayerArtworkBackground.Opacity = 0;
         NowPlayingCover.Source = _activeArtwork;
 
         _artworkTransitionDuration = isAutomaticTransition
@@ -805,7 +821,6 @@ public partial class MainView : UserControl
     private void PrepareOutgoingArtwork()
     {
         AppArtworkPreviousBackground.Source = null;
-        PlayerArtworkPreviousBackground.Source = null;
         _fadedArtwork?.Dispose();
 
         _fadedArtwork = _activeArtwork;
@@ -815,16 +830,9 @@ public partial class MainView : UserControl
         AppArtworkPreviousBackground.Source = _fadedArtwork;
         AppArtworkPreviousBackground.IsVisible = _fadedArtwork is not null;
         AppArtworkPreviousBackground.Opacity = AppArtworkBackground.Opacity;
-        PlayerArtworkPreviousBackground.Source = _fadedArtwork;
-        PlayerArtworkPreviousBackground.IsVisible = _fadedArtwork is not null;
-        PlayerArtworkPreviousBackground.Opacity = PlayerArtworkBackground.Opacity;
-
         AppArtworkBackground.Source = null;
         AppArtworkBackground.IsVisible = false;
         AppArtworkBackground.Opacity = 0;
-        PlayerArtworkBackground.Source = null;
-        PlayerArtworkBackground.IsVisible = false;
-        PlayerArtworkBackground.Opacity = 0;
     }
 
     private LoadedArtwork LoadArtwork(PortableTrack track)
@@ -871,8 +879,6 @@ public partial class MainView : UserControl
 
         AppArtworkPreviousBackground.Source = null;
         AppArtworkPreviousBackground.IsVisible = false;
-        PlayerArtworkPreviousBackground.Source = null;
-        PlayerArtworkPreviousBackground.IsVisible = false;
         _fadedArtwork.Dispose();
         _fadedArtwork = null;
         _artworkTimer.Stop();
@@ -886,18 +892,12 @@ public partial class MainView : UserControl
 
         AppArtworkBackground.Opacity = AppArtworkBackground.IsVisible ? 0.46 * incoming : 0;
         AppArtworkPreviousBackground.Opacity = AppArtworkPreviousBackground.IsVisible ? 0.46 * outgoing : 0;
-        PlayerArtworkBackground.Opacity = PlayerArtworkBackground.IsVisible ? 0.58 * incoming : 0;
-        PlayerArtworkPreviousBackground.Opacity = PlayerArtworkPreviousBackground.IsVisible ? 0.58 * outgoing : 0;
-
         var palette = new AmbientPalette(
             MixColor(_fadedAmbientPalette.Primary, _activeAmbientPalette.Primary, progress),
             MixColor(_fadedAmbientPalette.Secondary, _activeAmbientPalette.Secondary, progress));
         var appStops = ((LinearGradientBrush)AppAtmosphereTint.Background!).GradientStops;
-        var playerStops = ((LinearGradientBrush)PlayerAtmosphereTint.Background!).GradientStops;
         appStops[0].Color = WithAlpha(palette.Primary, 72);
         appStops[2].Color = WithAlpha(palette.Secondary, 56);
-        playerStops[0].Color = WithAlpha(palette.Primary, 112);
-        playerStops[2].Color = WithAlpha(palette.Secondary, 88);
     }
 
     private void ClearArtworkBackground()
@@ -908,10 +908,6 @@ public partial class MainView : UserControl
         AppArtworkBackground.IsVisible = false;
         AppArtworkPreviousBackground.Source = null;
         AppArtworkPreviousBackground.IsVisible = false;
-        PlayerArtworkBackground.Source = null;
-        PlayerArtworkBackground.IsVisible = false;
-        PlayerArtworkPreviousBackground.Source = null;
-        PlayerArtworkPreviousBackground.IsVisible = false;
         _activeArtwork?.Dispose();
         _fadedArtwork?.Dispose();
         _activeArtwork = null;

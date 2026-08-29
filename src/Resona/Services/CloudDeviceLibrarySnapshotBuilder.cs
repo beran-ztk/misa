@@ -52,7 +52,7 @@ public static class CloudDeviceLibrarySnapshotBuilder
                 track.LanguageCode,
                 track.NeedsReview,
                 track.LibraryState.ToString(),
-                track.Thumbnail,
+                library.GetTrackThumbnail(track.Id),
                 trackUsage.PlayCount,
                 trackUsage.ListenedSeconds,
                 trackUsage.SkipCount,
