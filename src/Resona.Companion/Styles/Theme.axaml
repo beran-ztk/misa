@@ -1,26 +1,26 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <SolidColorBrush x:Key="Mobile.Brush.Background">#1B1914</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.Navigation">#F0211E17</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.Surface">#211F19</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.SurfaceRaised">#2A261D</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.SurfaceHover">#39352B</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.SurfaceSelected">#4A4638</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.AccentSurface">#4B513D</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.Input">#B8171611</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Background">#141414</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Navigation">#F2141414</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Surface">#181818</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.SurfaceRaised">#1E1E1E</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.SurfaceHover">#2A2A2A</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.SurfaceSelected">#363636</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.AccentSurface">#3A3A3A</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Input">#B8111111</SolidColorBrush>
 
-    <SolidColorBrush x:Key="Mobile.Brush.BorderSubtle">#4B473B</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.Border">#554F41</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.BorderStrong">#615A49</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.Divider">#484438</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.BorderSubtle">#363636</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Border">#3D3D3D</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.BorderStrong">#464646</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Divider">#333333</SolidColorBrush>
 
     <SolidColorBrush x:Key="Mobile.Brush.TextPrimary">#F0EFE5</SolidColorBrush>
     <SolidColorBrush x:Key="Mobile.Brush.TextStrong">#F7F3E8</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.TextSecondary">#C7D2AD</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.TextMuted">#BDB7A3</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.TextSecondary">#C3C3BE</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.TextMuted">#B7B7B1</SolidColorBrush>
 
-    <SolidColorBrush x:Key="Mobile.Brush.Accent">#AFC58C</SolidColorBrush>
-    <SolidColorBrush x:Key="Mobile.Brush.AccentStrong">#B6D58A</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.Accent">#78A9E6</SolidColorBrush>
+    <SolidColorBrush x:Key="Mobile.Brush.AccentStrong">#8AB8F2</SolidColorBrush>
     <SolidColorBrush x:Key="Mobile.Brush.Warning">#FFD27A</SolidColorBrush>
     <SolidColorBrush x:Key="Mobile.Brush.Danger">#EE5C5C</SolidColorBrush>
     <SolidColorBrush x:Key="Mobile.Brush.DangerSurface">#52252B</SolidColorBrush>

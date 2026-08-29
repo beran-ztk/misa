@@ -26,13 +26,13 @@ public partial class MainView : UserControl
     private LoadedMusicLibrary _loadedLibrary = new("", PortableMusicLibrary.Empty);
 
     private List<PortableTrack> _filteredTracks = [];
-    private readonly List<FilterGroupControls> _filterGroups = [];
+    private readonly HashSet<string> _selectedRatings = new(StringComparer.OrdinalIgnoreCase);
     private const int ThumbnailCacheCapacity = 192;
     private static readonly TimeSpan AutomaticArtworkTransitionDuration = TimeSpan.FromSeconds(6.5);
     private static readonly TimeSpan ManualArtworkTransitionDuration = TimeSpan.FromSeconds(1.8);
     private static readonly AmbientPalette DefaultAmbientPalette = new(
-        Color.FromRgb(91, 110, 72),
-        Color.FromRgb(74, 64, 105));
+        Color.FromRgb(57, 86, 139),
+        Color.FromRgb(70, 45, 124));
 
     private readonly Dictionary<string, Bitmap?> _thumbnailCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Queue<string> _thumbnailCacheOrder = new();
@@ -49,21 +49,23 @@ public partial class MainView : UserControl
     private string? _currentTrackFileName;
     private bool _isSeeking;
     private bool _shuffle;
-    private bool _showReviewOnly;
-    private bool _updatingReviewFilterUi;
-    private bool _updatingPresetUi;
+    private bool _manualRatingFilter;
+    private MobileLibrarySource _activeLibrarySource = MobileLibrarySource.Default;
+    private string? _activeLibrarySourceId;
     private DateTime _lastMediaUpdate = DateTime.MinValue;
     private CancellationTokenSource? _toastCts;
     private CancellationTokenSource? _cloudDownloadCts;
     private CloudDeviceLibrarySnapshot? _cloudSnapshot;
     private bool _cloudBusy;
 
-    private record FilterGroupControls(
-        MultiSelectFilterControl GenreFilter,
-        MultiSelectFilterControl StyleFilter,
-        MultiSelectFilterControl TagFilter,
-        CheckBox NegateBox,
-        StackPanel Container);
+    private enum MobileLibrarySource
+    {
+        Default,
+        Review,
+        Declined,
+        Preset,
+        Collection
+    }
 
     private sealed class TrackRow
     {
@@ -83,6 +85,11 @@ public partial class MainView : UserControl
         public Bitmap? Cover => _owner.LoadThumbnail(Track);
 
         public string Title => Track.Title;
+        public IReadOnlyList<SubgenreDisplay> Subgenres => Track.Genres
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Take(3)
+            .Select(value => new SubgenreDisplay(SubgenreName(value), GenreBrush(value)))
+            .ToList();
         public string MetadataText => string.Join(" · ", new[]
             {
                 Track.ChannelName,
@@ -124,12 +131,55 @@ public partial class MainView : UserControl
             _ => new SolidColorBrush(Color.FromRgb(243, 203, 128))
         };
         public IBrush CurrentBackground => IsCurrent
-            ? CompanionTheme.Brush("Mobile.Brush.SurfaceSelected")
+            ? new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0.5, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(0.9, 0.5, RelativeUnit.Relative),
+                GradientStops =
+                {
+                    new GradientStop(Color.Parse("#483E6591"), 0),
+                    new GradientStop(Color.Parse("#24325A8D"), 0.42),
+                    new GradientStop(Colors.Transparent, 1)
+                }
+            }
             : TransparentBrush;
         public IBrush CurrentAccent => IsCurrent
-            ? CompanionTheme.Brush("Mobile.Brush.AccentStrong")
+            ? new SolidColorBrush(Color.Parse("#78A9E6"))
             : TransparentBrush;
+        public Thickness CurrentBorderThickness => IsCurrent
+            ? new Thickness(3, 0, 0, 0)
+            : new Thickness(0);
+
+        private static string SubgenreName(string value)
+        {
+            var separator = value.IndexOf('→');
+            return separator >= 0 ? value[(separator + 1)..].Trim() : value.Trim();
+        }
+
+        private static IBrush GenreBrush(string value)
+        {
+            var mainGenre = value.Split('→', 2)[0].Trim();
+            var color = mainGenre switch
+            {
+                "Electronic" => "#86E0B0",
+                "Rock" => "#FF826E",
+                "Pop" => "#FF7FB6",
+                "Hip Hop" => "#D58AFF",
+                "Jazz" => "#53D6B6",
+                "Funk / Soul" => "#FFAA5C",
+                "Classical" => "#BFA3FF",
+                "Reggae" => "#B5E85B",
+                "Latin" => "#FF955C",
+                "Folk, World, & Country" => "#9DDB72",
+                "Blues" => "#6EA8FF",
+                "Stage & Screen" => "#FFD166",
+                _ => "#B5BDC7"
+            };
+            return new SolidColorBrush(Color.Parse(color));
+        }
     }
+
+    private sealed record SubgenreDisplay(string Text, IBrush Foreground);
 
     public MainView()
     {
@@ -144,8 +194,6 @@ public partial class MainView : UserControl
             SearchButton.Opacity = SearchBox.IsVisible || !string.IsNullOrWhiteSpace(SearchBox.Text) ? 1 : 0.72;
             ApplyFilter();
         };
-        RatingFilter.SelectionChanged += (_, _) => ApplyFilter();
-
         ProgressSlider.AddHandler(PointerPressedEvent, OnProgressPressed, RoutingStrategies.Tunnel);
         ProgressSlider.AddHandler(PointerReleasedEvent, OnProgressReleased, RoutingStrategies.Tunnel);
 
@@ -227,62 +275,164 @@ public partial class MainView : UserControl
 
         PopulateFilters();
         ApplyFilter();
-        UpdateReviewButton();
-        UpdateReviewFilterButton();
         RefreshCloudPage();
     }
 
     private void PopulateFilters()
     {
-        PopulatePresets();
         ApplyDefaultRatingFilter();
-        RebuildFilterGroups();
+        RebuildLibrarySourceRows();
     }
 
     private void ApplyDefaultRatingFilter()
     {
         var ratings = _loadedLibrary.Library.Ratings;
-        RatingFilter.SetItems(ratings);
-        RatingFilter.SetSelectedItems(
-            ratings.Where(rating => !string.Equals(rating, "Avoid", StringComparison.OrdinalIgnoreCase)),
-            notify: false);
+        _selectedRatings.Clear();
+        _selectedRatings.UnionWith(ratings);
+        _manualRatingFilter = false;
+        RefreshRatingFilterControls();
     }
 
-    private void PopulatePresets()
+    private void RebuildLibrarySourceRows()
     {
-        _updatingPresetUi = true;
-        var names = (_loadedLibrary.Library.FilterPresets ?? [])
-            .Select(preset => preset.Name)
-            .Order(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        BuiltInViewRows.Children.Clear();
+        BuiltInViewRows.Children.Add(CreateLibrarySourceButton(
+            "Default", "Rated tracks without review flags", MobileLibrarySource.Default));
+        BuiltInViewRows.Children.Add(CreateLibrarySourceButton(
+            "Needs review", "Tracks marked for desktop review", MobileLibrarySource.Review));
+        BuiltInViewRows.Children.Add(CreateLibrarySourceButton(
+            "Declined", "Declined desktop downloads", MobileLibrarySource.Declined));
 
-        PresetBox.ItemsSource = names;
-        PresetBox.SelectedIndex = -1;
-        PresetBox.IsEnabled = names.Count > 0;
-        _updatingPresetUi = false;
+        PresetRows.Children.Clear();
+        foreach (var preset in (_loadedLibrary.Library.FilterPresets ?? [])
+                     .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase))
+            PresetRows.Children.Add(CreateLibrarySourceButton(
+                preset.Name, "Desktop preset", MobileLibrarySource.Preset, preset.Name));
+        AddEmptyState(PresetRows, "No desktop presets available.");
+
+        CollectionRows.Children.Clear();
+        foreach (var collection in (_loadedLibrary.Library.Collections ?? [])
+                     .OrderBy(item => item.Name, StringComparer.OrdinalIgnoreCase))
+            CollectionRows.Children.Add(CreateLibrarySourceButton(
+                collection.Name,
+                $"{collection.TrackKeys.Count} tracks",
+                MobileLibrarySource.Collection,
+                collection.StableId));
+        AddEmptyState(CollectionRows, "No desktop collections available.");
+    }
+
+    private Button CreateLibrarySourceButton(
+        string title,
+        string description,
+        MobileLibrarySource source,
+        string? id = null)
+    {
+        var selected = _activeLibrarySource == source
+                       && string.Equals(_activeLibrarySourceId, id, StringComparison.OrdinalIgnoreCase);
+        var labels = new StackPanel { Spacing = 1 };
+        labels.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontSize = 11.5,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = CompanionTheme.Brush(selected
+                ? "Mobile.Brush.TextStrong"
+                : "Mobile.Brush.TextPrimary")
+        });
+        labels.Children.Add(new TextBlock
+        {
+            Text = description,
+            FontSize = 9.5,
+            Foreground = CompanionTheme.Brush("Mobile.Brush.TextMuted"),
+            Opacity = 0.58
+        });
+
+        var button = new Button
+        {
+            Content = labels,
+            MinHeight = 48,
+            Padding = new Thickness(10, 7),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            Background = selected
+                ? new SolidColorBrush(Color.Parse("#303E6591"))
+                : CompanionTheme.Brush("Mobile.Brush.Surface"),
+            BorderBrush = selected
+                ? new SolidColorBrush(Color.Parse("#8A78A9E6"))
+                : CompanionTheme.Brush("Mobile.Brush.BorderSubtle"),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(7)
+        };
+        button.Click += (_, _) => SelectLibrarySource(source, id);
+        return button;
+    }
+
+    private static void AddEmptyState(StackPanel panel, string text)
+    {
+        if (panel.Children.Count > 0)
+            return;
+        panel.Children.Add(new TextBlock
+        {
+            Text = text,
+            FontSize = 10,
+            Opacity = 0.46,
+            Margin = new Thickness(2, 3)
+        });
+    }
+
+    private void SelectLibrarySource(MobileLibrarySource source, string? id)
+    {
+        _activeLibrarySource = source;
+        _activeLibrarySourceId = id;
+        ApplyFilter();
+        RebuildLibrarySourceRows();
     }
 
     private void ApplyFilter()
     {
+        IEnumerable<PortableTrack> sourceTracks = _loadedLibrary.Library.Tracks;
+        if (_activeLibrarySource == MobileLibrarySource.Collection)
+        {
+            var collection = (_loadedLibrary.Library.Collections ?? []).FirstOrDefault(item =>
+                string.Equals(item.StableId, _activeLibrarySourceId, StringComparison.OrdinalIgnoreCase));
+            var trackKeys = collection?.TrackKeys.ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+            sourceTracks = sourceTracks.Where(track =>
+                !string.IsNullOrWhiteSpace(track.TrackKey) && trackKeys.Contains(track.TrackKey));
+        }
+
+        var activePreset = _activeLibrarySource == MobileLibrarySource.Preset
+            ? (_loadedLibrary.Library.FilterPresets ?? []).FirstOrDefault(item =>
+                string.Equals(item.Name, _activeLibrarySourceId, StringComparison.OrdinalIgnoreCase))
+            : null;
+        IReadOnlyList<PortableFilterGroup> activeGroups = activePreset?.Groups ?? [];
+
         _filteredTracks = PortableTrackFilter.Apply(
-            _loadedLibrary.Library.Tracks,
+            sourceTracks,
             SearchBox.Text,
-            RatingFilter.SelectedItems,
-            _filterGroups
-                .Select(group => new PortableFilterGroup(
-                    group.GenreFilter.SelectedItems.ToList(),
-                    group.StyleFilter.SelectedItems.ToList(),
-                    group.TagFilter.SelectedItems.ToList(),
-                    group.NegateBox.IsChecked == true))
-                .ToList());
+            _selectedRatings,
+            activeGroups);
+
+        _filteredTracks = _activeLibrarySource switch
+        {
+            MobileLibrarySource.Review => _filteredTracks
+                .Where(track => !IsRejected(track) && track.NeedsReview)
+                .ToList(),
+            MobileLibrarySource.Declined => _filteredTracks
+                .Where(IsRejected)
+                .ToList(),
+            MobileLibrarySource.Preset => FilterForPresetCompletion(_filteredTracks),
+            _ => _filteredTracks
+                .Where(track => !IsRejected(track)
+                                && !track.NeedsReview
+                                && !string.IsNullOrWhiteSpace(track.Rating))
+                .ToList()
+        };
+
+        if (_manualRatingFilter && _selectedRatings.Count == 0)
+            _filteredTracks.Clear();
 
         if (_shuffle)
             ShuffleFilteredTracks();
-
-        if (_showReviewOnly)
-            _filteredTracks = _filteredTracks
-                .Where(track => track.NeedsReview)
-                .ToList();
 
         _currentIndex = string.IsNullOrWhiteSpace(_currentTrackFileName)
             ? -1
@@ -293,7 +443,21 @@ public partial class MainView : UserControl
 
         RefreshTrackRows();
         UpdatePlaylistSummary();
-        UpdateFilterCounts();
+    }
+
+    private static bool IsRejected(PortableTrack track) =>
+        string.Equals(track.LibraryState, "Rejected", StringComparison.OrdinalIgnoreCase);
+
+    private List<PortableTrack> FilterForPresetCompletion(IEnumerable<PortableTrack> tracks)
+    {
+        var preset = (_loadedLibrary.Library.FilterPresets ?? []).FirstOrDefault(item =>
+            string.Equals(item.Name, _activeLibrarySourceId, StringComparison.OrdinalIgnoreCase));
+        return tracks
+            .Where(track => !IsRejected(track)
+                            && (preset?.ShowNeedsReview == true
+                                ? track.NeedsReview
+                                : !track.NeedsReview))
+            .ToList();
     }
 
     private void RefreshTrackRows(bool scrollToCurrent = false)
@@ -329,12 +493,8 @@ public partial class MainView : UserControl
             _currentIndex = index;
             RefreshTrackRows(scrollToCurrent: true);
             NowPlayingText.Text = track.Title;
-            var playerMetadata = string.Join(" · ", new[] { track.ChannelName, track.GenreText }
-                .Where(value => !string.IsNullOrWhiteSpace(value)));
-            NowPlayingMetaText.Text = string.IsNullOrWhiteSpace(playerMetadata) ? "Local track" : playerMetadata;
             UpdateArtwork(track, isAutomaticTransition);
             UpdatePlayPauseIcon();
-            UpdateReviewButton();
             UpdateMediaControls();
             SetStatus();
         }
@@ -413,12 +573,10 @@ public partial class MainView : UserControl
             _currentIndex = -1;
             _currentTrackFileName = null;
             NowPlayingText.Text = "Nothing playing";
-            NowPlayingMetaText.Text = "Choose a track";
             NowPlayingCover.Source = null;
             ClearArtworkBackground();
             RefreshTrackRows();
             UpdatePlayPauseIcon();
-            UpdateReviewButton();
             CompanionServices.MediaControls.Stop();
             return;
         }
@@ -450,213 +608,116 @@ public partial class MainView : UserControl
 
     private void OnClearFiltersClicked(object? sender, RoutedEventArgs e)
     {
-        _updatingPresetUi = true;
-        PresetBox.SelectedIndex = -1;
-        _updatingPresetUi = false;
-
+        _activeLibrarySource = MobileLibrarySource.Default;
+        _activeLibrarySourceId = null;
         ApplyDefaultRatingFilter();
-        RebuildFilterGroups();
-        _showReviewOnly = false;
-        SetReviewOnlyFilterVisual(false);
+        RebuildLibrarySourceRows();
         ApplyFilter();
     }
 
-    private void OnPresetSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnAllRatingsPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_updatingPresetUi || PresetBox.SelectedItem is not string presetName)
+        SetRatingFilterMode(manual: false);
+        e.Handled = true;
+    }
+
+    private void OnManualRatingsPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!_manualRatingFilter)
+            SetRatingFilterMode(manual: true);
+        e.Handled = true;
+    }
+
+    private void SetRatingFilterMode(bool manual)
+    {
+        _manualRatingFilter = manual;
+        _selectedRatings.Clear();
+        if (!manual)
+            _selectedRatings.UnionWith(_loadedLibrary.Library.Ratings);
+        RefreshRatingFilterControls();
+        ApplyFilter();
+    }
+
+    private void RefreshRatingFilterControls()
+    {
+        RatingButtonsPanel.IsVisible = _manualRatingFilter;
+        if (RatingModeIndicator.RenderTransform is TranslateTransform transform)
+            transform.X = _manualRatingFilter ? 69 : 0;
+        RatingModeIndicator.CornerRadius = _manualRatingFilter
+            ? new CornerRadius(0, 5, 5, 0)
+            : new CornerRadius(5, 0, 0, 5);
+        AllRatingsText.Foreground = CompanionTheme.Brush(_manualRatingFilter
+            ? "Mobile.Brush.TextMuted"
+            : "Mobile.Brush.TextStrong");
+        ManualRatingsText.Foreground = CompanionTheme.Brush(_manualRatingFilter
+            ? "Mobile.Brush.TextStrong"
+            : "Mobile.Brush.TextMuted");
+
+        RatingButtonsPanel.Children.Clear();
+        if (!_manualRatingFilter)
             return;
 
-        var preset = (_loadedLibrary.Library.FilterPresets ?? []).FirstOrDefault(p =>
-            string.Equals(p.Name, presetName, StringComparison.OrdinalIgnoreCase));
-
-        if (preset is null)
-            return;
-
-        ApplyFilterPreset(preset);
-    }
-
-    private void ApplyFilterPreset(PortableFilterPreset preset)
-    {
-        _filterGroups.Clear();
-        FilterGroupsPanel.Children.Clear();
-
-        var groups = preset.Groups
-            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.Tags?.Count ?? 0) > 0)
-            .ToList();
-
-        if (groups.Count == 0)
+        foreach (var rating in _loadedLibrary.Library.RatingDefinitions
+                     ?.OrderBy(item => item.SortOrder)
+                     .Select(item => item.Name)
+                 ?? _loadedLibrary.Library.Ratings)
         {
-            AddFilterGroup();
-        }
-        else
-        {
-            foreach (var group in groups)
+            var selected = _selectedRatings.Contains(rating);
+            var accent = RatingAccentColor(rating);
+            var button = new Button
             {
-                var controls = AddFilterGroup();
-                controls.GenreFilter.SetSelectedItems(group.Genres, notify: false);
-                controls.StyleFilter.SetSelectedItems(group.Styles, notify: false);
-                controls.TagFilter.SetSelectedItems(group.Tags ?? [], notify: false);
-                controls.NegateBox.IsChecked = group.Negate;
-            }
-        }
-
-        ApplyFilter();
-    }
-
-    private void OnAddFilterGroupClicked(object? sender, RoutedEventArgs e)
-    {
-        AddFilterGroup();
-        ApplyFilter();
-    }
-
-    private void RebuildFilterGroups()
-    {
-        _filterGroups.Clear();
-        FilterGroupsPanel.Children.Clear();
-        AddFilterGroup();
-    }
-
-    private FilterGroupControls AddFilterGroup()
-    {
-        var genreFilter = new MultiSelectFilterControl { Placeholder = "All genres" };
-        genreFilter.SetItems(_loadedLibrary.Library.Genres);
-        genreFilter.SelectionChanged += (_, _) => ApplyFilter();
-
-        var styleFilter = new MultiSelectFilterControl { Placeholder = "All styles" };
-        styleFilter.SetItems(_loadedLibrary.Library.Styles);
-        styleFilter.SelectionChanged += (_, _) => ApplyFilter();
-
-        var tagFilter = new MultiSelectFilterControl { Placeholder = "All tags" };
-        tagFilter.SetItems(_loadedLibrary.Library.Tags);
-        tagFilter.SelectionChanged += (_, _) => ApplyFilter();
-
-        var negateBox = new CheckBox
-        {
-            Content = "Exclude matches",
-            FontSize = 11,
-            Opacity = 0.72
-        };
-        negateBox.IsCheckedChanged += (_, _) => ApplyFilter();
-
-        var container = new StackPanel { Spacing = 8, Margin = new Avalonia.Thickness(0, _filterGroups.Count == 0 ? 0 : 14, 0, 6) };
-        var controls = new FilterGroupControls(genreFilter, styleFilter, tagFilter, negateBox, container);
-        _filterGroups.Add(controls);
-
-        if (_filterGroups.Count > 1)
-        {
-            var header = new Grid();
-            header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-            header.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-
-            var label = new TextBlock
-            {
-                Text = $"Group {_filterGroups.Count}",
-                FontSize = 11,
-                Opacity = 0.45,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-            var removeButton = new Button
-            {
-                Content = "x",
-                Width = 34,
-                Height = 30,
-                Padding = new Avalonia.Thickness(0),
-                FontSize = 11,
-                Opacity = 0.55,
-                Background = null,
+                Content = rating,
+                Height = 34,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
-                VerticalContentAlignment = VerticalAlignment.Center
+                VerticalContentAlignment = VerticalAlignment.Center,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                Background = selected
+                    ? new SolidColorBrush(Color.FromArgb(76, accent.R, accent.G, accent.B))
+                    : CompanionTheme.Brush("Mobile.Brush.Surface"),
+                BorderBrush = selected
+                    ? new SolidColorBrush(Color.FromArgb(210, accent.R, accent.G, accent.B))
+                    : CompanionTheme.Brush("Mobile.Brush.BorderSubtle"),
+                Foreground = selected
+                    ? new SolidColorBrush(RatingForegroundColor(rating))
+                    : CompanionTheme.Brush("Mobile.Brush.TextMuted"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(5),
+                Opacity = selected ? 1 : 0.62
             };
-            removeButton.Click += (_, _) => RemoveFilterGroup(controls);
-
-            Grid.SetColumn(label, 0);
-            Grid.SetColumn(removeButton, 1);
-            header.Children.Add(label);
-            header.Children.Add(removeButton);
-            container.Children.Add(header);
-        }
-
-        container.Children.Add(negateBox);
-        container.Children.Add(FilterSection("Genre", genreFilter));
-        container.Children.Add(FilterSection("Style", styleFilter));
-        container.Children.Add(FilterSection("Tags", tagFilter));
-        FilterGroupsPanel.Children.Add(container);
-        return controls;
-    }
-
-    private static StackPanel FilterSection(string label, Control control) =>
-        new()
-        {
-            Spacing = 5,
-            Children =
+            button.Click += (_, _) =>
             {
-                new TextBlock { Text = label, FontSize = 11, Opacity = 0.55 },
-                control
-            }
-        };
-
-    private void RemoveFilterGroup(FilterGroupControls controls)
-    {
-        var index = _filterGroups.IndexOf(controls);
-        if (index < 0)
-            return;
-
-        _filterGroups.RemoveAt(index);
-        FilterGroupsPanel.Children.Remove(controls.Container);
-        if (_filterGroups.Count == 0)
-            AddFilterGroup();
-
-        ApplyFilter();
-    }
-
-    private void UpdateFilterCounts()
-    {
-        foreach (var group in _filterGroups)
-        {
-            var groupTracks = TracksMatchingSearchRatingAndGroup(group);
-            var genreCounts = CountByName(groupTracks.SelectMany(track => track.Genres));
-            var styleCounts = CountByName(groupTracks.SelectMany(track => track.Styles));
-            var tagCounts = CountByName(groupTracks.SelectMany(track => track.Tags ?? []));
-
-            group.GenreFilter.UpdateCounts(genreCounts);
-            group.StyleFilter.UpdateCounts(styleCounts);
-            group.TagFilter.UpdateCounts(tagCounts);
+                if (!_selectedRatings.Add(rating))
+                    _selectedRatings.Remove(rating);
+                RefreshRatingFilterControls();
+                ApplyFilter();
+            };
+            RatingButtonsPanel.Children.Add(button);
         }
     }
 
-    private List<PortableTrack> TracksMatchingSearchRatingAndGroup(FilterGroupControls group)
+    private static Color RatingAccentColor(string ratingName) => ratingName switch
     {
-        IEnumerable<PortableTrack> query = _loadedLibrary.Library.Tracks;
-        var term = SearchBox.Text?.Trim();
+        "Timeless" => Color.FromRgb(235, 194, 83),
+        "Amazing" => Color.FromRgb(220, 145, 82),
+        "Great" => Color.FromRgb(83, 190, 108),
+        "Good" => Color.FromRgb(71, 177, 150),
+        "Okay" => Color.FromRgb(151, 156, 116),
+        "Avoid" => Color.FromRgb(211, 78, 65),
+        _ => Color.FromRgb(205, 148, 67)
+    };
 
-        if (!string.IsNullOrWhiteSpace(term))
-            query = query.Where(track => track.Title.Contains(term, StringComparison.OrdinalIgnoreCase));
-
-        if (RatingFilter.SelectedItems.Count > 0)
-            query = query.Where(track => RatingFilter.SelectedItems.Contains(track.Rating));
-
-        if (group.GenreFilter.SelectedItems.Count > 0)
-            query = query.Where(track => group.GenreFilter.SelectedItems
-                .All(genre => track.Genres.Contains(genre, StringComparer.OrdinalIgnoreCase)));
-
-        if (group.StyleFilter.SelectedItems.Count > 0)
-            query = query.Where(track => group.StyleFilter.SelectedItems
-                .All(style => track.Styles.Contains(style, StringComparer.OrdinalIgnoreCase)));
-
-        if (group.TagFilter.SelectedItems.Count > 0)
-            query = query.Where(track => group.TagFilter.SelectedItems
-                .All(tag => (track.Tags ?? []).Contains(tag, StringComparer.OrdinalIgnoreCase)));
-
-        return query.ToList();
-    }
-
-    private static Dictionary<string, int> CountByName(IEnumerable<string> values)
+    private static Color RatingForegroundColor(string ratingName) => ratingName switch
     {
-        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        foreach (var value in values.Where(value => !string.IsNullOrWhiteSpace(value)))
-            counts[value] = counts.GetValueOrDefault(value, 0) + 1;
-        return counts;
-    }
+        "Timeless" => Color.FromRgb(255, 230, 150),
+        "Amazing" => Color.FromRgb(247, 195, 132),
+        "Great" => Color.FromRgb(188, 242, 185),
+        "Good" => Color.FromRgb(176, 232, 212),
+        "Okay" => Color.FromRgb(226, 224, 194),
+        "Avoid" => Color.FromRgb(246, 175, 160),
+        _ => Color.FromRgb(243, 203, 128)
+    };
 
     private Bitmap? LoadThumbnail(PortableTrack track)
     {
@@ -939,81 +1000,6 @@ public partial class MainView : UserControl
             await PlayTrackAtAsync(0);
     }
 
-    private async void OnReviewClicked(object? sender, RoutedEventArgs e)
-    {
-        var track = CurrentTrack;
-        if (track is null)
-        {
-            ShowToast("No active track");
-            return;
-        }
-
-        await SetTrackReviewAsync(track.FileName, !track.NeedsReview);
-        ShowToast(track.NeedsReview ? "Review mark removed" : "Marked for review");
-        ApplyFilter();
-        UpdateReviewButton();
-    }
-
-    private async Task SetTrackReviewAsync(string fileName, bool needsReview)
-    {
-        var tracks = _loadedLibrary.Library.Tracks
-            .Select(track => string.Equals(track.FileName, fileName, StringComparison.OrdinalIgnoreCase)
-                ? track with { NeedsReview = needsReview }
-                : track)
-            .ToList();
-
-        _loadedLibrary = _loadedLibrary with
-        {
-            Library = _loadedLibrary.Library with { Tracks = tracks }
-        };
-
-        await PortableLibraryStore.SaveAsync(
-            CompanionServices.LibraryStorage.LibraryDirectory,
-            _loadedLibrary.Library);
-    }
-
-    private void UpdateReviewButton()
-    {
-        var isMarked = CurrentTrack?.NeedsReview == true;
-
-        ReviewButton.Opacity = isMarked ? 1.0 : 0.45;
-        ToolTip.SetTip(ReviewButton, isMarked ? "Remove review mark" : "Mark for review");
-    }
-
-    private void OnReviewFilterClicked(object? sender, RoutedEventArgs e)
-    {
-        _showReviewOnly = !_showReviewOnly;
-        SetReviewOnlyFilterVisual(_showReviewOnly);
-        ApplyFilter();
-        UpdateReviewFilterButton();
-    }
-
-    private void OnReviewOnlyFilterChanged(object? sender, RoutedEventArgs e)
-    {
-        if (_updatingReviewFilterUi)
-            return;
-
-        _showReviewOnly = ReviewOnlyFilterBox.IsChecked == true;
-        ApplyFilter();
-        UpdateReviewFilterButton();
-    }
-
-    private void SetReviewOnlyFilterVisual(bool value)
-    {
-        _updatingReviewFilterUi = true;
-        ReviewOnlyFilterBox.IsChecked = value;
-        _updatingReviewFilterUi = false;
-    }
-
-    private void UpdateReviewFilterButton()
-    {
-        var count = _loadedLibrary.Library.Tracks.Count(track => track.NeedsReview);
-        ReviewFilterButton.Opacity = _showReviewOnly ? 1.0 : 0.45;
-        ToolTip.SetTip(ReviewFilterButton, _showReviewOnly
-            ? $"Review filter: On ({count})"
-            : $"Reviews ({count})");
-    }
-
     private void OnCloudClicked(object? sender, RoutedEventArgs e)
     {
         FilterDrawer.IsVisible = false;
@@ -1076,8 +1062,6 @@ public partial class MainView : UserControl
             _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
             PopulateFilters();
             ApplyFilter();
-            UpdateReviewButton();
-            UpdateReviewFilterButton();
             CloudOperationStatusText.Text = $"Updated {DateTime.Now:t}";
         }
         finally
@@ -1274,6 +1258,16 @@ public partial class MainView : UserControl
             .Select(track => track.DurationSeconds ?? 0)
             .Sum();
 
+        LibraryContextTitleText.Text = _activeLibrarySource switch
+        {
+            MobileLibrarySource.Review => "REVIEW",
+            MobileLibrarySource.Declined => "DECLINED",
+            MobileLibrarySource.Preset => $"PRESET · {_activeLibrarySourceId?.ToUpperInvariant()}",
+            MobileLibrarySource.Collection => $"COLLECTION · {(_loadedLibrary.Library.Collections ?? [])
+                .FirstOrDefault(item => string.Equals(item.StableId, _activeLibrarySourceId, StringComparison.OrdinalIgnoreCase))
+                ?.Name.ToUpperInvariant()}",
+            _ => "LIBRARY"
+        };
         PlaylistSummaryText.Text = $"{_filteredTracks.Count} tracks · {FormatPlaylistDuration(totalSeconds)}";
     }
 

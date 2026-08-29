@@ -289,10 +289,20 @@ public sealed class DeviceLibraryCloudClient
             SkipCount: track.SkipCount,
             LastListenedAt: track.LastListenedAt,
             Thumbnail: track.Thumbnail,
-            LanguageCode: track.LanguageCode)).ToList(),
+            LanguageCode: track.LanguageCode,
+            TrackKey: track.TrackKey,
+            OriginalTitle: track.OriginalTitle,
+            LibraryState: track.LibraryState,
+            EmotionalCharacter: track.EmotionalCharacter.ToDictionary(item => item.Key, item => item.Value))).ToList(),
         snapshot.FilterPresets.ToList(),
         ExportId: snapshot.GeneratedAt,
         ExportedAt: snapshot.GeneratedAt,
         MediaMode: "cloud",
-        RatingDefinitions: snapshot.Ratings.ToList());
+        RatingDefinitions: snapshot.Ratings.ToList(),
+        Collections: snapshot.Collections
+            .Select(collection => new PortableCollection(
+                collection.StableId,
+                collection.Name,
+                collection.TrackKeys.ToList()))
+            .ToList());
 }

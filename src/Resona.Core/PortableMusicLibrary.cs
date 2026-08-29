@@ -10,7 +10,8 @@ public sealed record PortableMusicLibrary(
     string? ExportId = null,
     string? ExportedAt = null,
     string MediaMode = "full",
-    List<PortableRating>? RatingDefinitions = null)
+    List<PortableRating>? RatingDefinitions = null,
+    List<PortableCollection>? Collections = null)
 {
     public const int CurrentSchemaVersion = 4;
 
@@ -69,6 +70,11 @@ public sealed record PortableMusicLibrary(
 
 public sealed record PortableRating(string Name, int SortOrder);
 
+public sealed record PortableCollection(
+    string StableId,
+    string Name,
+    List<string> TrackKeys);
+
 public sealed record PortableFilterPreset(
     string Name,
     List<PortableFilterGroup> Groups,
@@ -95,7 +101,11 @@ public sealed record PortableTrack(
     string? LastListenedAt = null,
     byte[]? Thumbnail = null,
     bool IsPublic = false,
-    string? LanguageCode = null)
+    string? LanguageCode = null,
+    string? TrackKey = null,
+    string? OriginalTitle = null,
+    string LibraryState = "Active",
+    Dictionary<string, double>? EmotionalCharacter = null)
 {
     public string GenreText => string.Join(", ", Genres);
     public string StyleText => string.Join(", ", Styles);
@@ -191,7 +201,7 @@ public static class PortableTrackFilter
             query = query.Where(t => ratings.Contains(t.Rating));
 
         var activeGroups = filterGroups
-            .Where(g => g.Genres.Count > 0 || (g.MainGenres?.Count ?? 0) > 0 || g.Styles.Count > 0 || (g.Tags?.Count ?? 0) > 0 || (g.Languages?.Count ?? 0) > 0)
+            .Where(g => g.Genres.Count > 0 || (g.MainGenres?.Count ?? 0) > 0 || g.Styles.Count > 0 || (g.Tags?.Count ?? 0) > 0 || (g.Languages?.Count ?? 0) > 0 || (g.EmotionalCharacters?.Count ?? 0) > 0)
             .ToList();
         var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
         var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
@@ -227,6 +237,22 @@ public static class PortableTrackFilter
             && (string.IsNullOrWhiteSpace(track.LanguageCode)
                 || !group.Languages!.Contains(track.LanguageCode, StringComparer.OrdinalIgnoreCase)))
             return false;
+
+        if ((group.EmotionalCharacters?.Count ?? 0) > 0)
+        {
+            if (track.EmotionalCharacter is null)
+                return false;
+            foreach (var filter in group.EmotionalCharacters!)
+            {
+                if (!track.EmotionalCharacter.TryGetValue(filter.SignalKey, out var score))
+                    return false;
+                var percent = score * 100d;
+                if (filter.MinimumPercent is double minimum && percent < minimum)
+                    return false;
+                if (filter.MaximumPercent is double maximum && percent > maximum)
+                    return false;
+            }
+        }
 
         return true;
     }
