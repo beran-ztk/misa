@@ -128,7 +128,7 @@ public sealed class MusicPlaybackService : Service
             PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
 
         builder
-            .SetSmallIcon(Resource.Drawable.Icon)
+            .SetSmallIcon(Resource.Drawable.ic_notification)
             .SetContentTitle(title)
             .SetContentText(isPlaying ? "Playing" : "Paused")
             .SetSubText("Resona")

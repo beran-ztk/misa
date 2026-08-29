@@ -9,7 +9,7 @@ namespace Resona.Android;
 [Activity(
     Label = "Resona",
     Theme = "@style/MyTheme.NoActionBar",
-    Icon = "@drawable/icon",
+    Icon = "@mipmap/ic_launcher",
     MainLauncher = true,
     LaunchMode = LaunchMode.SingleTask,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]

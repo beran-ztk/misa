@@ -348,9 +348,15 @@
                 CornerRadius="0"
                 ClipToBounds="False"
                 BoxShadow="0 -14 36 6 #A0000000">
-            <Border Background="#D0202022"
-                    ClipToBounds="True"
+            <Border ClipToBounds="True"
                     BoxShadow="inset 0 8 16 -12 #50000000">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#E012141A" Offset="0"/>
+                        <GradientStop Color="#D0141924" Offset="0.56"/>
+                        <GradientStop Color="#E00E1015" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
                 <Grid x:Name="PlayerContent"
                       RowDefinitions="Auto,Auto,Auto" RowSpacing="1" Margin="12,5,12,13">
                     <Grid ColumnDefinitions="42,*" ColumnSpacing="8">
