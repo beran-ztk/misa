@@ -23,6 +23,27 @@
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <Style Selector="Button.shuffle-toggle">
+            <Setter Property="Opacity" Value="0.18"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.shuffle-toggle:pointerover">
+            <Setter Property="Opacity" Value="0.42"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.shuffle-toggle.active">
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.shuffle-toggle.active:pointerover">
+            <Setter Property="Opacity" Value="1"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
         <Style Selector="ToggleButton.toolbar-icon">
             <Setter Property="Width" Value="38"/>
             <Setter Property="Height" Value="38"/>
@@ -486,6 +507,21 @@
                                     MinHeight="58"
                                     Padding="0,0">
                                 <Panel>
+                                <Border IsVisible="{Binding IsPlaying}"
+                                        CornerRadius="4"
+                                        Background="#40103050"
+                                        BorderThickness="3,0,0,0"
+                                        BorderBrush="Aquamarine"
+                                        BoxShadow="0 0 16 0 #284F83C4"
+                                        IsHitTestVisible="False">
+                                    <Border.OpacityMask>
+                                        <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                            <GradientStop Color="#FFFFFFFF" Offset="0"/>
+                                            <GradientStop Color="#FFFFFFFF" Offset="0.6"/>
+                                            <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.OpacityMask>
+                                </Border>
                                 <views:TrackColorWashControl
                                         PrimaryColor="{Binding ArtworkPrimaryColor}"
                                         SecondaryColor="{Binding ArtworkSecondaryColor}"
@@ -691,21 +727,6 @@
                                     </TextBlock>
                                 </StackPanel>
 
-                                <Border IsVisible="{Binding IsPlaying}"
-                                        CornerRadius="4"
-                                        Background="#40103050"
-                                        BorderThickness="3,0,0,0"
-                                        BorderBrush="Aquamarine"
-                                        BoxShadow="0 0 16 0 #284F83C4"
-                                        IsHitTestVisible="False">
-                                    <Border.OpacityMask>
-                                        <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
-                                            <GradientStop Color="#FFFFFFFF" Offset="0"/>
-                                            <GradientStop Color="#FFFFFFFF" Offset="0.6"/>
-                                            <GradientStop Color="#00FFFFFF" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Border.OpacityMask>
-                                </Border>
                                 <!-- <Border Classes="selection-accent" -->
                                 <!--         IsVisible="{Binding IsPlaying}" -->
                                 <!--         Width="3" -->
@@ -851,7 +872,7 @@
                                            Padding="0,0,4,0"/>
 
                                 <StackPanel Grid.Column="2"
-                                            Orientation="Horizontal" Spacing="4"
+                                            Orientation="Horizontal" Spacing="10"
                                             VerticalAlignment="Center">
                                     <Border ClipToBounds="False">
                                         <Slider x:Name="VolumeSlider"
@@ -865,10 +886,8 @@
                                                 VerticalAlignment="Center"/>
                                     </Border>
                                     <Button x:Name="ShuffleBtn"
-                                            Classes="icon"
-                                            Click="OnShuffleToggleClicked"
-                                            Opacity="0.35"
-                                            ToolTip.Tip="Shuffle: Off">
+                                            Classes="icon shuffle-toggle"
+                                            Click="OnShuffleToggleClicked">
                                         <Image Source="{SvgImage /Assets/shuffle.svg}"
                                                Width="17" Height="17"/>
                                     </Button>

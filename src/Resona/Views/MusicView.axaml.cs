@@ -4398,8 +4398,15 @@ public partial class MusicView : UserControl
 
     private void UpdateShuffleButton()
     {
-        ShuffleBtn.Opacity = _shuffle ? 1.0 : 0.35;
-        ToolTip.SetTip(ShuffleBtn, _shuffle ? "Shuffle: On" : "Shuffle: Off");
+        if (_shuffle)
+        {
+            if (!ShuffleBtn.Classes.Contains("active"))
+                ShuffleBtn.Classes.Add("active");
+        }
+        else
+        {
+            ShuffleBtn.Classes.Remove("active");
+        }
         _windowsMediaSession.UpdateShuffle(_shuffle);
     }
 
