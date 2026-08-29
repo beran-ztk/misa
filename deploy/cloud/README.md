@@ -9,10 +9,10 @@ The compose stack runs PostgreSQL, the Resona ASP.NET Core API, and the Python/E
    - `curl http://127.0.0.1:5081/health`
 4. Put Caddy, nginx, or another TLS reverse proxy in front of ports 5080 and 5081. Separate subdomains such as `api.example.com` and `analyzer.example.com` keep the proxy configuration simple.
 
-For nginx, the API virtual host must allow the same 25 MB request size as the ASP.NET Core server. Add this inside the `server` block for the Resona API and reload nginx:
+For nginx, the API virtual host must allow the same 256 MB per-track request size as the ASP.NET Core server. Add this inside the `server` block for the Resona API and reload nginx:
 
 ```nginx
-client_max_body_size 25m;
+client_max_body_size 256m;
 ```
 
 Without this setting nginx uses its much smaller default limit and full-library synchronization returns HTTP 413 (`Request Entity Too Large`).
@@ -39,7 +39,21 @@ curl -fS 'https://api.resona-music.de/api/v1/public/profiles/USER_ID/image' -o p
 
 Profile search matches username and bio. Track search matches edited title, original title, and channel name. Missing profiles return HTTP 404; invalid pagination returns HTTP 400.
 
-The schema is created idempotently at API startup. PostgreSQL data lives in the `postgres-data` volume. Back up that volume or use `pg_dump` before upgrades.
+The schema is created idempotently at API startup. PostgreSQL data lives in the `postgres-data` volume. Uploaded audio lives in the `resona-media` volume. Back up both volumes before upgrades; use `pg_dump` for PostgreSQL.
+
+## Private device-library synchronization
+
+The authenticated device API keeps one replaceable metadata snapshot and a persistent inventory of individually uploaded audio files:
+
+```text
+PUT /api/v1/device-library-snapshot
+GET /api/v1/device-library-snapshot
+GET /api/v1/library-media
+PUT /api/v1/library-media/{trackKey}
+GET /api/v1/library-media/{trackKey}
+```
+
+Audio uploads are atomic and recorded only after the complete file has been written and hashed. Downloads support HTTP range requests. The desktop compares its local library with `GET /api/v1/library-media` and uploads only missing files, so interrupted initial synchronization resumes on the next application start.
 
 The analyzer intentionally runs one analysis at a time by default because TensorFlow inference is memory intensive. It returns MAEST genre scores, BPM, EBU R128 loudness/dynamics, and the MIREX emotional-character clusters used by Resona. Increase `MAX_CONCURRENT_ANALYSES` only after checking memory usage on the server.
 

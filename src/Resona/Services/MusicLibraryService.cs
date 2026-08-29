@@ -775,6 +775,7 @@ public class MusicLibraryService
             var track = GetTrackById(trackId)
                 ?? throw new InvalidOperationException($"Track {trackId} was inserted but could not be reloaded.");
             ChannelHubBackgroundService.Current.RequestRefresh();
+            CloudLibrarySyncService.Current.RequestSynchronization();
             WorkflowLog.Info("download", $"Persisted track {trackId} from a YouTube download.");
             return new ImportResult(true, track);
         }

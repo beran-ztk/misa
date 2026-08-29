@@ -25,6 +25,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=${POSTGRES_DB:-resona};Username=${POSTGRES_USER:-resona};Password=${POSTGRES_PASSWORD}
+      MediaStoragePath: /app/data/media
+    volumes:
+      - resona-media:/app/data/media
     ports:
       - "127.0.0.1:${RESONA_API_PORT:-5080}:8080"
 
@@ -46,3 +49,4 @@ services:
 
 volumes:
   postgres-data:
+  resona-media:

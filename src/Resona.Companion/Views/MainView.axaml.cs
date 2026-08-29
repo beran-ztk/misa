@@ -195,6 +195,20 @@ public partial class MainView : UserControl
         try
         {
             ClearThumbnailCache();
+            var cloud = new DeviceLibraryCloudClient();
+            if (cloud.LoadConnection() is not null)
+            {
+                try
+                {
+                    using var refreshTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                    await cloud.RefreshMetadataAsync(refreshTimeout.Token);
+                }
+                catch (Exception ex)
+                {
+                    // A cached library remains usable while the server is unavailable.
+                    SetStatus($"Cloud refresh failed: {ex.Message}");
+                }
+            }
             _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
             SetStatus();
         }

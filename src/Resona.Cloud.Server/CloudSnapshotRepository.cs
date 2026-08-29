@@ -15,6 +15,23 @@ public sealed class CloudSnapshotRepository
 
     public CloudSnapshotRepository(NpgsqlDataSource dataSource) => _dataSource = dataSource;
 
+    public async Task<bool> AuthenticateDeviceAsync(
+        DeviceCredentials credentials,
+        CancellationToken cancellationToken)
+    {
+        await using var command = _dataSource.CreateCommand(
+            "SELECT user_id, device_key_hash FROM user_devices WHERE id = @deviceId");
+        command.Parameters.AddWithValue("deviceId", credentials.DeviceId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+            return false;
+
+        return reader.GetGuid(0) == credentials.UserId
+               && CryptographicOperations.FixedTimeEquals(
+                   reader.GetFieldValue<byte[]>(1),
+                   credentials.DeviceKeyHash);
+    }
+
     public async Task<SnapshotReplaceResult> ReplaceSnapshotAsync(
         DeviceCredentials credentials,
         CloudLibrarySnapshot snapshot,

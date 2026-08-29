@@ -4,14 +4,16 @@ using Resona.Cloud.Server;
 using Resona.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = 25 * 1024 * 1024);
-builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 25 * 1024 * 1024);
+builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = CloudMediaRepository.MaximumFileSizeBytes);
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = CloudMediaRepository.MaximumFileSizeBytes);
 
 var connectionString = builder.Configuration.GetConnectionString("Postgres")
     ?? throw new InvalidOperationException("ConnectionStrings:Postgres is required.");
 builder.Services.AddSingleton(_ => new NpgsqlDataSourceBuilder(connectionString).Build());
 builder.Services.AddSingleton<CloudSnapshotRepository>();
 builder.Services.AddSingleton<CloudPublicLibraryRepository>();
+builder.Services.AddSingleton<CloudMediaRepository>();
+builder.Services.AddSingleton<CloudDeviceLibraryRepository>();
 
 var app = builder.Build();
 await CloudSchema.InitializeAsync(app.Services.GetRequiredService<NpgsqlDataSource>());
@@ -53,6 +55,119 @@ app.MapPut("/api/v1/library-snapshot", async (
             synchronizedAt = DateTime.UtcNow
         })
     };
+});
+
+app.MapGet("/api/v1/library-media", async (
+    HttpRequest request,
+    CloudSnapshotRepository snapshots,
+    CloudMediaRepository media,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+
+    return Results.Ok(await media.GetInventoryAsync(credentials.UserId, cancellationToken));
+});
+
+app.MapPut("/api/v1/library-media/{trackKey}", async (
+    string trackKey,
+    HttpRequest request,
+    CloudSnapshotRepository snapshots,
+    CloudMediaRepository media,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+    if (!CloudMediaRepository.IsValidTrackKey(trackKey))
+        return Results.BadRequest(new { error = "Track key is invalid." });
+
+    var fileName = request.Headers["X-Resona-File-Name"].ToString();
+    if (string.IsNullOrWhiteSpace(fileName))
+        return Results.BadRequest(new { error = "X-Resona-File-Name is required." });
+    try
+    {
+        var stored = await media.StoreAsync(
+            credentials.UserId,
+            trackKey,
+            fileName,
+            request.ContentType ?? "application/octet-stream",
+            request.Body,
+            request.ContentLength,
+            request.Headers["X-Resona-Sha256"].ToString(),
+            cancellationToken);
+        return Results.Ok(stored);
+    }
+    catch (ArgumentException exception)
+    {
+        return Results.BadRequest(new { error = exception.Message });
+    }
+    catch (InvalidDataException exception)
+    {
+        return Results.BadRequest(new { error = exception.Message });
+    }
+});
+
+app.MapGet("/api/v1/library-media/{trackKey}", async (
+    string trackKey,
+    HttpRequest request,
+    CloudSnapshotRepository snapshots,
+    CloudMediaRepository media,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+    if (!CloudMediaRepository.IsValidTrackKey(trackKey))
+        return Results.BadRequest(new { error = "Track key is invalid." });
+
+    var stored = await media.FindAsync(credentials.UserId, trackKey, cancellationToken);
+    if (stored is null || !File.Exists(stored.StoragePath))
+        return Results.NotFound();
+    return Results.File(
+        stored.StoragePath,
+        stored.ContentType,
+        stored.FileName,
+        enableRangeProcessing: true);
+});
+
+app.MapPut("/api/v1/device-library-snapshot", async (
+    HttpRequest request,
+    CloudDeviceLibrarySnapshot snapshot,
+    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+    if (!string.Equals(credentials.UserId.ToString("D"), snapshot.UserId, StringComparison.OrdinalIgnoreCase))
+        return Results.BadRequest(new { error = "Authenticated user ID does not match snapshot." });
+    if (snapshot.SchemaVersion != 1
+        || snapshot.TrackCount != snapshot.Tracks.Count
+        || snapshot.Tracks.Any(track => !CloudMediaRepository.IsValidTrackKey(track.TrackKey)))
+        return Results.BadRequest(new { error = "Device library snapshot is invalid." });
+
+    await deviceLibrary.ReplaceAsync(credentials.UserId, snapshot, cancellationToken);
+    return Results.Ok(new
+    {
+        trackCount = snapshot.TrackCount,
+        synchronizedAt = DateTime.UtcNow
+    });
+});
+
+app.MapGet("/api/v1/device-library-snapshot", async (
+    HttpRequest request,
+    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+    var snapshot = await deviceLibrary.GetCurrentAsync(credentials.UserId, cancellationToken);
+    return snapshot is null ? Results.NotFound() : Results.Ok(snapshot);
 });
 
 app.Run();

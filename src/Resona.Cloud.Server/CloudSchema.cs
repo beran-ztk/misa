@@ -96,5 +96,28 @@ public static class CloudSchema
             generated_at        timestamptz NOT NULL,
             synchronized_at     timestamptz NOT NULL DEFAULT now()
         );
+
+        CREATE TABLE IF NOT EXISTS library_media (
+            owner_user_id       uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            track_key           varchar(128) NOT NULL,
+            file_name           varchar(255) NOT NULL,
+            content_type        varchar(100) NOT NULL,
+            file_size_bytes     bigint NOT NULL CHECK (file_size_bytes >= 0),
+            sha256              char(64) NOT NULL,
+            storage_path        text NOT NULL,
+            uploaded_at         timestamptz NOT NULL DEFAULT now(),
+            PRIMARY KEY (owner_user_id, track_key)
+        );
+        CREATE INDEX IF NOT EXISTS ix_library_media_owner_uploaded
+            ON library_media(owner_user_id, uploaded_at);
+
+        CREATE TABLE IF NOT EXISTS device_library_snapshots (
+            user_id             uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            schema_version      integer NOT NULL,
+            track_count         integer NOT NULL CHECK (track_count >= 0),
+            generated_at        timestamptz NOT NULL,
+            snapshot_json       jsonb NOT NULL,
+            synchronized_at     timestamptz NOT NULL DEFAULT now()
+        );
         """;
 }

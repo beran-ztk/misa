@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Resona.Core;
 
 namespace Resona.Models;
 
@@ -38,3 +39,57 @@ public sealed record CloudPublicTrackAnalysis(
     double? Bpm,
     double? IntegratedLoudness,
     double? LoudnessRange);
+
+public sealed record CloudMediaFile(
+    string TrackKey,
+    string FileName,
+    long FileSizeBytes,
+    string Sha256,
+    string UploadedAt);
+
+public sealed record CloudMediaInventory(
+    IReadOnlyList<CloudMediaFile> Files);
+
+public sealed record CloudDeviceLibrarySnapshot(
+    int SchemaVersion,
+    string UserId,
+    int TrackCount,
+    string GeneratedAt,
+    IReadOnlyList<PortableRating> Ratings,
+    IReadOnlyList<PortableFilterPreset> FilterPresets,
+    IReadOnlyList<CloudDeviceCollection> Collections,
+    IReadOnlyList<CloudDeviceTrack> Tracks);
+
+public sealed record CloudDeviceCollection(
+    string StableId,
+    string Name,
+    IReadOnlyList<string> TrackKeys);
+
+public sealed record CloudDeviceTrack(
+    string TrackKey,
+    string FileName,
+    string Title,
+    string OriginalTitle,
+    string? Artist,
+    string? Remix,
+    string? Edits,
+    int? DurationSeconds,
+    string? Rating,
+    string? RatingBand,
+    IReadOnlyList<string> Genres,
+    IReadOnlyList<string> Styles,
+    IReadOnlyList<string> Tags,
+    string? LanguageCode,
+    bool NeedsReview,
+    string LibraryState,
+    byte[]? Thumbnail,
+    int PlayCount,
+    int ListenedSeconds,
+    int SkipCount,
+    string? LastListenedAt,
+    CloudPublicTrackAnalysis? Analysis,
+    IReadOnlyDictionary<string, double> EmotionalCharacter,
+    string UpdatedAt,
+    bool AudioAvailable = false,
+    long? AudioFileSizeBytes = null,
+    string? AudioSha256 = null);

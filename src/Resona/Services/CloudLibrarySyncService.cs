@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -23,11 +26,13 @@ public sealed class CloudLibrarySyncService
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly HttpClient _httpClient;
     private readonly SemaphoreSlim _syncGate = new(1, 1);
+    private readonly object _requestGate = new();
+    private CancellationTokenSource? _requestedSyncCts;
     private int _initialized;
 
     public static readonly CloudLibrarySyncService Current = new(new HttpClient
     {
-        Timeout = TimeSpan.FromMinutes(2)
+        Timeout = TimeSpan.FromMinutes(30)
     });
 
     public CloudLibrarySyncService(HttpClient httpClient) => _httpClient = httpClient;
@@ -42,6 +47,30 @@ public sealed class CloudLibrarySyncService
         if (Interlocked.Exchange(ref _initialized, 1) != 0)
             return;
         _ = SynchronizeAsync();
+    }
+
+    public void RequestSynchronization()
+    {
+        CancellationToken token;
+        lock (_requestGate)
+        {
+            _requestedSyncCts?.Cancel();
+            _requestedSyncCts?.Dispose();
+            _requestedSyncCts = new CancellationTokenSource();
+            token = _requestedSyncCts.Token;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), token);
+                await SynchronizeAsync(token);
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested)
+            {
+            }
+        }, token);
     }
 
     public async Task<CloudSyncStatus> SynchronizeAsync(CancellationToken cancellationToken = default)
@@ -65,9 +94,19 @@ public sealed class CloudLibrarySyncService
                 cancellationToken);
             await UploadSnapshotAsync(baseUri, identity, snapshot, cancellationToken);
 
+            SetStatus(new CloudSyncStatus(CloudSyncState.Synchronizing, "Uploading current device library metadata…"));
+            var deviceSnapshot = await Task.Run(
+                () => CloudDeviceLibrarySnapshotBuilder.Build(MusicLibraryService.Current, identity),
+                cancellationToken);
+            await UploadDeviceSnapshotAsync(baseUri, identity, deviceSnapshot, cancellationToken);
+
+            var mediaResult = await SynchronizeMediaAsync(baseUri, identity, cancellationToken);
+
             return SetStatus(new CloudSyncStatus(
                 CloudSyncState.Succeeded,
-                $"Full public library synchronized · {snapshot.TrackCount} tracks",
+                mediaResult.Failed == 0
+                    ? $"Cloud synchronized · {snapshot.TrackCount} metadata tracks · {mediaResult.Uploaded} audio uploaded"
+                    : $"Cloud metadata synchronized · {mediaResult.Failed} audio uploads failed",
                 snapshot.TrackCount,
                 DateTime.UtcNow.ToString("O")));
         }
@@ -107,6 +146,124 @@ public sealed class CloudLibrarySyncService
             throw new InvalidOperationException(
                 "The public library snapshot exceeds the server upload limit. Increase the reverse proxy request-body limit.");
         response.EnsureSuccessStatusCode();
+    }
+
+    private async Task UploadDeviceSnapshotAsync(
+        Uri baseUri,
+        CloudIdentity identity,
+        CloudDeviceLibrarySnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        var endpoint = new Uri(EnsureTrailingSlash(baseUri), "api/v1/device-library-snapshot");
+        using var request = new HttpRequestMessage(HttpMethod.Put, endpoint)
+        {
+            Content = JsonContent.Create(snapshot, options: JsonOptions)
+        };
+        AddDeviceHeaders(request, identity);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    private async Task<(int Uploaded, int Failed)> SynchronizeMediaAsync(
+        Uri baseUri,
+        CloudIdentity identity,
+        CancellationToken cancellationToken)
+    {
+        SetStatus(new CloudSyncStatus(CloudSyncState.Synchronizing, "Checking cloud audio inventory…"));
+        var inventory = await GetMediaInventoryAsync(baseUri, identity, cancellationToken);
+        var serverFiles = inventory.Files.ToDictionary(file => file.TrackKey, StringComparer.Ordinal);
+        var localFiles = new List<(string TrackKey, string FileName, string Path, long Size)>();
+        foreach (var track in MusicLibraryService.Current.GetTracks())
+        {
+            var trackKey = string.IsNullOrWhiteSpace(track.SourceVideoId)
+                ? YouTubeUrlNormalizer.ExtractVideoId(track.CanonicalUrl)
+                : track.SourceVideoId.Trim();
+            if (string.IsNullOrWhiteSpace(trackKey))
+                continue;
+            var path = Path.Combine(Values.TracksDirectory, track.FileName);
+            if (!File.Exists(path))
+                continue;
+            var size = new FileInfo(path).Length;
+            if (serverFiles.TryGetValue(trackKey, out var remote) && remote.FileSizeBytes == size)
+                continue;
+            localFiles.Add((trackKey, track.FileName, path, size));
+        }
+
+        var uploaded = 0;
+        var failed = 0;
+        for (var index = 0; index < localFiles.Count; index++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var file = localFiles[index];
+            SetStatus(new CloudSyncStatus(
+                CloudSyncState.Synchronizing,
+                $"Uploading audio {index + 1} of {localFiles.Count} · {file.FileName}"));
+            try
+            {
+                await UploadMediaAsync(baseUri, identity, file.TrackKey, file.FileName, file.Path, file.Size, cancellationToken);
+                uploaded++;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                failed++;
+                WorkflowLog.Error("cloud-media", $"Audio upload failed for {file.TrackKey}.", exception);
+            }
+        }
+
+        return (uploaded, failed);
+    }
+
+    private async Task<CloudMediaInventory> GetMediaInventoryAsync(
+        Uri baseUri,
+        CloudIdentity identity,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            new Uri(EnsureTrailingSlash(baseUri), "api/v1/library-media"));
+        AddDeviceHeaders(request, identity);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CloudMediaInventory>(JsonOptions, cancellationToken)
+               ?? new CloudMediaInventory([]);
+    }
+
+    private async Task UploadMediaAsync(
+        Uri baseUri,
+        CloudIdentity identity,
+        string trackKey,
+        string fileName,
+        string path,
+        long size,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = new FileStream(
+            path, FileMode.Open, FileAccess.Read, FileShare.Read,
+            128 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var request = new HttpRequestMessage(
+            HttpMethod.Put,
+            new Uri(EnsureTrailingSlash(baseUri), $"api/v1/library-media/{Uri.EscapeDataString(trackKey)}"));
+        AddDeviceHeaders(request, identity);
+        request.Headers.Add("X-Resona-File-Name", fileName);
+        request.Content = new StreamContent(stream, 128 * 1024);
+        request.Content.Headers.ContentLength = size;
+        request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        using var response = await _httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+        response.EnsureSuccessStatusCode();
+    }
+
+    private static void AddDeviceHeaders(HttpRequestMessage request, CloudIdentity identity)
+    {
+        request.Headers.Add("X-Resona-User-Id", identity.UserId);
+        request.Headers.Add("X-Resona-Device-Id", identity.DeviceId);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Device", identity.DeviceKey);
     }
 
     private CloudSyncStatus SetStatus(CloudSyncStatus status)
