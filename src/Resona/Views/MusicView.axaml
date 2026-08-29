@@ -692,21 +692,29 @@
                                 </StackPanel>
 
                                 <Border IsVisible="{Binding IsPlaying}"
-                                        CornerRadius="11,3,3,11"
-                                        Background="#52253546"
-                                        BorderBrush="#9A78A9E6"
-                                        BorderThickness="1"
-                                        BoxShadow="0 0 16 0 #284F83C4, inset 0 1 0 0 #28FFFFFF"
-                                        IsHitTestVisible="False"/>
-                                <Border Classes="selection-accent"
-                                        IsVisible="{Binding IsPlaying}"
-                                        Width="3"
-                                        Height="34"
-                                        CornerRadius="2"
-                                        Margin="3,0,0,0"
-                                        HorizontalAlignment="Left"
-                                        VerticalAlignment="Center"
-                                        IsHitTestVisible="False"/>
+                                        CornerRadius="4"
+                                        Background="#40103050"
+                                        BorderThickness="3,0,0,0"
+                                        BorderBrush="Aquamarine"
+                                        BoxShadow="0 0 16 0 #284F83C4"
+                                        IsHitTestVisible="False">
+                                    <Border.OpacityMask>
+                                        <LinearGradientBrush StartPoint="0%,50%" EndPoint="100%,50%">
+                                            <GradientStop Color="#FFFFFFFF" Offset="0"/>
+                                            <GradientStop Color="#FFFFFFFF" Offset="0.6"/>
+                                            <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Border.OpacityMask>
+                                </Border>
+                                <!-- <Border Classes="selection-accent" -->
+                                <!--         IsVisible="{Binding IsPlaying}" -->
+                                <!--         Width="3" -->
+                                <!--         Height="34" -->
+                                <!--         CornerRadius="2" -->
+                                <!--         Margin="3,0,0,0" -->
+                                <!--         HorizontalAlignment="Left" -->
+                                <!--         VerticalAlignment="Center" -->
+                                <!--         IsHitTestVisible="False"/> -->
 
                                 </Panel>
                             </Border>
