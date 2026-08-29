@@ -343,12 +343,14 @@
         </Panel>
 
         <Border Grid.Row="2"
-                Background="{DynamicResource Mobile.Brush.Background}"
+                Background="Transparent"
                 BorderThickness="0"
                 CornerRadius="0"
-                ClipToBounds="True"
-                BoxShadow="0 -7 20 0 #70000000">
-            <Panel>
+                ClipToBounds="False"
+                BoxShadow="0 -14 36 6 #A0000000">
+            <Border Background="#D0202022"
+                    ClipToBounds="True"
+                    BoxShadow="inset 0 8 16 -12 #50000000">
                 <Grid x:Name="PlayerContent"
                       RowDefinitions="Auto,Auto,Auto" RowSpacing="1" Margin="12,5,12,13">
                     <Grid ColumnDefinitions="42,*" ColumnSpacing="8">
@@ -403,7 +405,7 @@
                     </Button>
                     </Grid>
                 </Grid>
-            </Panel>
+            </Border>
         </Border>
 
         <Border x:Name="CloudPage"
