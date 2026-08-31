@@ -18,20 +18,16 @@ namespace Resona.Views;
 public partial class EditTrackOverlay : UserControl
 {
     private sealed record RatingButtonVisual(Rating Rating, Button Button, TextBlock Icon);
-    private static readonly string[] FallbackEditStyles = ["Nightcore", "Reverb", "Sped Up", "Slowed"];
-
     private MusicTrack? _track;
     private List<Tag> _tags = [];
     private List<Rating> _ratings = [];
     private List<Style> _styles = [];
 
     private readonly List<(Tag Tag, ToggleButton Btn)> _tagChips = [];
-    private readonly List<(string Style, ToggleButton Btn)> _editStyleChips = [];
     private readonly List<(TrackLanguage Language, ToggleButton Btn)> _languageChips = [];
     private readonly List<(Style Style, ToggleButton Btn)> _styleChips = [];
     private readonly List<RatingButtonVisual> _ratingButtons = [];
 
-    private Dictionary<int, List<int>> _allTrackStyleIds = [];
     private HashSet<int> _modelGenreIds = [];
     private Dictionary<int, ModelSubgenre> _modelSubgenresById = [];
     private Dictionary<int, string> _modelGenreNamesById = [];
@@ -195,8 +191,6 @@ public partial class EditTrackOverlay : UserControl
         _tags = MusicLibraryService.Current.GetTags();
         _ratings = MusicLibraryService.Current.GetRatings();
         _styles = MusicLibraryService.Current.GetStyles();
-        _allTrackStyleIds = MusicLibraryService.Current.GetAllTrackStyleIds();
-        StylesSection.IsVisible = false;
 
         BuildRatingButtons();
         _lookupsLoaded = true;
@@ -229,7 +223,7 @@ public partial class EditTrackOverlay : UserControl
         ShowDetectedGenres(track);
         RebuildModelGenreChoices();
         BuildFrequentManualGenreChoices();
-        RebuildEditStyleChips(track.Edits);
+        RebuildStyleChips(selectedStyleIds);
         RebuildTagChips(selectedTagIds);
         RebuildLanguageChips(track.LanguageCode);
         RebuildCollectionMemberships(track);
@@ -337,7 +331,6 @@ public partial class EditTrackOverlay : UserControl
         if (string.IsNullOrWhiteSpace(TitleBox.Text))
             TitleBox.Text = _track.Title;
         AutoSaveChanges();
-        RebuildEditStyleChips(EditsBox.Text);
         UpdateInformationDisplay(_track);
     }
 
@@ -442,34 +435,7 @@ public partial class EditTrackOverlay : UserControl
         ToastRequested?.Invoke($"{label} copied");
     }
 
-    private void RebuildEditStyleChips(string? edits)
-    {
-        EditStylesPanel.Children.Clear();
-        _editStyleChips.Clear();
-        var selectedStyles = TrackTitleFormatter.ParseEdits(edits);
-
-        var availableStyles = _styles.Count > 0
-            ? _styles.Select(style => style.Name)
-            : FallbackEditStyles;
-        foreach (var style in availableStyles)
-        {
-            var button = CreateEditStyleButton(
-                style,
-                selectedStyles.Any(edit => IsEditStyle(edit, style)));
-            button.IsCheckedChanged += (_, _) =>
-            {
-                ApplyTagVisual(button);
-                ApplySelectedEditStyles();
-                AutoSaveChanges();
-                if (_track is not null)
-                    UpdateInformationDisplay(_track);
-            };
-            _editStyleChips.Add((style, button));
-            EditStylesPanel.Children.Add(button);
-        }
-    }
-
-    private static ToggleButton CreateEditStyleButton(string style, bool isSelected)
+    private static ToggleButton CreateStyleButton(string style, bool isSelected)
     {
         var label = new TextBlock
         {
@@ -497,24 +463,6 @@ public partial class EditTrackOverlay : UserControl
         ApplyTagVisual(button);
         return button;
     }
-
-    private void ApplySelectedEditStyles()
-    {
-        var customEdits = TrackTitleFormatter.ParseEdits(EditsBox.Text)
-            .Where(edit => !_editStyleChips.Any(style => IsEditStyle(edit, style.Style)));
-        var selectedStyles = _editStyleChips
-            .Where(item => item.Btn.IsChecked == true)
-            .Select(item => item.Style);
-        var edits = selectedStyles.Concat(customEdits).ToList();
-        EditsBox.Text = edits.Count == 0 ? null : string.Join(", ", edits);
-    }
-
-    private static bool IsEditStyle(string edit, string style) =>
-        string.Equals(edit, style, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(style, "Sped Up", StringComparison.OrdinalIgnoreCase)
-           && string.Equals(edit, "Speed Up", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(style, "Slowed", StringComparison.OrdinalIgnoreCase)
-           && string.Equals(edit, "Slow", StringComparison.OrdinalIgnoreCase);
 
     private void RebuildTagChips(IReadOnlySet<int> selectedTagIds)
     {
@@ -711,8 +659,6 @@ public partial class EditTrackOverlay : UserControl
 
     private void RebuildStyleChips(IReadOnlySet<int>? selectedStyleIds = null)
     {
-        var styleCounts = MetadataCountService.StyleCountsForGenres(new Dictionary<int, List<int>>(), _allTrackStyleIds, new HashSet<int>());
-
         selectedStyleIds ??= _styleChips
             .Where(c => c.Btn.IsChecked == true)
             .Select(c => c.Style.Id)
@@ -720,22 +666,23 @@ public partial class EditTrackOverlay : UserControl
 
         var sorted = _styles
             .OrderByDescending(s => selectedStyleIds.Contains(s.Id))
-            .ThenByDescending(s => styleCounts.GetValueOrDefault(s.Id, 0))
             .ThenBy(s => s.Name)
             .ToList();
 
-        StylesPanel.Children.Clear();
+        EditStylesPanel.Children.Clear();
         _styleChips.Clear();
 
         foreach (var style in sorted)
         {
-            var count = styleCounts.GetValueOrDefault(style.Id, 0);
             var selected = selectedStyleIds.Contains(style.Id);
-            var btn = MetadataChipFactory.Create(style.Name, count, selected);
-            btn.Opacity = count > 0 || selected ? 1.0 : 0.48;
-            btn.IsCheckedChanged += (_, _) => AutoSaveChanges();
+            var btn = CreateStyleButton(style.Name, selected);
+            btn.IsCheckedChanged += (_, _) =>
+            {
+                ApplyTagVisual(btn);
+                AutoSaveChanges();
+            };
             _styleChips.Add((style, btn));
-            StylesPanel.Children.Add(btn);
+            EditStylesPanel.Children.Add(btn);
         }
     }
 
@@ -746,10 +693,9 @@ public partial class EditTrackOverlay : UserControl
             .ToHashSet();
 
     private HashSet<int> SelectedStyleIds() =>
-        _styles
-            .Where(style => _editStyleChips.Any(item =>
-                item.Btn.IsChecked == true && IsEditStyle(item.Style, style.Name)))
-            .Select(style => style.Id)
+        _styleChips
+            .Where(item => item.Btn.IsChecked == true)
+            .Select(item => item.Style.Id)
             .ToHashSet();
 
     private int? SelectedRatingId() => _selectedRatingId;
