@@ -220,6 +220,13 @@ public class MusicDatabase
                 PRIMARY KEY (track_id, tag_id)
             );
 
+            CREATE TABLE track_styles (
+                track_id     INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                style_id     INTEGER NOT NULL REFERENCES style_definitions(id) ON DELETE CASCADE,
+                PRIMARY KEY (track_id, style_id)
+            );
+            CREATE INDEX ix_track_styles_style_id ON track_styles(style_id);
+
             CREATE TABLE track_analysis (
                 id                INTEGER PRIMARY KEY AUTOINCREMENT,
                 track_id          INTEGER NOT NULL UNIQUE REFERENCES tracks(id) ON DELETE CASCADE,
@@ -519,13 +526,35 @@ public class MusicDatabase
 
     private static void CreateStyleSchema(SqliteConnection conn)
     {
+        var migrateLegacyEdits = !TableExists(conn, "track_styles");
         ExecuteNonQuery(conn, @"
             CREATE TABLE IF NOT EXISTS style_definitions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL COLLATE NOCASE UNIQUE
-            );");
+            );
+            CREATE TABLE IF NOT EXISTS track_styles (
+                track_id INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
+                style_id INTEGER NOT NULL REFERENCES style_definitions(id) ON DELETE CASCADE,
+                PRIMARY KEY (track_id, style_id)
+            );
+            CREATE INDEX IF NOT EXISTS ix_track_styles_style_id ON track_styles(style_id);");
         using var tx = conn.BeginTransaction();
         SeedDefaultStyles(conn, tx);
+        if (migrateLegacyEdits)
+            ExecuteInsert(conn, tx, @"
+                INSERT OR IGNORE INTO track_styles (track_id, style_id)
+                SELECT tracks.id, styles.id
+                FROM tracks
+                CROSS JOIN style_definitions styles
+                WHERE tracks.edits IS NOT NULL
+                  AND (
+                      INSTR(',' || LOWER(REPLACE(tracks.edits, ', ', ',')) || ',',
+                            ',' || LOWER(styles.name) || ',') > 0
+                      OR LOWER(styles.name) = 'sped up'
+                         AND INSTR(',' || LOWER(REPLACE(tracks.edits, ', ', ',')) || ',', ',speed up,') > 0
+                      OR LOWER(styles.name) = 'slowed'
+                         AND INSTR(',' || LOWER(REPLACE(tracks.edits, ', ', ',')) || ',', ',slow,') > 0
+                  )");
         tx.Commit();
     }
 
@@ -2594,7 +2623,7 @@ public class MusicDatabase
     }
 
     public int InsertTrack(string canonicalUrl, string title, string fileName,
-        List<int> genreIds, int? ratingId, List<int> _, int? durationSeconds, long? fileSizeBytes,
+        List<int> genreIds, int? ratingId, List<int> styleIds, int? durationSeconds, long? fileSizeBytes,
         int? downloadDurationMilliseconds, YouTubeTrackMetadata? metadata = null, byte[]? thumbnail = null)
     {
         using var conn = Open();
@@ -2652,6 +2681,7 @@ public class MusicDatabase
             ("$metadataUpdatedAt", metadata is null ? null : now));
 
         SynchronizeLibraryChannelVideo(conn, tx, trackId, now);
+        SetTrackStyles(conn, tx, trackId, styleIds);
 
         tx.Commit();
         return (int)trackId;
@@ -3577,16 +3607,16 @@ public class MusicDatabase
     public Dictionary<int, List<int>> GetAllTrackStyleIds()
     {
         using var conn = Open();
-        var styles = ReadStyles(conn);
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT id, edits FROM tracks WHERE edits IS NOT NULL AND TRIM(edits) <> ''";
+        cmd.CommandText = "SELECT track_id, style_id FROM track_styles ORDER BY track_id, style_id";
         using var reader = cmd.ExecuteReader();
         var result = new Dictionary<int, List<int>>();
         while (reader.Read())
         {
-            var ids = StyleIdsForEdits(reader.GetString(1), styles);
-            if (ids.Count > 0)
-                result[reader.GetInt32(0)] = ids;
+            var trackId = reader.GetInt32(0);
+            if (!result.TryGetValue(trackId, out var ids))
+                result[trackId] = ids = [];
+            ids.Add(reader.GetInt32(1));
         }
         return result;
     }
@@ -3594,11 +3624,14 @@ public class MusicDatabase
     public List<int> GetTrackStyleIds(int trackId)
     {
         using var conn = Open();
-        var styles = ReadStyles(conn);
         using var cmd = conn.CreateCommand();
-        cmd.CommandText = "SELECT edits FROM tracks WHERE id = $id";
+        cmd.CommandText = "SELECT style_id FROM track_styles WHERE track_id = $id ORDER BY style_id";
         cmd.Parameters.AddWithValue("$id", trackId);
-        return cmd.ExecuteScalar() is string edits ? StyleIdsForEdits(edits, styles) : [];
+        var result = new List<int>();
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+            result.Add(reader.GetInt32(0));
+        return result;
     }
 
     public List<Style> GetStyles()
@@ -3634,18 +3667,6 @@ public class MusicDatabase
         ExecuteInsert(conn, tx,
             "UPDATE style_definitions SET name = $name WHERE id = $id",
             ("$name", newName), ("$id", id));
-        foreach (var track in ReadTracksUsingStyle(conn, tx, oldName))
-        {
-            var updatedEdits = TrackTitleFormatter.ParseEdits(track.Edits)
-                .Select(edit => StyleNameMatches(edit, oldName) ? newName : edit)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            ExecuteInsert(conn, tx,
-                "UPDATE tracks SET edits = $edits, updated_at = $now WHERE id = $id",
-                ("$edits", updatedEdits.Count == 0 ? DBNull.Value : string.Join(", ", updatedEdits)),
-                ("$now", DateTime.UtcNow.ToString("O")),
-                ("$id", track.Id));
-        }
         tx.Commit();
     }
 
@@ -3664,7 +3685,8 @@ public class MusicDatabase
         if (name is null)
             return null;
 
-        var usageCount = ReadTracksUsingStyle(conn, tx, name).Count;
+        var usageCount = SelectId(conn, tx,
+            "SELECT COUNT(*) FROM track_styles WHERE style_id = $id", ("$id", id));
         if (usageCount > 0)
             return $"Cannot delete: used by {usageCount} track(s).";
 
@@ -3679,37 +3701,6 @@ public class MusicDatabase
         cmd.CommandText = "SELECT id, name FROM style_definitions ORDER BY name";
         return ReadLookupList(cmd, (id, name) => new Style(id, name));
     }
-
-    private static List<int> StyleIdsForEdits(string? edits, IReadOnlyList<Style> styles) =>
-        styles
-            .Where(style => TrackTitleFormatter.ParseEdits(edits)
-                .Any(edit => StyleNameMatches(edit, style.Name)))
-            .Select(style => style.Id)
-            .ToList();
-
-    private static List<(int Id, string Edits)> ReadTracksUsingStyle(
-        SqliteConnection conn, SqliteTransaction tx, string styleName)
-    {
-        using var cmd = conn.CreateCommand();
-        cmd.Transaction = tx;
-        cmd.CommandText = "SELECT id, edits FROM tracks WHERE edits IS NOT NULL AND TRIM(edits) <> ''";
-        using var reader = cmd.ExecuteReader();
-        var tracks = new List<(int Id, string Edits)>();
-        while (reader.Read())
-        {
-            var edits = reader.GetString(1);
-            if (TrackTitleFormatter.ParseEdits(edits).Any(edit => StyleNameMatches(edit, styleName)))
-                tracks.Add((reader.GetInt32(0), edits));
-        }
-        return tracks;
-    }
-
-    private static bool StyleNameMatches(string value, string styleName) =>
-        string.Equals(value, styleName, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(styleName, "Sped Up", StringComparison.OrdinalIgnoreCase)
-           && string.Equals(value, "Speed Up", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(styleName, "Slowed", StringComparison.OrdinalIgnoreCase)
-           && string.Equals(value, "Slow", StringComparison.OrdinalIgnoreCase);
 
     private static string RequiredStyleName(string? value)
     {
@@ -3729,7 +3720,7 @@ public class MusicDatabase
         string? edits,
         List<int> genreIds,
         int? ratingId,
-        List<int> _,
+        List<int> styleIds,
         bool isPublic)
     {
         using var conn = Open();
@@ -3751,6 +3742,8 @@ public class MusicDatabase
               WHERE id = $id",
             ("$id", id), ("$title", title), ("$artist", artist), ("$remix", remix), ("$edits", edits),
             ("$ratingId", ratingId), ("$isPublic", isPublic ? 1 : 0), ("$updatedAt", now));
+
+        SetTrackStyles(conn, tx, id, styleIds);
 
         if (ratingId is not null)
             ExecuteInsert(conn, tx, @"
@@ -3803,6 +3796,19 @@ public class MusicDatabase
         using var tx = conn.BeginTransaction();
         DeleteTrack(conn, tx, id);
         tx.Commit();
+    }
+
+    private static void SetTrackStyles(
+        SqliteConnection conn,
+        SqliteTransaction tx,
+        long trackId,
+        IReadOnlyCollection<int> styleIds)
+    {
+        ExecuteInsert(conn, tx, "DELETE FROM track_styles WHERE track_id = $trackId", ("$trackId", trackId));
+        foreach (var styleId in styleIds.Distinct())
+            ExecuteInsert(conn, tx,
+                "INSERT INTO track_styles (track_id, style_id) VALUES ($trackId, $styleId)",
+                ("$trackId", trackId), ("$styleId", styleId));
     }
 
     public void SetTrackRating(int id, int ratingId)
