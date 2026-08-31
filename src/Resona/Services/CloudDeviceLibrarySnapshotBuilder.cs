@@ -42,7 +42,6 @@ public static class CloudDeviceLibrarySnapshotBuilder
                 track.OriginalTitle,
                 track.Artist,
                 track.Remix,
-                track.Edits,
                 track.DurationSeconds,
                 track.RatingId is int ratingId ? ratingNames.GetValueOrDefault(ratingId) : null,
                 track.RatingBand?.ToString(),

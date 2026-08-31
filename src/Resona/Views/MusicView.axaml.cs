@@ -5292,7 +5292,7 @@ public partial class MusicView : UserControl
 
         _windowsMediaSession.UpdateMetadata(
             item.Track.Id,
-            TrackTitleFormatter.Format(null, item.Track.Title, item.Track.Remix, item.Track.Edits),
+            TrackTitleFormatter.Format(null, item.Track.Title, item.Track.Remix),
             string.IsNullOrWhiteSpace(item.Track.Artist) ? item.ChannelText : item.Track.Artist,
             _engine.CurrentTime,
             _engine.TotalTime,

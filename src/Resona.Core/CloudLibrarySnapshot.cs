@@ -72,7 +72,6 @@ public sealed record CloudDeviceTrack(
     string OriginalTitle,
     string? Artist,
     string? Remix,
-    string? Edits,
     int? DurationSeconds,
     string? Rating,
     string? RatingBand,

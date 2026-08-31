@@ -24,7 +24,6 @@ public sealed class StyleDatabaseTests : IDisposable
             );
             CREATE TABLE tracks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                edits TEXT NULL,
                 updated_at TEXT NOT NULL
             );
             CREATE TABLE track_styles (
@@ -36,11 +35,11 @@ public sealed class StyleDatabaseTests : IDisposable
     }
 
     [Fact]
-    public void Styles_are_stored_independently_from_legacy_edits()
+    public void Styles_are_stored_in_the_style_junction_table()
     {
         _database.AddStyle("Sped Up");
         _database.AddStyle("Reverb");
-        var trackId = InsertTrack("Speed Up, Reverb, Custom");
+        var trackId = InsertTrack();
         var styles = _database.GetStyles();
         var spedUp = styles.Single(style => style.Name == "Sped Up");
         var reverb = styles.Single(style => style.Name == "Reverb");
@@ -50,7 +49,6 @@ public sealed class StyleDatabaseTests : IDisposable
 
         _database.RenameStyle(reverb.Id, "Echo");
 
-        Assert.Equal("Speed Up, Reverb, Custom", Scalar<string>("SELECT edits FROM tracks WHERE id = $id", ("$id", trackId)));
         Assert.Equal("Echo", _database.GetStyles().Single(style => style.Id == reverb.Id).Name);
         Assert.Equal(new[] { reverb.Id, spedUp.Id }.Order(), _database.GetTrackStyleIds(trackId).Order());
     }
@@ -60,7 +58,7 @@ public sealed class StyleDatabaseTests : IDisposable
     {
         _database.AddStyle("Nightcore");
         _database.AddStyle("Slowed");
-        var trackId = InsertTrack("Nightcore");
+        var trackId = InsertTrack();
         var styles = _database.GetStyles();
         AssignStyles(trackId, styles.Single(style => style.Name == "Nightcore").Id);
 
@@ -70,10 +68,10 @@ public sealed class StyleDatabaseTests : IDisposable
         Assert.DoesNotContain(_database.GetStyles(), style => style.Name == "Slowed");
     }
 
-    private int InsertTrack(string edits)
+    private int InsertTrack()
     {
-        Execute("INSERT INTO tracks (edits, updated_at) VALUES ($edits, $now)",
-            ("$edits", edits), ("$now", DateTime.UtcNow.ToString("O")));
+        Execute("INSERT INTO tracks (updated_at) VALUES ($now)",
+            ("$now", DateTime.UtcNow.ToString("O")));
         return Scalar<int>("SELECT MAX(id) FROM tracks");
     }
 

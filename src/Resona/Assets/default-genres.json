@@ -1,6 +1,5 @@
 {
   "genres": [
-    { "name": "Nightcore", "description": "Hochgepitchte und beschleunigte Versionen bestehender Songs; oft mit Anime-, Internet- oder Edit-Kultur verbunden." },
     { "name": "Pop", "description": "Eingängige, melodische Mainstream-Musik mit Fokus auf Gesang, Hook und Wiedererkennbarkeit." },
     { "name": "EDM", "description": "Breiter Sammelbegriff für elektronische Festival-, Club- und Dance-Musik mit moderner Produktion." },
     { "name": "House", "description": "Elektronische Musik mit stabilem 4/4-Groove, tanzbarem Rhythmus und meist gleichmäßigem Flow." },

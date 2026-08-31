@@ -8135,25 +8135,6 @@
     ]
   },
   {
-    "label": "Electronic---Nightcore",
-    "genre": "Electronic",
-    "subgenre": "Nightcore",
-    "description": "A sped-up edit style that raises both tempo and pitch, typically giving existing pop, dance, or electronic songs brighter vocals and more urgent energy.",
-    "classificationHint": "Use this for an existing song audibly accelerated with corresponding pitch-raised vocals; do not use it merely because an original track is naturally fast or high-pitched.",
-    "bpmMin": null,
-    "bpmMax": null,
-    "distinguishFrom": [
-      {
-        "label": "Electronic---Speedcore",
-        "difference": "Speedcore is an original extreme-hardcore genre defined by very high tempo and aggressive kicks; Nightcore is primarily a speed-and-pitch transformation of another song."
-      },
-      {
-        "label": "Electronic---Dance-pop",
-        "difference": "Dance-pop describes the underlying songwriting and dance production; Nightcore describes a sped-up, pitch-raised version and may be combined with the base style."
-      }
-    ]
-  },
-  {
     "label": "Electronic---Nightstep",
     "genre": "Electronic",
     "subgenre": "Nightstep",
@@ -8162,10 +8143,6 @@
     "bpmMin": null,
     "bpmMax": null,
     "distinguishFrom": [
-      {
-        "label": "Electronic---Nightcore",
-        "difference": "Nightcore can transform music of many styles; Nightstep specifically retains prominent dubstep or bass-music traits."
-      },
       {
         "label": "Electronic---Dubstep",
         "difference": "Dubstep alone does not imply raised pitch or accelerated source audio; Nightstep combines that bass framework with Nightcore-style processing."

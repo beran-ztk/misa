@@ -39,10 +39,9 @@ public record MusicTrack(
     string OriginalTitle = "",
     string? Artist = null,
     string? Remix = null,
-    string? Edits = null,
     RatingBand? RatingBand = null)
 {
-    public string DisplayTitle => TrackTitleFormatter.Format(Artist, Title, Remix, Edits);
+    public string DisplayTitle => TrackTitleFormatter.Format(Artist, Title, Remix);
     public string? DisplayChannelName => ChannelNameFormatter.Format(ChannelName);
 }
 
@@ -64,7 +63,7 @@ public static class ChannelNameFormatter
 
 public static class TrackTitleFormatter
 {
-    public static string Format(string? artist, string title, string? remix, string? edits)
+    public static string Format(string? artist, string title, string? remix)
     {
         var cleanTitle = title.Trim();
         var result = string.IsNullOrWhiteSpace(artist)
@@ -74,20 +73,8 @@ public static class TrackTitleFormatter
         if (!string.IsNullOrWhiteSpace(remix))
             result += $" ({remix.Trim()})";
 
-        var editNames = ParseEdits(edits);
-        if (editNames.Count > 0)
-            result += $" · {string.Join(" · ", editNames)}";
-
         return result;
     }
-
-    public static IReadOnlyList<string> ParseEdits(string? edits) =>
-        string.IsNullOrWhiteSpace(edits)
-            ? []
-            : edits.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Where(edit => edit.Length > 0)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
 }
 
 public sealed record TrackLanguage(string Code, string Name);

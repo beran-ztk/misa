@@ -64,13 +64,12 @@ public class MusicLibraryService
         string title,
         string? artist,
         string? remix,
-        string? edits,
         List<int> genreIds,
         int? ratingId,
         List<int> styleIds,
         bool isPublic)
     {
-        _db.UpdateTrack(id, title, artist, remix, edits, genreIds, ratingId, styleIds, isPublic);
+        _db.UpdateTrack(id, title, artist, remix, genreIds, ratingId, styleIds, isPublic);
         if (ratingId is not null)
             BackgroundAnalysisService.Current.EnqueueTrack(id);
     }
