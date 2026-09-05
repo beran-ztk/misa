@@ -25,6 +25,38 @@ public sealed class DeviceLibraryCloudClientTests
     }
 
     [Fact]
+    public async Task Newer_revision_replaces_cache_even_when_timestamp_is_equal()
+    {
+        var previousStorage = CompanionServices.LibraryStorage;
+        var root = Path.Combine(Path.GetTempPath(), $"resona-companion-revision-{Guid.NewGuid():N}");
+        try
+        {
+            CompanionServices.LibraryStorage = new TestLibraryStorage(root);
+            var userId = Guid.NewGuid().ToString("D");
+            var cached = Snapshot(userId, "2026-09-05T12:00:00Z", "Old") with { LibraryRevision = 4 };
+            var remote = Snapshot(userId, "2026-09-05T12:00:00Z", "New") with { LibraryRevision = 5 };
+            var client = new DeviceLibraryCloudClient(new HttpClient(new SnapshotHandler(remote)));
+            client.SaveConnection(new CompanionCloudConnection(
+                "https://api.resona.home.arpa", userId, Guid.NewGuid().ToString("D"), "device-key"));
+            Directory.CreateDirectory(root);
+            await File.WriteAllTextAsync(client.SnapshotPath,
+                JsonSerializer.Serialize(cached, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
+
+            var result = await client.RefreshMetadataAsync();
+            var library = await PortableLibraryStore.LoadAsync(root);
+
+            Assert.True(result.LibraryUpdated);
+            Assert.Equal("New", Assert.Single(library.Library.FilterPresets!).Name);
+        }
+        finally
+        {
+            CompanionServices.LibraryStorage = previousStorage;
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Equal_timestamp_keeps_existing_local_library()
     {
         var previousStorage = CompanionServices.LibraryStorage;

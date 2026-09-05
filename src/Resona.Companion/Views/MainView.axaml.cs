@@ -56,6 +56,7 @@ public partial class MainView : UserControl
     private CancellationTokenSource? _toastCts;
     private CancellationTokenSource? _cloudDownloadCts;
     private CloudDeviceLibrarySnapshot? _cloudSnapshot;
+    private CloudDeviceTrack? _editingCloudTrack;
     private bool _cloudBusy;
 
     private enum MobileLibrarySource
@@ -1004,9 +1005,153 @@ public partial class MainView : UserControl
         CloudPage.IsVisible = true;
         ConfigureSystemBars();
         RefreshCloudPage();
+        _ = RefreshServerDownloadsAsync();
     }
 
     private void OnCloseCloudClicked(object? sender, RoutedEventArgs e) => CloudPage.IsVisible = false;
+
+    private void OnEditTrackClicked(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is not Button { DataContext: TrackRow row }
+            || string.IsNullOrWhiteSpace(row.Track.TrackKey))
+            return;
+        _cloudSnapshot ??= _cloud.LoadCachedSnapshot();
+        _editingCloudTrack = _cloudSnapshot?.Tracks.FirstOrDefault(track =>
+            string.Equals(track.TrackKey, row.Track.TrackKey, StringComparison.Ordinal));
+        if (_editingCloudTrack is null)
+        {
+            ShowToast("Synchronize before editing this track");
+            return;
+        }
+
+        TrackEditTitleBox.Text = _editingCloudTrack.Title;
+        TrackEditArtistBox.Text = _editingCloudTrack.Artist ?? string.Empty;
+        TrackEditRemixBox.Text = _editingCloudTrack.Remix ?? string.Empty;
+        var ratings = new[] { "(No rating)" }
+            .Concat(_cloudSnapshot!.Ratings.OrderBy(rating => rating.SortOrder).Select(rating => rating.Name))
+            .ToList();
+        TrackEditRatingBox.ItemsSource = ratings;
+        TrackEditRatingBox.SelectedItem = _editingCloudTrack.Rating ?? "(No rating)";
+        TrackEditRevisionText.Text = $"Server revision {_editingCloudTrack.Revision}";
+        TrackEditStatusText.Text = string.Empty;
+        RefreshTrackEditAudioButtons();
+        TrackEditPage.IsVisible = true;
+    }
+
+    private void OnCloseTrackEditClicked(object? sender, RoutedEventArgs e)
+    {
+        TrackEditPage.IsVisible = false;
+        _editingCloudTrack = null;
+    }
+
+    private async void OnSaveTrackEditClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_editingCloudTrack is null || string.IsNullOrWhiteSpace(TrackEditTitleBox.Text))
+        {
+            TrackEditStatusText.Text = "A title is required.";
+            return;
+        }
+        var selectedRating = TrackEditRatingBox.SelectedItem as string;
+        var rating = selectedRating == "(No rating)" ? null : selectedRating;
+        var update = _editingCloudTrack with
+        {
+            Title = TrackEditTitleBox.Text.Trim(),
+            Artist = NullIfWhiteSpace(TrackEditArtistBox.Text),
+            Remix = NullIfWhiteSpace(TrackEditRemixBox.Text),
+            Rating = rating,
+            RatingBand = string.Equals(rating, _editingCloudTrack.Rating, StringComparison.OrdinalIgnoreCase)
+                ? _editingCloudTrack.RatingBand
+                : null,
+            NeedsReview = rating is null,
+            LibraryState = rating is null ? "PendingRating" : "Active"
+        };
+        try
+        {
+            TrackEditSaveButton.IsEnabled = false;
+            TrackEditStatusText.Text = "Saving on server…";
+            _cloudSnapshot = await _cloud.UpdateTrackAsync(update);
+            _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
+            ClearThumbnailCache();
+            PopulateFilters();
+            ApplyFilter();
+            TrackEditPage.IsVisible = false;
+            _editingCloudTrack = null;
+            ShowToast("Track updated on every device");
+        }
+        catch (CloudRevisionConflictException)
+        {
+            await RefreshCloudMetadataAndLibraryAsync(isBackground: false);
+            TrackEditStatusText.Text =
+                "This track changed on another device. The current version was loaded; close and reopen it before editing.";
+        }
+        catch (Exception ex)
+        {
+            TrackEditStatusText.Text = $"Could not save: {ex.Message}";
+        }
+        finally
+        {
+            TrackEditSaveButton.IsEnabled = true;
+        }
+    }
+
+    private static string? NullIfWhiteSpace(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private async void OnDownloadEditedTrackClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_editingCloudTrack is null)
+            return;
+        try
+        {
+            TrackEditDownloadButton.IsEnabled = false;
+            TrackEditStatusText.Text = "Downloading this track to the phone…";
+            await _cloud.DownloadTrackAudioAsync(_editingCloudTrack);
+            TrackEditStatusText.Text = "This track is available offline.";
+            RefreshTrackEditAudioButtons();
+            RefreshCloudCountersOnly();
+        }
+        catch (Exception ex)
+        {
+            TrackEditStatusText.Text = $"Could not download: {ex.Message}";
+        }
+    }
+
+    private void OnRemoveEditedTrackAudioClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_editingCloudTrack is null)
+            return;
+        if (string.Equals(_currentTrackFileName, _editingCloudTrack.FileName, StringComparison.OrdinalIgnoreCase)
+            && _audio.IsPlaying)
+        {
+            TrackEditStatusText.Text = "Pause this track before removing its offline copy.";
+            return;
+        }
+        try
+        {
+            _cloud.RemoveLocalTrackAudio(_editingCloudTrack);
+            TrackEditStatusText.Text = "Offline copy removed. The server copy is unchanged.";
+            RefreshTrackEditAudioButtons();
+            RefreshCloudCountersOnly();
+        }
+        catch (Exception ex)
+        {
+            TrackEditStatusText.Text = $"Could not remove offline copy: {ex.Message}";
+        }
+    }
+
+    private void RefreshTrackEditAudioButtons()
+    {
+        if (_editingCloudTrack is null)
+            return;
+        var localPath = Path.Combine(
+            CompanionServices.LibraryStorage.LibraryDirectory,
+            "tracks",
+            Path.GetFileName(_editingCloudTrack.FileName));
+        var exists = File.Exists(localPath);
+        TrackEditDownloadButton.IsEnabled = !exists && _editingCloudTrack.AudioAvailable;
+        TrackEditRemoveAudioButton.IsEnabled = exists;
+    }
 
     private async void OnConnectCloudClicked(object? sender, RoutedEventArgs e)
     {
@@ -1135,12 +1280,161 @@ public partial class MainView : UserControl
 
     private void OnCancelCloudDownloadClicked(object? sender, RoutedEventArgs e) => _cloudDownloadCts?.Cancel();
 
+    private async void OnQueueServerDownloadClicked(object? sender, RoutedEventArgs e)
+    {
+        var url = CloudDownloadUrlBox.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            CloudOperationStatusText.Text = "Paste an individual YouTube track link first.";
+            return;
+        }
+        try
+        {
+            SetCloudBusy(true);
+            var job = await _cloud.QueueServerDownloadAsync(url);
+            CloudDownloadUrlBox.Text = string.Empty;
+            CloudOperationStatusText.Text = $"Queued on server · {job.JobId[..8]}";
+            await RefreshServerDownloadsAsync();
+            ShowToast("Server download queued");
+        }
+        catch (Exception ex)
+        {
+            CloudOperationStatusText.Text = $"Could not queue download: {ex.Message}";
+        }
+        finally
+        {
+            SetCloudBusy(false);
+        }
+    }
+
+    private async void OnRefreshServerDownloadsClicked(object? sender, RoutedEventArgs e) =>
+        await RefreshServerDownloadsAsync();
+
+    private async void OnRenameCloudPresetClicked(object? sender, RoutedEventArgs e)
+    {
+        var selected = SelectedPreset();
+        var name = CloudPresetNameBox.Text?.Trim();
+        if (selected is null || string.IsNullOrWhiteSpace(name))
+        {
+            CloudOperationStatusText.Text = "Select a preset in Filters and enter its new name.";
+            return;
+        }
+        var presets = (_loadedLibrary.Library.FilterPresets ?? [])
+            .Select(preset => ReferenceEquals(preset, selected)
+                || string.Equals(preset.Name, selected.Name, StringComparison.OrdinalIgnoreCase)
+                    ? preset with { Name = name }
+                    : preset)
+            .ToList();
+        await SaveCloudPresetsAsync(presets, name);
+    }
+
+    private async void OnCopyCloudPresetClicked(object? sender, RoutedEventArgs e)
+    {
+        var selected = SelectedPreset();
+        var name = CloudPresetNameBox.Text?.Trim();
+        if (selected is null || string.IsNullOrWhiteSpace(name))
+        {
+            CloudOperationStatusText.Text = "Select a preset in Filters and enter a name for the copy.";
+            return;
+        }
+        var presets = (_loadedLibrary.Library.FilterPresets ?? []).ToList();
+        if (presets.Any(preset => string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            CloudOperationStatusText.Text = "A preset with that name already exists.";
+            return;
+        }
+        presets.Add(selected with { Name = name });
+        await SaveCloudPresetsAsync(presets, name);
+    }
+
+    private async void OnDeleteCloudPresetClicked(object? sender, RoutedEventArgs e)
+    {
+        var selected = SelectedPreset();
+        if (selected is null)
+        {
+            CloudOperationStatusText.Text = "Select the preset to delete in Filters first.";
+            return;
+        }
+        var presets = (_loadedLibrary.Library.FilterPresets ?? [])
+            .Where(preset => !string.Equals(preset.Name, selected.Name, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        await SaveCloudPresetsAsync(presets, null);
+    }
+
+    private PortableFilterPreset? SelectedPreset() =>
+        _activeLibrarySource == MobileLibrarySource.Preset
+            ? (_loadedLibrary.Library.FilterPresets ?? []).FirstOrDefault(preset =>
+                string.Equals(preset.Name, _activeLibrarySourceId, StringComparison.OrdinalIgnoreCase))
+            : null;
+
+    private async Task SaveCloudPresetsAsync(List<PortableFilterPreset> presets, string? selectedName)
+    {
+        try
+        {
+            SetCloudBusy(true);
+            _cloudSnapshot = await _cloud.UpdatePresetsAsync(presets);
+            _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
+            _activeLibrarySource = selectedName is null ? MobileLibrarySource.Default : MobileLibrarySource.Preset;
+            _activeLibrarySourceId = selectedName;
+            CloudPresetNameBox.Text = string.Empty;
+            PopulateFilters();
+            ApplyFilter();
+            CloudOperationStatusText.Text = $"Shared presets updated · {_cloudSnapshot.PresetsRevision}";
+            ShowToast("Presets updated on server");
+        }
+        catch (CloudRevisionConflictException)
+        {
+            await RefreshCloudMetadataAndLibraryAsync(isBackground: false);
+            CloudOperationStatusText.Text =
+                "The presets changed on another device. The current server version was loaded; review it and try again.";
+        }
+        catch (Exception ex)
+        {
+            CloudOperationStatusText.Text = $"Could not update presets: {ex.Message}";
+        }
+        finally
+        {
+            SetCloudBusy(false);
+        }
+    }
+
+    private async Task RefreshServerDownloadsAsync()
+    {
+        if (_cloud.LoadConnection() is null)
+        {
+            CloudServerJobsText.Text = "Connect this device to the server first.";
+            return;
+        }
+        try
+        {
+            var jobs = await _cloud.GetServerDownloadsAsync();
+            CloudServerJobsText.Text = jobs.Count == 0
+                ? "No server downloads yet."
+                : string.Join(Environment.NewLine, jobs.Take(5).Select(job =>
+                    $"{job.Status} · {job.ProgressPercent}% · {job.Title ?? job.TrackKey ?? job.JobId[..8]}"
+                    + (string.IsNullOrWhiteSpace(job.Error) ? string.Empty : $" · {job.Error}")));
+            if (jobs.Any(job => job.Status == "Completed"))
+                _ = RefreshCloudMetadataAndLibraryAsync(isBackground: true);
+        }
+        catch (Exception ex)
+        {
+            CloudServerJobsText.Text = $"Could not load server downloads: {ex.Message}";
+        }
+    }
+
     private void SetCloudBusy(bool busy)
     {
         _cloudBusy = busy;
         CloudConnectButton.IsEnabled = !busy;
         CloudRefreshButton.IsEnabled = !busy && _cloud.LoadConnection() is not null;
         CloudConnectionCodeBox.IsEnabled = !busy;
+        CloudDownloadUrlBox.IsEnabled = !busy;
+        CloudPresetNameBox.IsEnabled = !busy;
+        CloudRenamePresetButton.IsEnabled = !busy && _cloud.LoadConnection() is not null;
+        CloudCopyPresetButton.IsEnabled = !busy && _cloud.LoadConnection() is not null;
+        CloudDeletePresetButton.IsEnabled = !busy && _cloud.LoadConnection() is not null;
+        CloudQueueDownloadButton.IsEnabled = !busy && _cloud.LoadConnection() is not null;
+        CloudRefreshJobsButton.IsEnabled = !busy && _cloud.LoadConnection() is not null;
         CloudDownloadButton.IsEnabled = !busy && _cloudSnapshot is not null
                                       && _cloud.FindMissingAudio(_cloudSnapshot).Count > 0;
         CloudCancelDownloadButton.IsVisible = _cloudDownloadCts is not null;
@@ -1153,6 +1447,11 @@ public partial class MainView : UserControl
             ? "Not connected"
             : $"Connected · {new Uri(connection.ServerUrl).Host}";
         CloudRefreshButton.IsEnabled = !_cloudBusy && connection is not null;
+        CloudQueueDownloadButton.IsEnabled = !_cloudBusy && connection is not null;
+        CloudRefreshJobsButton.IsEnabled = !_cloudBusy && connection is not null;
+        CloudRenamePresetButton.IsEnabled = !_cloudBusy && connection is not null;
+        CloudCopyPresetButton.IsEnabled = !_cloudBusy && connection is not null;
+        CloudDeletePresetButton.IsEnabled = !_cloudBusy && connection is not null;
         _cloudSnapshot ??= _cloud.LoadCachedSnapshot();
         RefreshCloudCountersOnly();
     }

@@ -14,6 +14,14 @@ builder.Services.AddSingleton<CloudSnapshotRepository>();
 builder.Services.AddSingleton<CloudPublicLibraryRepository>();
 builder.Services.AddSingleton<CloudMediaRepository>();
 builder.Services.AddSingleton<CloudDeviceLibraryRepository>();
+builder.Services.AddSingleton<CloudDownloadRepository>();
+builder.Services.AddHttpClient("analyzer", client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AnalyzerBaseUrl"] ?? "http://analyzer:8000/");
+    client.Timeout = TimeSpan.FromMinutes(30);
+});
+builder.Services.AddHostedService<CloudDownloadWorker>();
 
 var app = builder.Build();
 await CloudSchema.InitializeAsync(app.Services.GetRequiredService<NpgsqlDataSource>());
@@ -149,12 +157,10 @@ app.MapPut("/api/v1/device-library-snapshot", async (
         || snapshot.Tracks.Any(track => !CloudMediaRepository.IsValidTrackKey(track.TrackKey)))
         return Results.BadRequest(new { error = "Device library snapshot is invalid." });
 
-    await deviceLibrary.ReplaceAsync(credentials.UserId, snapshot, cancellationToken);
-    return Results.Ok(new
-    {
-        trackCount = snapshot.TrackCount,
-        synchronizedAt = DateTime.UtcNow
-    });
+    var result = await deviceLibrary.ReplaceAsync(credentials.UserId, snapshot, cancellationToken);
+    return result.Status == DeviceLibraryWriteStatus.Conflict
+        ? Results.Conflict(result.Conflict)
+        : Results.Ok(result.Snapshot);
 });
 
 app.MapGet("/api/v1/device-library-snapshot", async (
@@ -168,6 +174,84 @@ app.MapGet("/api/v1/device-library-snapshot", async (
         return Results.Unauthorized();
     var snapshot = await deviceLibrary.GetCurrentAsync(credentials.UserId, cancellationToken);
     return snapshot is null ? Results.NotFound() : Results.Ok(snapshot);
+});
+
+app.MapPut("/api/v1/device-library/tracks/{trackKey}", async (
+    string trackKey,
+    HttpRequest request,
+    CloudTrackUpdateRequest update,
+    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+    if (!CloudMediaRepository.IsValidTrackKey(trackKey)
+        || !string.Equals(trackKey, update.Track.TrackKey, StringComparison.Ordinal))
+        return Results.BadRequest(new { error = "Track key is invalid or does not match the route." });
+    if (update.ExpectedRevision <= 0)
+        return Results.BadRequest(new { error = "A positive expectedRevision is required." });
+
+    var result = await deviceLibrary.UpdateTrackAsync(
+        credentials.UserId, trackKey, update, cancellationToken);
+    return result.Status switch
+    {
+        DeviceLibraryWriteStatus.NotFound => Results.NotFound(),
+        DeviceLibraryWriteStatus.Conflict => Results.Conflict(result.Conflict),
+        _ => Results.Ok(result.Snapshot)
+    };
+});
+
+app.MapPut("/api/v1/device-library/presets", async (
+    HttpRequest request,
+    CloudPresetsUpdateRequest update,
+    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+    if (update.ExpectedRevision <= 0
+        || update.Presets.Any(preset => string.IsNullOrWhiteSpace(preset.Name)))
+        return Results.BadRequest(new { error = "A positive expectedRevision and named presets are required." });
+
+    var result = await deviceLibrary.UpdatePresetsAsync(credentials.UserId, update, cancellationToken);
+    return result.Status switch
+    {
+        DeviceLibraryWriteStatus.NotFound => Results.NotFound(),
+        DeviceLibraryWriteStatus.Conflict => Results.Conflict(result.Conflict),
+        _ => Results.Ok(result.Snapshot)
+    };
+});
+
+app.MapPost("/api/v1/downloads", async (
+    HttpRequest request,
+    CloudDownloadRequest download,
+    CloudSnapshotRepository snapshots,
+    CloudDownloadRepository downloads,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+    if (CloudDownloadWorker.TrackKey(download.Url) is null)
+        return Results.BadRequest(new { error = "Only individual YouTube video links are supported." });
+    return Results.Accepted(
+        value: await downloads.EnqueueAsync(credentials.UserId, download, cancellationToken));
+});
+
+app.MapGet("/api/v1/downloads", async (
+    HttpRequest request,
+    CloudSnapshotRepository snapshots,
+    CloudDownloadRepository downloads,
+    CancellationToken cancellationToken) =>
+{
+    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
+        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
+        return Results.Unauthorized();
+    return Results.Ok(await downloads.ListAsync(credentials.UserId, cancellationToken));
 });
 
 app.Run();

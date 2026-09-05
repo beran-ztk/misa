@@ -186,7 +186,7 @@
                                     BorderThickness="{Binding CurrentBorderThickness}"
                                     CornerRadius="0,7,7,0"
                                     Padding="8,6">
-                                <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="10">
+                                <Grid ColumnDefinitions="42,*,Auto,Auto" ColumnSpacing="7">
                                     <Border Width="40" Height="40"
                                             CornerRadius="2"
                                             ClipToBounds="True"
@@ -226,6 +226,10 @@
                                                Foreground="#8AB8F2"
                                                VerticalAlignment="Center"
                                                HorizontalAlignment="Right"/>
+                                    <Button Grid.Column="3" Classes="icon" Width="32" Height="32"
+                                            Padding="7" Click="OnEditTrackClicked" ToolTip.Tip="Edit track">
+                                        <Image Source="{SvgImage /Assets/pencil-simple.svg}" Width="15" Height="15"/>
+                                    </Button>
                                 </Grid>
                             </Border>
                             <Border Grid.Row="1"
@@ -464,6 +468,50 @@
 
                         <Border Height="1" Background="{DynamicResource Mobile.Brush.Divider}"/>
 
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="SHARED PRESETS" FontSize="9.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                            <TextBlock Text="Select a preset in Filters, then rename it, save a copy, or delete it for every device."
+                                       FontSize="10.5" Foreground="{DynamicResource Mobile.Brush.TextSecondary}"
+                                       TextWrapping="Wrap"/>
+                            <TextBox x:Name="CloudPresetNameBox" Watermark="Preset name" MinHeight="40"/>
+                            <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="7">
+                                <Button x:Name="CloudRenamePresetButton" Content="Rename"
+                                        Click="OnRenameCloudPresetClicked" Padding="10,8"/>
+                                <Button Grid.Column="1" x:Name="CloudCopyPresetButton" Content="Save copy"
+                                        Click="OnCopyCloudPresetClicked" Padding="10,8"/>
+                                <Button Grid.Column="2" x:Name="CloudDeletePresetButton" Content="Delete"
+                                        Click="OnDeleteCloudPresetClicked" Padding="10,8"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <Border Height="1" Background="{DynamicResource Mobile.Brush.Divider}"/>
+
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="SERVER DOWNLOAD" FontSize="9.5" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                            <TextBlock Text="Paste one YouTube track. The server downloads and analyzes it; this phone only fetches the audio when you choose to."
+                                       FontSize="10.5" Foreground="{DynamicResource Mobile.Brush.TextSecondary}"
+                                       TextWrapping="Wrap"/>
+                            <TextBox x:Name="CloudDownloadUrlBox"
+                                     Watermark="https://www.youtube.com/watch?v=…"
+                                     MinHeight="40"/>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <Button x:Name="CloudQueueDownloadButton"
+                                        Content="Download on server"
+                                        Click="OnQueueServerDownloadClicked"
+                                        HorizontalAlignment="Stretch" Padding="12,8"/>
+                                <Button Grid.Column="1" x:Name="CloudRefreshJobsButton"
+                                        Content="Refresh" Click="OnRefreshServerDownloadsClicked" Padding="12,8"/>
+                            </Grid>
+                            <TextBlock x:Name="CloudServerJobsText"
+                                       Text="No server downloads loaded."
+                                       FontSize="10.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <Border Height="1" Background="{DynamicResource Mobile.Brush.Divider}"/>
+
                         <StackPanel Spacing="12">
                             <TextBlock Text="OFFLINE AUDIO" FontSize="9.5" FontWeight="SemiBold"
                                        Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
@@ -516,6 +564,54 @@
                                 IsVisible="False" Padding="12,9"/>
                     </Grid>
                 </Border>
+            </Grid>
+        </Border>
+
+        <Border x:Name="TrackEditPage"
+                Grid.RowSpan="3"
+                ZIndex="220"
+                IsVisible="False"
+                Background="{DynamicResource Mobile.Brush.Background}">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <Border BorderBrush="{DynamicResource Mobile.Brush.BorderSubtle}"
+                        BorderThickness="0,0,0,1" Padding="16,12,10,11">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="EDIT TRACK" FontSize="15" FontWeight="SemiBold" LetterSpacing="0.8"/>
+                            <TextBlock x:Name="TrackEditRevisionText" FontSize="10.5"
+                                       Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="toolbarIcon" Click="OnCloseTrackEditClicked">
+                            <Image Source="{SvgImage /Assets/close.svg}" Width="14" Height="14"/>
+                        </Button>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel Margin="16,20" Spacing="12">
+                        <TextBlock Text="TITLE" FontSize="9.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        <TextBox x:Name="TrackEditTitleBox"/>
+                        <TextBlock Text="ARTIST" FontSize="9.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        <TextBox x:Name="TrackEditArtistBox"/>
+                        <TextBlock Text="REMIX / VERSION" FontSize="9.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        <TextBox x:Name="TrackEditRemixBox"/>
+                        <TextBlock Text="RATING" FontSize="9.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        <ComboBox x:Name="TrackEditRatingBox" HorizontalAlignment="Stretch"/>
+                        <TextBlock Text="OFFLINE AUDIO" FontSize="9.5" Foreground="{DynamicResource Mobile.Brush.TextMuted}"/>
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button x:Name="TrackEditDownloadButton" Content="Keep on phone"
+                                    Click="OnDownloadEditedTrackClicked" Padding="10,8"/>
+                            <Button Grid.Column="1" x:Name="TrackEditRemoveAudioButton" Content="Free space"
+                                    Click="OnRemoveEditedTrackAudioClicked" Padding="10,8"/>
+                        </Grid>
+                        <TextBlock x:Name="TrackEditStatusText" FontSize="10.5"
+                                   Foreground="{DynamicResource Mobile.Brush.Warning}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </ScrollViewer>
+                <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="8" Margin="16,11,16,15">
+                    <Button Content="Cancel" Click="OnCloseTrackEditClicked" Padding="12,9"/>
+                    <Button Grid.Column="1" x:Name="TrackEditSaveButton"
+                            Content="Save on server" Click="OnSaveTrackEditClicked" Padding="12,9"/>
+                </Grid>
             </Grid>
         </Border>
     </Grid>

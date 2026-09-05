@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,6 +38,13 @@ public sealed record CloudMediaSyncResult(
     public int Pending => Math.Max(0, Total - Available);
 }
 
+public sealed record CloudSyncCursor(
+    int SchemaVersion,
+    long LibraryRevision,
+    long PresetsRevision,
+    string PresetsHash,
+    string SynchronizedAt);
+
 public sealed class CloudLibrarySyncService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -56,6 +65,54 @@ public sealed class CloudLibrarySyncService
         CloudSyncState.NotConfigured, "Cloud server is not configured.");
 
     public event Action<CloudSyncStatus>? StatusChanged;
+
+    public bool CanUseServerDownloads =>
+        ServerUrlNormalizer.TryNormalize(AppSettingsStore.Load().CloudServerUrl, out _);
+
+    public async Task<CloudDownloadJob> QueueServerDownloadAsync(
+        DownloadRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var configuredServerUrl = AppSettingsStore.Load().CloudServerUrl;
+        if (!ServerUrlNormalizer.TryNormalize(configuredServerUrl, out var serverUrl)
+            || !Uri.TryCreate(serverUrl, UriKind.Absolute, out var baseUri))
+            throw new InvalidOperationException("Cloud server is not configured.");
+        var identity = CloudIdentityStore.Current.GetOrCreate();
+        var library = MusicLibraryService.Current;
+        var rating = request.RatingId is int ratingId
+            ? library.GetRatings().FirstOrDefault(item => item.Id == ratingId)?.Name
+            : null;
+        var genres = library.GetGenres().ToDictionary(item => item.Id, item => item.Name);
+        var styles = library.GetStyles().ToDictionary(item => item.Id, item => item.Name);
+        string? parentTrackKey = null;
+        if (request.ParentTrackId is int parentId && library.GetTrackById(parentId) is { } parent)
+            parentTrackKey = string.IsNullOrWhiteSpace(parent.SourceVideoId)
+                ? YouTubeUrlNormalizer.ExtractVideoId(parent.CanonicalUrl)
+                : parent.SourceVideoId;
+        var payload = new CloudDownloadRequest(
+            request.RawUrl,
+            rating,
+            request.GenreIds.Select(id => genres.GetValueOrDefault(id))
+                .Where(name => !string.IsNullOrWhiteSpace(name)).Cast<string>().ToList(),
+            request.StyleIds.Select(id => styles.GetValueOrDefault(id))
+                .Where(name => !string.IsNullOrWhiteSpace(name)).Cast<string>().ToList(),
+            request.IsOriginal,
+            parentTrackKey,
+            TrackVersions.Types.Where(type => request.EditTypes.HasFlag(type.Type))
+                .Select(type => type.Name).ToList(),
+            request.VersionName);
+        using var message = new HttpRequestMessage(
+            HttpMethod.Post,
+            new Uri(EnsureTrailingSlash(baseUri), "api/v1/downloads"))
+        {
+            Content = JsonContent.Create(payload, options: JsonOptions)
+        };
+        AddDeviceHeaders(message, identity);
+        using var response = await _httpClient.SendAsync(message, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CloudDownloadJob>(JsonOptions, cancellationToken)
+               ?? throw new InvalidDataException("Cloud server returned an empty download job.");
+    }
 
     public void Initialize()
     {
@@ -107,13 +164,67 @@ public sealed class CloudLibrarySyncService
             var snapshot = await Task.Run(
                 () => CloudLibrarySnapshotBuilder.Build(MusicLibraryService.Current, identity),
                 cancellationToken);
+            // The public snapshot endpoint also performs first-device registration.
             await UploadSnapshotAsync(baseUri, identity, snapshot, cancellationToken);
+
+            var remoteSnapshot = await GetDeviceSnapshotAsync(baseUri, identity, cancellationToken);
+            var cursor = LoadCursor();
+            var localPresets = FilterPresetStore.Load();
+            var localPresetsHash = PresetsHash(localPresets);
+
+            if (remoteSnapshot is not null)
+            {
+                if (cursor is not null
+                    && remoteSnapshot.PresetsRevision > cursor.PresetsRevision
+                    && !string.Equals(localPresetsHash, cursor.PresetsHash, StringComparison.Ordinal))
+                    throw new InvalidOperationException(
+                        "Presets changed on this device and on the server. Refresh the presets before saving them again.");
+
+                if (cursor is not null
+                    && remoteSnapshot.PresetsRevision > cursor.PresetsRevision
+                    && string.Equals(localPresetsHash, cursor.PresetsHash, StringComparison.Ordinal))
+                {
+                    FilterPresetStore.Save(remoteSnapshot.FilterPresets.ToList());
+                    localPresets = remoteSnapshot.FilterPresets.ToList();
+                }
+
+                var importedTracks = await Task.Run(
+                    () => MusicLibraryService.Current.ApplyCloudDeviceSnapshot(remoteSnapshot),
+                    cancellationToken);
+                if (importedTracks > 0)
+                {
+                    snapshot = await Task.Run(
+                        () => CloudLibrarySnapshotBuilder.Build(MusicLibraryService.Current, identity),
+                        cancellationToken);
+                    await UploadSnapshotAsync(baseUri, identity, snapshot, cancellationToken);
+                }
+            }
 
             SetProgressStatus("Uploading current device library metadata…");
             var deviceSnapshot = await Task.Run(
                 () => CloudDeviceLibrarySnapshotBuilder.Build(MusicLibraryService.Current, identity),
                 cancellationToken);
-            await UploadDeviceSnapshotAsync(baseUri, identity, deviceSnapshot, cancellationToken);
+            if (remoteSnapshot is not null)
+            {
+                var revisions = remoteSnapshot.Tracks.ToDictionary(
+                    track => track.TrackKey, track => track.Revision, StringComparer.Ordinal);
+                deviceSnapshot = deviceSnapshot with
+                {
+                    LibraryRevision = remoteSnapshot.LibraryRevision,
+                    PresetsRevision = remoteSnapshot.PresetsRevision,
+                    Tracks = deviceSnapshot.Tracks
+                        .Select(track => track with { Revision = revisions.GetValueOrDefault(track.TrackKey) })
+                        .ToList()
+                };
+            }
+            var acceptedSnapshot = await UploadDeviceSnapshotAsync(
+                baseUri, identity, deviceSnapshot, cancellationToken);
+            SaveCursor(new CloudSyncCursor(
+                1,
+                acceptedSnapshot.LibraryRevision,
+                acceptedSnapshot.PresetsRevision,
+                PresetsHash(acceptedSnapshot.FilterPresets),
+                DateTime.UtcNow.ToString("O")));
 
             var mediaResult = await SynchronizeMediaAsync(baseUri, identity, cancellationToken);
 
@@ -176,7 +287,7 @@ public sealed class CloudLibrarySyncService
         response.EnsureSuccessStatusCode();
     }
 
-    private async Task UploadDeviceSnapshotAsync(
+    private async Task<CloudDeviceLibrarySnapshot> UploadDeviceSnapshotAsync(
         Uri baseUri,
         CloudIdentity identity,
         CloudDeviceLibrarySnapshot snapshot,
@@ -189,7 +300,29 @@ public sealed class CloudLibrarySyncService
         };
         AddDeviceHeaders(request, identity);
         using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.Conflict)
+            throw new InvalidOperationException(
+                "The server library changed during synchronization. Run synchronization again to load the current data.");
         response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CloudDeviceLibrarySnapshot>(JsonOptions, cancellationToken)
+               ?? throw new InvalidDataException("Cloud server returned an empty library snapshot.");
+    }
+
+    private async Task<CloudDeviceLibrarySnapshot?> GetDeviceSnapshotAsync(
+        Uri baseUri,
+        CloudIdentity identity,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            new Uri(EnsureTrailingSlash(baseUri), "api/v1/device-library-snapshot"));
+        AddDeviceHeaders(request, identity);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            return null;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CloudDeviceLibrarySnapshot>(
+            JsonOptions, cancellationToken);
     }
 
     private async Task<CloudMediaSyncResult> SynchronizeMediaAsync(
@@ -331,4 +464,31 @@ public sealed class CloudLibrarySyncService
 
     private static Uri EnsureTrailingSlash(Uri uri) =>
         uri.AbsoluteUri.EndsWith('/') ? uri : new Uri(uri.AbsoluteUri + "/");
+
+    private static string PresetsHash(IReadOnlyList<Resona.Core.PortableFilterPreset> presets) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+            JsonSerializer.Serialize(presets, JsonOptions))));
+
+    private static CloudSyncCursor? LoadCursor()
+    {
+        try
+        {
+            return File.Exists(Values.CloudSyncStatePath)
+                ? JsonSerializer.Deserialize<CloudSyncCursor>(
+                    File.ReadAllText(Values.CloudSyncStatePath), JsonOptions)
+                : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static void SaveCursor(CloudSyncCursor cursor)
+    {
+        Directory.CreateDirectory(Values.LocalDirectory);
+        var temporaryPath = Values.CloudSyncStatePath + ".tmp";
+        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(cursor, JsonOptions));
+        File.Move(temporaryPath, Values.CloudSyncStatePath, overwrite: true);
+    }
 }

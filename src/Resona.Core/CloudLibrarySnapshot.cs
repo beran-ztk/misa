@@ -58,7 +58,9 @@ public sealed record CloudDeviceLibrarySnapshot(
     IReadOnlyList<PortableRating> Ratings,
     IReadOnlyList<PortableFilterPreset> FilterPresets,
     IReadOnlyList<CloudDeviceCollection> Collections,
-    IReadOnlyList<CloudDeviceTrack> Tracks);
+    IReadOnlyList<CloudDeviceTrack> Tracks,
+    long LibraryRevision = 0,
+    long PresetsRevision = 0);
 
 public sealed record CloudDeviceCollection(
     string StableId,
@@ -94,4 +96,42 @@ public sealed record CloudDeviceTrack(
     string? AudioSha256 = null,
     bool IsOriginal = true,
     string? ParentTrackKey = null,
-    IReadOnlyList<string>? EditTypes = null);
+    IReadOnlyList<string>? EditTypes = null,
+    long Revision = 0,
+    string? CanonicalUrl = null,
+    bool IsPublic = true);
+
+public sealed record CloudTrackUpdateRequest(
+    long ExpectedRevision,
+    CloudDeviceTrack Track);
+
+public sealed record CloudPresetsUpdateRequest(
+    long ExpectedRevision,
+    IReadOnlyList<PortableFilterPreset> Presets);
+
+public sealed record CloudRevisionConflict(
+    string Entity,
+    long ExpectedRevision,
+    long CurrentRevision,
+    object CurrentValue);
+
+public sealed record CloudDownloadRequest(
+    string Url,
+    string? Rating = null,
+    IReadOnlyList<string>? Genres = null,
+    IReadOnlyList<string>? Styles = null,
+    bool IsOriginal = true,
+    string? ParentTrackKey = null,
+    IReadOnlyList<string>? EditTypes = null,
+    string? VersionName = null);
+
+public sealed record CloudDownloadJob(
+    string JobId,
+    string Url,
+    string Status,
+    int ProgressPercent,
+    string? TrackKey,
+    string? Title,
+    string? Error,
+    string CreatedAt,
+    string UpdatedAt);

@@ -20,7 +20,6 @@ public static class CloudSchema
             created_at          timestamptz NOT NULL DEFAULT now(),
             updated_at          timestamptz NOT NULL DEFAULT now()
         );
-
         CREATE TABLE IF NOT EXISTS user_devices (
             id                  uuid PRIMARY KEY,
             user_id             uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -117,7 +116,39 @@ public static class CloudSchema
             track_count         integer NOT NULL CHECK (track_count >= 0),
             generated_at        timestamptz NOT NULL,
             snapshot_json       jsonb NOT NULL,
-            synchronized_at     timestamptz NOT NULL DEFAULT now()
+            synchronized_at     timestamptz NOT NULL DEFAULT now(),
+            library_revision    bigint NOT NULL DEFAULT 1 CHECK (library_revision > 0),
+            presets_revision    bigint NOT NULL DEFAULT 1 CHECK (presets_revision > 0)
         );
+
+        ALTER TABLE device_library_snapshots
+            ADD COLUMN IF NOT EXISTS library_revision bigint NOT NULL DEFAULT 1;
+        ALTER TABLE device_library_snapshots
+            ADD COLUMN IF NOT EXISTS presets_revision bigint NOT NULL DEFAULT 1;
+
+        CREATE TABLE IF NOT EXISTS device_library_track_revisions (
+            user_id             uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            track_key           varchar(128) NOT NULL,
+            revision            bigint NOT NULL DEFAULT 1 CHECK (revision > 0),
+            updated_at          timestamptz NOT NULL DEFAULT now(),
+            PRIMARY KEY (user_id, track_key)
+        );
+
+        CREATE TABLE IF NOT EXISTS library_download_jobs (
+            id                  uuid PRIMARY KEY,
+            user_id             uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            url                 varchar(2048) NOT NULL,
+            status              varchar(30) NOT NULL,
+            progress_percent    integer NOT NULL DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100),
+            track_key           varchar(128) NULL,
+            title               varchar(500) NULL,
+            error               text NULL,
+            created_at          timestamptz NOT NULL DEFAULT now(),
+            updated_at          timestamptz NOT NULL DEFAULT now()
+        );
+        ALTER TABLE library_download_jobs
+            ADD COLUMN IF NOT EXISTS request_json jsonb NULL;
+        CREATE INDEX IF NOT EXISTS ix_library_download_jobs_queue
+            ON library_download_jobs(status, created_at);
         """;
 }

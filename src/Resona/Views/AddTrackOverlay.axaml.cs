@@ -316,7 +316,19 @@ public partial class AddTrackOverlay : UserControl
         DownloadResult result;
         try
         {
-            result = await MusicLibraryService.Current.DownloadTrackAsync(request, progress);
+            if (CloudLibrarySyncService.Current.CanUseServerDownloads)
+            {
+                BusyTitleText.Text = "Queueing on music server";
+                var job = await CloudLibrarySyncService.Current.QueueServerDownloadAsync(
+                    request);
+                result = new DownloadResult(
+                    true,
+                    Warning: $"Queued on the music server · {job.JobId[..8]}. It will appear after the next sync.");
+            }
+            else
+            {
+                result = await MusicLibraryService.Current.DownloadTrackAsync(request, progress);
+            }
         }
         catch (OperationCanceledException)
         {

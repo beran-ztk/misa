@@ -33,6 +33,13 @@ public sealed record CloudMetadataRefreshResult(
     CloudDeviceLibrarySnapshot Snapshot,
     bool LibraryUpdated);
 
+public sealed class CloudRevisionConflictException(CloudRevisionConflict conflict)
+    : InvalidOperationException(
+        $"{conflict.Entity} changed on another device (expected revision {conflict.ExpectedRevision}, current revision {conflict.CurrentRevision}).")
+{
+    public CloudRevisionConflict Conflict { get; } = conflict;
+}
+
 public sealed class DeviceLibraryCloudClient
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
@@ -122,13 +129,114 @@ public sealed class DeviceLibraryCloudClient
             PortableLibraryStore.FileName);
         var libraryUpdated = cachedSnapshot is null
                              || !string.Equals(snapshot.UserId, cachedSnapshot.UserId, StringComparison.OrdinalIgnoreCase)
-                             || IsNewer(snapshot.GeneratedAt, cachedSnapshot.GeneratedAt)
+                             || HasNewerRevision(snapshot, cachedSnapshot)
                              || !File.Exists(portableLibraryPath);
         if (!libraryUpdated)
             return new CloudMetadataRefreshResult(
                 MergeAudioAvailability(cachedSnapshot!, snapshot),
                 false);
 
+        await SaveSnapshotAsync(snapshot, cancellationToken);
+        return new CloudMetadataRefreshResult(snapshot, true);
+    }
+
+    public async Task<CloudDeviceLibrarySnapshot> UpdateTrackAsync(
+        CloudDeviceTrack track,
+        CancellationToken cancellationToken = default)
+    {
+        var connection = LoadConnection()
+                         ?? throw new InvalidOperationException("Cloud connection is not configured.");
+        using var request = CreateRequest(
+            connection,
+            HttpMethod.Put,
+            $"api/v1/device-library/tracks/{Uri.EscapeDataString(track.TrackKey)}");
+        request.Content = JsonContent.Create(
+            new CloudTrackUpdateRequest(track.Revision, track), options: JsonOptions);
+        var snapshot = await SendMutationAsync(request, cancellationToken);
+        await SaveSnapshotAsync(snapshot, cancellationToken);
+        return snapshot;
+    }
+
+    public async Task<CloudDeviceLibrarySnapshot> UpdatePresetsAsync(
+        IReadOnlyList<PortableFilterPreset> presets,
+        CancellationToken cancellationToken = default)
+    {
+        var connection = LoadConnection()
+                         ?? throw new InvalidOperationException("Cloud connection is not configured.");
+        var current = LoadCachedSnapshot()
+                      ?? throw new InvalidOperationException("Synchronize metadata before editing presets.");
+        using var request = CreateRequest(connection, HttpMethod.Put, "api/v1/device-library/presets");
+        request.Content = JsonContent.Create(
+            new CloudPresetsUpdateRequest(current.PresetsRevision, presets), options: JsonOptions);
+        var snapshot = await SendMutationAsync(request, cancellationToken);
+        await SaveSnapshotAsync(snapshot, cancellationToken);
+        return snapshot;
+    }
+
+    public async Task<CloudDownloadJob> QueueServerDownloadAsync(
+        string url,
+        CancellationToken cancellationToken = default)
+    {
+        var connection = LoadConnection()
+                         ?? throw new InvalidOperationException("Cloud connection is not configured.");
+        using var request = CreateRequest(connection, HttpMethod.Post, "api/v1/downloads");
+        request.Content = JsonContent.Create(new CloudDownloadRequest(url.Trim()), options: JsonOptions);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CloudDownloadJob>(JsonOptions, cancellationToken)
+               ?? throw new InvalidDataException("Cloud server returned an empty download job.");
+    }
+
+    public async Task<IReadOnlyList<CloudDownloadJob>> GetServerDownloadsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var connection = LoadConnection()
+                         ?? throw new InvalidOperationException("Cloud connection is not configured.");
+        using var request = CreateRequest(connection, HttpMethod.Get, "api/v1/downloads");
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<List<CloudDownloadJob>>(
+                   JsonOptions, cancellationToken)
+               ?? [];
+    }
+
+    public static bool IsNewer(string candidateTimestamp, string currentTimestamp)
+    {
+        const DateTimeStyles styles = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal;
+        return DateTimeOffset.TryParse(candidateTimestamp, CultureInfo.InvariantCulture, styles, out var candidate)
+               && (!DateTimeOffset.TryParse(currentTimestamp, CultureInfo.InvariantCulture, styles, out var current)
+                   || candidate > current);
+    }
+
+    private static bool HasNewerRevision(
+        CloudDeviceLibrarySnapshot candidate,
+        CloudDeviceLibrarySnapshot current) =>
+        candidate.LibraryRevision > 0 && current.LibraryRevision > 0
+            ? candidate.LibraryRevision > current.LibraryRevision
+            : IsNewer(candidate.GeneratedAt, current.GeneratedAt);
+
+    private async Task<CloudDeviceLibrarySnapshot> SendMutationAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.Conflict)
+        {
+            var conflict = await response.Content.ReadFromJsonAsync<CloudRevisionConflict>(
+                JsonOptions, cancellationToken)
+                ?? new CloudRevisionConflict("library", 0, 0, new { });
+            throw new CloudRevisionConflictException(conflict);
+        }
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CloudDeviceLibrarySnapshot>(
+                   JsonOptions, cancellationToken)
+               ?? throw new InvalidDataException("Cloud server returned an empty library snapshot.");
+    }
+
+    private async Task SaveSnapshotAsync(
+        CloudDeviceLibrarySnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
         Directory.CreateDirectory(CompanionServices.LibraryStorage.LibraryDirectory);
         await PortableLibraryStore.SaveAsync(
             CompanionServices.LibraryStorage.LibraryDirectory,
@@ -139,15 +247,6 @@ public sealed class DeviceLibraryCloudClient
             JsonSerializer.Serialize(snapshot, JsonOptions),
             cancellationToken);
         File.Move(temporaryPath, SnapshotPath, overwrite: true);
-        return new CloudMetadataRefreshResult(snapshot, true);
-    }
-
-    public static bool IsNewer(string candidateTimestamp, string currentTimestamp)
-    {
-        const DateTimeStyles styles = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal;
-        return DateTimeOffset.TryParse(candidateTimestamp, CultureInfo.InvariantCulture, styles, out var candidate)
-               && (!DateTimeOffset.TryParse(currentTimestamp, CultureInfo.InvariantCulture, styles, out var current)
-                   || candidate > current);
     }
 
     public IReadOnlyList<MissingDeviceAudio> FindMissingAudio(CloudDeviceLibrarySnapshot snapshot)
@@ -201,6 +300,40 @@ public sealed class DeviceLibraryCloudClient
             await DownloadOneAsync(connection, tracksDirectory, item, cancellationToken);
             progress?.Report((index + 1, missing.Count, item.FileName));
         }
+    }
+
+    public async Task DownloadTrackAudioAsync(
+        CloudDeviceTrack track,
+        CancellationToken cancellationToken = default)
+    {
+        if (!track.AudioAvailable || track.AudioFileSizeBytes is not > 0)
+            throw new InvalidOperationException("This track is not available on the server yet.");
+        var connection = LoadConnection()
+                         ?? throw new InvalidOperationException("Cloud connection is not configured.");
+        var tracksDirectory = Path.Combine(CompanionServices.LibraryStorage.LibraryDirectory, "tracks");
+        Directory.CreateDirectory(tracksDirectory);
+        await DownloadOneAsync(
+            connection,
+            tracksDirectory,
+            new MissingDeviceAudio(
+                track.TrackKey,
+                track.FileName,
+                track.AudioFileSizeBytes.Value,
+                track.AudioSha256 ?? string.Empty),
+            cancellationToken);
+    }
+
+    public void RemoveLocalTrackAudio(CloudDeviceTrack track)
+    {
+        var tracksDirectory = Path.Combine(CompanionServices.LibraryStorage.LibraryDirectory, "tracks");
+        var path = Path.GetFullPath(Path.Combine(tracksDirectory, Path.GetFileName(track.FileName)));
+        if (!path.StartsWith(Path.GetFullPath(tracksDirectory) + Path.DirectorySeparatorChar,
+                StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Resolved track path is outside the local library.");
+        if (File.Exists(path))
+            File.Delete(path);
+        if (File.Exists(path + ".part"))
+            File.Delete(path + ".part");
     }
 
     private async Task DownloadOneAsync(

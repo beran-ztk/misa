@@ -98,6 +98,8 @@ public class MusicLibraryService
     public void RecordTrackSkip(int trackId) => _db.RecordTrackSkip(trackId);
     public TrackUsageStats GetTrackUsageStats(int trackId) => _db.GetTrackUsageStats(trackId);
     public Dictionary<int, TrackUsageStats> GetAllTrackUsageStats() => _db.GetAllTrackUsageStats();
+    public int ApplyCloudDeviceSnapshot(CloudDeviceLibrarySnapshot snapshot) =>
+        _db.ApplyCloudDeviceSnapshot(snapshot);
     public TimeSpan? EstimateAnalysisDuration(int? trackDurationSeconds, long? fileSizeBytes) =>
         _db.EstimateAnalysisDuration(trackDurationSeconds, fileSizeBytes);
     public TimeSpan? EstimateDownloadDuration(int? trackDurationSeconds, long? fileSizeBytes) =>

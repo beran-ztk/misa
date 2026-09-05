@@ -71,7 +71,9 @@ public static class CloudDeviceLibrarySnapshotBuilder
                 IsOriginal: track.IsOriginal,
                 ParentTrackKey: track.ParentTrackId is int parent ? trackKeys.GetValueOrDefault(parent) : null,
                 EditTypes: TrackVersions.Types.Where(type => track.EditTypes.HasFlag(type.Type))
-                    .Select(type => type.Name).ToList());
+                    .Select(type => type.Name).ToList(),
+                CanonicalUrl: track.CanonicalUrl,
+                IsPublic: track.IsPublic);
         }).OrderBy(track => track.TrackKey, StringComparer.Ordinal).ToList();
 
         var collections = library.GetCollections()
