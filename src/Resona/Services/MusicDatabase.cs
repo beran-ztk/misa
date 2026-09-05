@@ -4541,17 +4541,34 @@ public class MusicDatabase
 
         foreach (var track in snapshot.Tracks)
         {
+            var canonicalUrl = track.CanonicalUrl ?? YouTubeUrlNormalizer.GetCanonicalUrl(track.TrackKey);
             using var find = conn.CreateCommand();
             find.Transaction = tx;
-            find.CommandText = "SELECT id, updated_at FROM tracks WHERE source_video_id = $trackKey";
+            find.CommandText = """
+                SELECT id, updated_at, source_video_id
+                FROM tracks
+                WHERE source_video_id = $trackKey
+                   OR canonical_url = $canonicalUrl
+                   OR (source_video_id IS NULL AND file_name = $fileName)
+                ORDER BY CASE
+                    WHEN source_video_id = $trackKey THEN 0
+                    WHEN canonical_url = $canonicalUrl THEN 1
+                    ELSE 2
+                END
+                LIMIT 1
+                """;
             find.Parameters.AddWithValue("$trackKey", track.TrackKey);
+            find.Parameters.AddWithValue("$canonicalUrl", canonicalUrl);
+            find.Parameters.AddWithValue("$fileName", track.FileName);
             using var reader = find.ExecuteReader();
             int? trackId = null;
             string? localUpdatedAt = null;
+            string? localTrackKey = null;
             if (reader.Read())
             {
                 trackId = reader.GetInt32(0);
                 localUpdatedAt = reader.IsDBNull(1) ? null : reader.GetString(1);
+                localTrackKey = reader.IsDBNull(2) ? null : reader.GetString(2);
             }
             reader.Close();
 
@@ -4571,7 +4588,7 @@ public class MusicDatabase
                          $trackKey, $language, $isPublic, $isOriginal, 0, $thumbnail,
                          $playCount, $listenedSeconds, $skipCount, $lastListenedAt)
                     """,
-                    ("$canonicalUrl", track.CanonicalUrl ?? YouTubeUrlNormalizer.GetCanonicalUrl(track.TrackKey)),
+                    ("$canonicalUrl", canonicalUrl),
                     ("$title", track.Title), ("$originalTitle", track.OriginalTitle),
                     ("$artist", track.Artist), ("$remix", track.Remix), ("$fileName", track.FileName),
                     ("$rating", track.Rating), ("$duration", track.DurationSeconds),
@@ -4584,9 +4601,23 @@ public class MusicDatabase
                     ("$lastListenedAt", track.LastListenedAt));
                 changed++;
             }
-            else if (IsRemoteNewer(track.UpdatedAt, localUpdatedAt))
+            else
             {
-                ExecuteInsert(conn, tx, """
+                if (string.IsNullOrWhiteSpace(localTrackKey))
+                {
+                    ExecuteInsert(conn, tx, """
+                        UPDATE tracks
+                        SET source_video_id = $trackKey,
+                            canonical_url = COALESCE(canonical_url, $canonicalUrl)
+                        WHERE id = $trackId AND source_video_id IS NULL
+                        """,
+                        ("$trackId", trackId.Value), ("$trackKey", track.TrackKey),
+                        ("$canonicalUrl", canonicalUrl));
+                }
+
+                if (IsRemoteNewer(track.UpdatedAt, localUpdatedAt))
+                {
+                    ExecuteInsert(conn, tx, """
                     UPDATE tracks SET
                         title = $title,
                         original_title = $originalTitle,
@@ -4618,7 +4649,8 @@ public class MusicDatabase
                     ("$thumbnail", track.Thumbnail), ("$playCount", track.PlayCount),
                     ("$listenedSeconds", track.ListenedSeconds), ("$skipCount", track.SkipCount),
                     ("$lastListenedAt", track.LastListenedAt));
-                changed++;
+                    changed++;
+                }
             }
 
             trackIds[track.TrackKey] = trackId.Value;
