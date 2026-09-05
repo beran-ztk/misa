@@ -4561,7 +4561,7 @@ public class MusicDatabase
                     INSERT INTO tracks
                         (canonical_url, title, original_title, artist, remix, file_name,
                          rating_id, duration_seconds, downloaded_at, updated_at,
-                         needs_review, library_state, source_video_id, language_code,
+                         needs_reevaluation, library_state, source_video_id, language_code,
                          is_public, is_original, edit_types, thumbnail,
                          listen_count, listened_seconds, skip_count, last_listened_at)
                     VALUES
@@ -4596,7 +4596,7 @@ public class MusicDatabase
                         rating_band = $ratingBand,
                         duration_seconds = COALESCE($duration, duration_seconds),
                         updated_at = $updatedAt,
-                        needs_review = $needsReview,
+                        needs_reevaluation = $needsReview,
                         library_state = $libraryState,
                         language_code = $language,
                         is_public = $isPublic,
