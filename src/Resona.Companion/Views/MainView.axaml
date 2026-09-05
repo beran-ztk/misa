@@ -444,7 +444,7 @@
                             <TextBlock x:Name="CloudConnectionSummaryText"
                                        Text="Not connected"
                                        FontSize="12.5" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                            <TextBlock Text="Copy the Android connection code in Resona Desktop under Settings → Cloud sync, then paste it here."
+                            <TextBlock Text="Copy the Android connection code in Resona Desktop under Settings → Cloud sync, then paste it here. Metadata and presets load locally first and refresh in the background."
                                        FontSize="10.5" Foreground="{DynamicResource Mobile.Brush.TextSecondary}"
                                        TextWrapping="Wrap"/>
                             <TextBox x:Name="CloudConnectionCodeBox"
@@ -452,10 +452,10 @@
                                      PasswordChar="●"
                                      MinHeight="40"/>
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                <Button x:Name="CloudConnectButton" Content="Connect and refresh" Click="OnConnectCloudClicked"
+                                <Button x:Name="CloudConnectButton" Content="Connect and sync" Click="OnConnectCloudClicked"
                                         HorizontalAlignment="Stretch" Padding="12,8"/>
                                 <Button Grid.Column="1" x:Name="CloudRefreshButton"
-                                        Content="Refresh" Click="OnRefreshCloudClicked" Padding="12,8"/>
+                                        Content="Sync metadata &amp; presets" Click="OnRefreshCloudClicked" Padding="12,8"/>
                             </Grid>
                             <TextBlock x:Name="CloudOperationStatusText"
                                        FontSize="10.5" Foreground="{DynamicResource Mobile.Brush.Warning}"

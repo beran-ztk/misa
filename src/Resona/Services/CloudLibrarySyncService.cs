@@ -23,7 +23,8 @@ public sealed record CloudSyncStatus(
     int? TotalAudioTracks = null,
     int? UploadedAudioTracks = null,
     int? PendingAudioTracks = null,
-    int? FailedAudioTracks = null);
+    int? FailedAudioTracks = null,
+    int? PresetCount = null);
 
 public sealed record CloudMediaSyncResult(
     int Total,
@@ -119,14 +120,15 @@ public sealed class CloudLibrarySyncService
             return SetStatus(new CloudSyncStatus(
                 CloudSyncState.Succeeded,
                 mediaResult.Failed == 0
-                    ? $"Cloud synchronized · {deviceSnapshot.TrackCount} metadata tracks · {mediaResult.Uploaded} audio uploaded"
-                    : $"Cloud metadata synchronized · {mediaResult.Failed} audio uploads failed",
+                    ? $"Full sync complete · {deviceSnapshot.TrackCount} tracks · {deviceSnapshot.FilterPresets.Count} presets · {mediaResult.Uploaded} audio uploaded"
+                    : $"Metadata and presets synchronized · {mediaResult.Failed} audio uploads failed",
                 deviceSnapshot.TrackCount,
                 DateTime.UtcNow.ToString("O"),
                 mediaResult.Total,
                 mediaResult.Available,
                 mediaResult.Pending,
-                mediaResult.Failed));
+                mediaResult.Failed,
+                deviceSnapshot.FilterPresets.Count));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -143,7 +145,8 @@ public sealed class CloudLibrarySyncService
                 Status.TotalAudioTracks,
                 Status.UploadedAudioTracks,
                 Status.PendingAudioTracks,
-                Status.FailedAudioTracks));
+                Status.FailedAudioTracks,
+                Status.PresetCount));
         }
         finally
         {
@@ -323,7 +326,8 @@ public sealed class CloudLibrarySyncService
         Status.TotalAudioTracks,
         Status.UploadedAudioTracks,
         Status.PendingAudioTracks,
-        Status.FailedAudioTracks));
+        Status.FailedAudioTracks,
+        Status.PresetCount));
 
     private static Uri EnsureTrailingSlash(Uri uri) =>
         uri.AbsoluteUri.EndsWith('/') ? uri : new Uri(uri.AbsoluteUri + "/");

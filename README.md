@@ -177,7 +177,7 @@ To connect Android to your private library:
 2. Select **Copy Android connection code**.
 3. Open the cloud section in Resona Android.
 4. Paste the connection code and connect the device.
-5. Refresh the metadata.
+5. Select **Sync metadata & presets**. On later launches, the cached library opens immediately and this check runs automatically in the background.
 6. Review the number and size of missing tracks, then start **Download missing audio**.
 
 The connection code contains the server address and private device credentials. Treat it like a password. The Android app uses the desktop-controlled collections, presets, views, and metadata; ratings remain a global Android filter.

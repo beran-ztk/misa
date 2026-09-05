@@ -18,5 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Resona.Cloud.Server\Resona.Cloud.Server.csproj" />
+    <ProjectReference Include="..\..\src\Resona.Companion\Resona.Companion.csproj" />
   </ItemGroup>
 </Project>

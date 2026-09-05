@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Globalization;
 using Resona.Core;
 using Resona.Models;
 
@@ -27,6 +28,10 @@ public sealed record DeviceAudioStatus(
     int MissingTracks,
     long MissingBytes,
     int WaitingForDesktopUpload);
+
+public sealed record CloudMetadataRefreshResult(
+    CloudDeviceLibrarySnapshot Snapshot,
+    bool LibraryUpdated);
 
 public sealed class DeviceLibraryCloudClient
 {
@@ -98,7 +103,7 @@ public sealed class DeviceLibraryCloudClient
         }
     }
 
-    public async Task<CloudDeviceLibrarySnapshot> RefreshMetadataAsync(
+    public async Task<CloudMetadataRefreshResult> RefreshMetadataAsync(
         CancellationToken cancellationToken = default)
     {
         var connection = LoadConnection()
@@ -111,17 +116,38 @@ public sealed class DeviceLibraryCloudClient
                            JsonOptions, cancellationToken)
                        ?? throw new InvalidDataException("Cloud device-library snapshot is empty.");
 
+        var cachedSnapshot = LoadCachedSnapshot();
+        var portableLibraryPath = Path.Combine(
+            CompanionServices.LibraryStorage.LibraryDirectory,
+            PortableLibraryStore.FileName);
+        var libraryUpdated = cachedSnapshot is null
+                             || !string.Equals(snapshot.UserId, cachedSnapshot.UserId, StringComparison.OrdinalIgnoreCase)
+                             || IsNewer(snapshot.GeneratedAt, cachedSnapshot.GeneratedAt)
+                             || !File.Exists(portableLibraryPath);
+        if (!libraryUpdated)
+            return new CloudMetadataRefreshResult(
+                MergeAudioAvailability(cachedSnapshot!, snapshot),
+                false);
+
         Directory.CreateDirectory(CompanionServices.LibraryStorage.LibraryDirectory);
+        await PortableLibraryStore.SaveAsync(
+            CompanionServices.LibraryStorage.LibraryDirectory,
+            ToPortableLibrary(snapshot));
         var temporaryPath = SnapshotPath + ".tmp";
         await File.WriteAllTextAsync(
             temporaryPath,
             JsonSerializer.Serialize(snapshot, JsonOptions),
             cancellationToken);
         File.Move(temporaryPath, SnapshotPath, overwrite: true);
-        await PortableLibraryStore.SaveAsync(
-            CompanionServices.LibraryStorage.LibraryDirectory,
-            ToPortableLibrary(snapshot));
-        return snapshot;
+        return new CloudMetadataRefreshResult(snapshot, true);
+    }
+
+    public static bool IsNewer(string candidateTimestamp, string currentTimestamp)
+    {
+        const DateTimeStyles styles = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal;
+        return DateTimeOffset.TryParse(candidateTimestamp, CultureInfo.InvariantCulture, styles, out var candidate)
+               && (!DateTimeOffset.TryParse(currentTimestamp, CultureInfo.InvariantCulture, styles, out var current)
+                   || candidate > current);
     }
 
     public IReadOnlyList<MissingDeviceAudio> FindMissingAudio(CloudDeviceLibrarySnapshot snapshot)
@@ -247,6 +273,24 @@ public sealed class DeviceLibraryCloudClient
         var path = Path.Combine(tracksDirectory, safeName);
         return File.Exists(path)
                && (track.AudioFileSizeBytes is null || new FileInfo(path).Length == track.AudioFileSizeBytes);
+    }
+
+    private static CloudDeviceLibrarySnapshot MergeAudioAvailability(
+        CloudDeviceLibrarySnapshot cached,
+        CloudDeviceLibrarySnapshot remote)
+    {
+        var remoteTracks = remote.Tracks.ToDictionary(track => track.TrackKey, StringComparer.Ordinal);
+        return cached with
+        {
+            Tracks = cached.Tracks.Select(track => remoteTracks.TryGetValue(track.TrackKey, out var remoteTrack)
+                ? track with
+                {
+                    AudioAvailable = remoteTrack.AudioAvailable,
+                    AudioFileSizeBytes = remoteTrack.AudioFileSizeBytes,
+                    AudioSha256 = remoteTrack.AudioSha256
+                }
+                : track).ToList()
+        };
     }
 
     private static HttpRequestMessage CreateRequest(

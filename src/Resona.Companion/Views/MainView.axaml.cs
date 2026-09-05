@@ -262,26 +262,12 @@ public partial class MainView : UserControl
 
     private async Task LoadLibraryAsync()
     {
-        string? cloudError = null;
         try
         {
             ClearThumbnailCache();
             _cloudSnapshot = _cloud.LoadCachedSnapshot();
-            if (_cloud.LoadConnection() is not null)
-            {
-                try
-                {
-                    using var refreshTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    _cloudSnapshot = await _cloud.RefreshMetadataAsync(refreshTimeout.Token);
-                }
-                catch (Exception ex)
-                {
-                    // A cached library remains usable while the server is unavailable.
-                    cloudError = $"Cloud refresh failed: {ex.Message}";
-                }
-            }
             _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
-            SetStatus(cloudError);
+            SetStatus();
         }
         catch (Exception ex)
         {
@@ -294,6 +280,22 @@ public partial class MainView : UserControl
         PopulateFilters();
         ApplyFilter();
         RefreshCloudPage();
+
+        if (_cloud.LoadConnection() is not null)
+            _ = RefreshCloudMetadataInBackgroundAsync();
+    }
+
+    private async Task RefreshCloudMetadataInBackgroundAsync()
+    {
+        try
+        {
+            await RefreshCloudMetadataAndLibraryAsync(isBackground: true);
+        }
+        catch (Exception ex)
+        {
+            // The already displayed local library remains usable while the server is unavailable.
+            CloudOperationStatusText.Text = $"Background sync failed: {ex.Message}";
+        }
     }
 
     private void PopulateFilters()
@@ -1018,7 +1020,7 @@ public partial class MainView : UserControl
         {
             _cloud.SaveConnectionCode(CloudConnectionCodeBox.Text);
             CloudConnectionCodeBox.Text = string.Empty;
-            await RefreshCloudMetadataAndLibraryAsync();
+            await RefreshCloudMetadataAndLibraryAsync(isBackground: false);
             ShowToast("Cloud library connected");
         }
         catch (Exception ex)
@@ -1037,8 +1039,8 @@ public partial class MainView : UserControl
 
         try
         {
-            await RefreshCloudMetadataAndLibraryAsync();
-            ShowToast("Cloud metadata updated");
+            var updated = await RefreshCloudMetadataAndLibraryAsync(isBackground: false);
+            ShowToast(updated ? "Library and presets updated" : "Library already current");
         }
         catch (Exception ex)
         {
@@ -1046,19 +1048,30 @@ public partial class MainView : UserControl
         }
     }
 
-    private async Task RefreshCloudMetadataAndLibraryAsync()
+    private async Task<bool> RefreshCloudMetadataAndLibraryAsync(bool isBackground)
     {
         SetCloudBusy(true);
-        CloudOperationStatusText.Text = "Refreshing metadata…";
+        CloudOperationStatusText.Text = isBackground
+            ? "Checking for library updates…"
+            : "Synchronizing metadata and presets…";
         try
         {
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-            _cloudSnapshot = await _cloud.RefreshMetadataAsync(timeout.Token);
-            ClearThumbnailCache();
-            _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
-            PopulateFilters();
-            ApplyFilter();
-            CloudOperationStatusText.Text = $"Updated {DateTime.Now:t}";
+            var result = await _cloud.RefreshMetadataAsync(timeout.Token);
+            _cloudSnapshot = result.Snapshot;
+            if (result.LibraryUpdated)
+            {
+                ClearThumbnailCache();
+                _loadedLibrary = await PortableLibraryStore.LoadAsync(CompanionServices.LibraryStorage.LibraryDirectory);
+                PopulateFilters();
+                ApplyFilter();
+            }
+
+            var presetCount = _loadedLibrary.Library.FilterPresets?.Count ?? 0;
+            CloudOperationStatusText.Text = result.LibraryUpdated
+                ? $"Updated {DateTime.Now:t} · {_loadedLibrary.Library.Tracks.Count} tracks · {presetCount} presets"
+                : $"Already current · {_loadedLibrary.Library.Tracks.Count} tracks · {presetCount} presets";
+            return result.LibraryUpdated;
         }
         finally
         {

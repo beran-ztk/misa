@@ -766,6 +766,7 @@ public partial class SettingsOverlay : UserControl
         CloudSyncTotalText.Text = status.TotalAudioTracks?.ToString(CultureInfo.InvariantCulture) ?? "—";
         CloudSyncUploadedText.Text = status.UploadedAudioTracks?.ToString(CultureInfo.InvariantCulture) ?? "—";
         CloudSyncPendingText.Text = status.PendingAudioTracks?.ToString(CultureInfo.InvariantCulture) ?? "—";
+        CloudSyncPresetText.Text = status.PresetCount?.ToString(CultureInfo.InvariantCulture) ?? "—";
 
         var total = status.TotalAudioTracks.GetValueOrDefault();
         var uploaded = status.UploadedAudioTracks.GetValueOrDefault();

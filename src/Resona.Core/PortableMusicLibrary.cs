@@ -171,8 +171,10 @@ public static class PortableLibraryStore
     {
         Directory.CreateDirectory(rootDirectory);
         var path = Path.Combine(rootDirectory, FileName);
-        await using var stream = File.Create(path);
-        await JsonSerializer.SerializeAsync(stream, library, JsonOptions);
+        var temporaryPath = path + ".tmp";
+        await using (var stream = File.Create(temporaryPath))
+            await JsonSerializer.SerializeAsync(stream, library, JsonOptions);
+        File.Move(temporaryPath, path, overwrite: true);
     }
 }
 
