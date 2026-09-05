@@ -106,6 +106,7 @@ public partial class MusicView : UserControl
     private readonly HashSet<string> _selectedRatingNames = new(StringComparer.OrdinalIgnoreCase);
     private MultiSelectFilterControl? _conditionGenreCtrl;
     private MultiSelectFilterControl? _conditionStyleCtrl;
+    private MultiSelectFilterControl? _conditionVersionCtrl;
     private MultiSelectFilterControl? _conditionTagCtrl;
     private MultiSelectFilterControl? _conditionLanguageCtrl;
     private bool _conditionNegate;
@@ -123,6 +124,7 @@ public partial class MusicView : UserControl
         MultiSelectFilterControl StyleCtrl,
         MultiSelectFilterControl TagCtrl,
         MultiSelectFilterControl LanguageCtrl,
+        MultiSelectFilterControl VersionCtrl,
         Dictionary<string, EmotionalRangeState> EmotionalCharacters,
         HashSet<string> MainGenres,
         bool Negate,
@@ -277,6 +279,11 @@ public partial class MusicView : UserControl
             ShowToast(warning ?? "Track downloaded; analysis queued");
         };
         AddTrackOverlay.CloseRequested += () => AddTrackOverlay.IsVisible = false;
+        AddVersionOverlay.Queued += () =>
+        {
+            ImportOverlay.RefreshQueue();
+            ShowToast("Version added to Current Queue");
+        };
         ChannelOverlay.CloseRequested += () =>
         {
             StopTrackPreview();
@@ -839,6 +846,14 @@ public partial class MusicView : UserControl
             UpdateDiscordPresence();
         }
 
+        if (previous?.Track.IsOriginal != updatedTrack.IsOriginal
+            || previous?.Track.ParentTrackId != updatedTrack.ParentTrackId
+            || previous?.Track.EditTypes != updatedTrack.EditTypes)
+        {
+            ApplyFilterCore();
+            return;
+        }
+
         if (filteredIndex >= 0)
             EnsureVisibleWindowAround(filteredIndex);
 
@@ -889,7 +904,8 @@ public partial class MusicView : UserControl
                 Values.Genres
                     .Where(genre => fg.MainGenres.Contains(MainGenreName(genre.Name)))
                     .Select(genre => genre.Id)
-                    .ToHashSet()))
+                    .ToHashSet(),
+                fg.VersionCtrl.SelectedItems.ToHashSet()))
             .ToList();
 
     private static string ShortGenreName(string genreName)
@@ -1119,6 +1135,10 @@ public partial class MusicView : UserControl
             item.ShowDownloadedDate = _sortBy == LibrarySortBy.DownloadedAt;
 
         var ratingSortById = Values.Ratings.ToDictionary(rating => rating.Id, rating => rating.SortOrder);
+        var originalTitles = _allItems.Where(item => item.Track.IsOriginal)
+            .ToDictionary(item => item.Track.Id, item => item.Track.Title);
+        string GroupTitle(TrackDisplayItem item) => item.Track.ParentTrackId is int parent
+            ? originalTitles.GetValueOrDefault(parent, item.Track.Title) : item.Track.Title;
         IOrderedEnumerable<TrackDisplayItem> sorted = _sortBy switch
         {
             LibrarySortBy.CollectionOrder when _activeCollection is not null =>
@@ -1137,7 +1157,8 @@ public partial class MusicView : UserControl
                         : int.MinValue)
                     .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
             LibrarySortBy.Name when _sortDirection == LibrarySortDirection.Descending =>
-                _filteredItems.OrderByDescending(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
+                _filteredItems.OrderByDescending(GroupTitle, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
             LibrarySortBy.DownloadedAt when _sortDirection == LibrarySortDirection.Ascending =>
                 _filteredItems
                     .OrderBy(item => DownloadedAtSortValue(item.Track.DownloadedAt))
@@ -1147,10 +1168,16 @@ public partial class MusicView : UserControl
                     .OrderByDescending(item => DownloadedAtSortValue(item.Track.DownloadedAt))
                     .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase),
             _ =>
-                _filteredItems.OrderBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase)
+                _filteredItems.OrderBy(GroupTitle, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(item => item.Track.Title, StringComparer.OrdinalIgnoreCase)
         };
 
-        _filteredItems = sorted.ToList();
+        var sortedItems = sorted.ToList();
+        var itemsById = sortedItems.ToDictionary(item => item.Track.Id);
+        _filteredItems = TrackGrouping.Build(sortedItems.Select(item => item.Track).ToList(),
+                _allItems.Select(item => item.Track))
+            .Where(row => !row.IsContextOnly)
+            .Select(row => itemsById[row.Track.Id]).ToList();
     }
 
     private static DateTimeOffset DownloadedAtSortValue(string downloadedAt) =>
@@ -1192,7 +1219,17 @@ public partial class MusicView : UserControl
     private void RefreshVisibleItemsSource(int? selectedTrackId = null)
     {
         selectedTrackId ??= (FileList.SelectedItem as TrackDisplayItem)?.Track.Id;
-        _visibleItems = _filteredItems.ToList();
+        var itemById = _allItems.ToDictionary(item => item.Track.Id);
+        _visibleItems = TrackGrouping.Build(_filteredItems.Select(item => item.Track).ToList(),
+                _allItems.Select(item => item.Track))
+            .Select(row =>
+            {
+                var item = itemById[row.Track.Id];
+                item.IsContextOnly = row.IsContextOnly;
+                item.IsVersionChild = row.IsChild;
+                item.ShowDownloadedDate = _sortBy == LibrarySortBy.DownloadedAt;
+                return item;
+            }).ToList();
 
         FileList.ItemsSource = _visibleItems;
         if (selectedTrackId is int id)
@@ -1208,8 +1245,9 @@ public partial class MusicView : UserControl
         if (filteredIndex < 0 || filteredIndex >= _filteredItems.Count)
             return;
 
-        if (filteredIndex < _visibleItems.Count)
-            FileList.ScrollIntoView(_visibleItems[filteredIndex]);
+        var visible = _visibleItems.FirstOrDefault(item => item.Track.Id == _filteredItems[filteredIndex].Track.Id);
+        if (visible is not null)
+            FileList.ScrollIntoView(visible);
     }
 
     private void RestoreSavedQueueOrder()
@@ -1312,8 +1350,8 @@ public partial class MusicView : UserControl
 
     private void SetFilteredSelectedIndex(int filteredIndex)
     {
-        FileList.SelectedIndex = filteredIndex >= 0 && filteredIndex < _visibleItems.Count
-            ? filteredIndex
+        FileList.SelectedIndex = filteredIndex >= 0 && filteredIndex < _filteredItems.Count
+            ? _visibleItems.FindIndex(item => item.Track.Id == _filteredItems[filteredIndex].Track.Id)
             : -1;
     }
 
@@ -1371,6 +1409,9 @@ public partial class MusicView : UserControl
         var selectedTagIds = SelectedIds(group.TagCtrl.SelectedItems, Values.Tags, TagFilterName, t => t.Id);
         var selectedLanguages = group.LanguageCtrl.SelectedItems.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var term = SearchBox.Text?.Trim();
+
+        if (group.VersionCtrl.SelectedItems.Count > 0)
+            query = query.Where(track => TrackVersions.Matches(track, group.VersionCtrl.SelectedItems));
 
         if (!string.IsNullOrWhiteSpace(term))
             query = query.Where(track =>
@@ -2650,8 +2691,9 @@ public partial class MusicView : UserControl
                     .Select(pair => new PortableEmotionalCharacterFilter(pair.Key, pair.Value.MinimumPercent, null))
                     .ToList(),
                 SortedNames(group.LanguageCtrl.SelectedItems),
-                SortedNames(group.MainGenres)))
-            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.MainGenres?.Count ?? 0) > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0 || (group.Languages?.Count ?? 0) > 0)
+                SortedNames(group.MainGenres),
+                SortedNames(group.VersionCtrl.SelectedItems)))
+            .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.MainGenres?.Count ?? 0) > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0 || (group.Languages?.Count ?? 0) > 0 || (group.Versions?.Count ?? 0) > 0)
             .ToList();
 
         return new PortableFilterPreset(
@@ -2672,11 +2714,11 @@ public partial class MusicView : UserControl
             _filterGroups.Clear();
 
             var groups = preset.Groups
-                .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.MainGenres?.Count ?? 0) > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0 || (group.Languages?.Count ?? 0) > 0)
+                .Where(group => group.Genres.Count > 0 || group.Styles.Count > 0 || (group.MainGenres?.Count ?? 0) > 0 || (group.Tags?.Count ?? 0) > 0 || (group.EmotionalCharacters?.Count ?? 0) > 0 || (group.Languages?.Count ?? 0) > 0 || (group.Versions?.Count ?? 0) > 0)
                 .ToList();
 
             foreach (var group in groups)
-                _filterGroups.Add(CreateFilterCondition(group.Genres, group.Styles, group.Tags ?? new List<string>(), group.Negate, group.EmotionalCharacters, group.Languages, group.MainGenres));
+                _filterGroups.Add(CreateFilterCondition(group.Genres, group.Styles, group.Tags ?? new List<string>(), group.Negate, group.EmotionalCharacters, group.Languages, group.MainGenres, group.Versions));
 
             RebuildFilterConditionsPanel();
             ClearConditionBuilder();
@@ -2739,6 +2781,8 @@ public partial class MusicView : UserControl
 
     private void InitializeFilterConditionBuilder()
     {
+        _conditionVersionCtrl = CreateVersionFilterControl();
+        _conditionVersionCtrl.SelectionChanged += (_, _) => UpdateCurrentSetSummary();
         _conditionGenreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         _conditionGenreCtrl.SetItems(GenreFilterOptions());
         _conditionGenreCtrl.SelectionChanged += (_, _) => UpdateCurrentSetSummary();
@@ -2762,6 +2806,8 @@ public partial class MusicView : UserControl
         _conditionEmotionalSection = CreateEmotionalCharacterFilterSection(_conditionEmotionalCharacters);
 
         FilterBuilderPanel.Children.Clear();
+        FilterBuilderPanel.Children.Add(new TextBlock { Text = "Versions · match any selected", FontSize = 12, FontWeight = FontWeight.SemiBold });
+        FilterBuilderPanel.Children.Add(_conditionVersionCtrl);
         FilterBuilderPanel.Children.Add(_conditionGenreSection.Control);
         FilterBuilderPanel.Children.Add(_conditionStyleSection.Control);
         FilterBuilderPanel.Children.Add(_conditionTagSection.Control);
@@ -2780,13 +2826,14 @@ public partial class MusicView : UserControl
         var selectedStyles = SortedNames(_conditionStyleCtrl.SelectedItems);
         var selectedTags = SortedNames(_conditionTagCtrl.SelectedItems);
         var selectedLanguages = SortedNames(_conditionLanguageCtrl.SelectedItems);
-        if (selectedGenres.Count == 0 && selectedStyles.Count == 0 && selectedTags.Count == 0 && selectedLanguages.Count == 0 && !_conditionEmotionalCharacters.Values.Any(value => value.IsActive))
+        var selectedVersions = SortedNames(_conditionVersionCtrl?.SelectedItems ?? new HashSet<string>());
+        if (selectedVersions.Count == 0 && selectedGenres.Count == 0 && selectedStyles.Count == 0 && selectedTags.Count == 0 && selectedLanguages.Count == 0 && !_conditionEmotionalCharacters.Values.Any(value => value.IsActive))
             return;
 
         _filterGroups.Add(CreateFilterCondition(selectedGenres, selectedStyles, selectedTags, _conditionNegate, _conditionEmotionalCharacters
             .Where(pair => pair.Value.IsActive)
             .Select(pair => new PortableEmotionalCharacterFilter(pair.Key, pair.Value.MinimumPercent, null)),
-            selectedLanguages));
+            selectedLanguages, versions: selectedVersions));
         RebuildFilterConditionsPanel();
         ClearConditionBuilder();
     }
@@ -2798,7 +2845,8 @@ public partial class MusicView : UserControl
         bool negate = false,
         IEnumerable<PortableEmotionalCharacterFilter>? emotionalCharacters = null,
         IEnumerable<string>? languages = null,
-        IEnumerable<string>? mainGenres = null)
+        IEnumerable<string>? mainGenres = null,
+        IEnumerable<string>? versions = null)
     {
         var genreCtrl = new MultiSelectFilterControl { Placeholder = "All genres" };
         genreCtrl.SetItems(GenreFilterOptions());
@@ -2815,6 +2863,8 @@ public partial class MusicView : UserControl
         var languageCtrl = new MultiSelectFilterControl { Placeholder = "All languages" };
         languageCtrl.SetItems(LanguageFilterOptions());
         languageCtrl.SetSelectedItems(languages ?? [], notify: false);
+        var versionCtrl = CreateVersionFilterControl();
+        versionCtrl.SetSelectedItems(versions ?? [], notify: false);
 
         var emotional = EmotionalCharacterCatalog.All.ToDictionary(
             item => item.Adjectives,
@@ -2829,6 +2879,7 @@ public partial class MusicView : UserControl
             styleCtrl,
             tagCtrl,
             languageCtrl,
+            versionCtrl,
             emotional,
             (mainGenres ?? []).ToHashSet(StringComparer.OrdinalIgnoreCase),
             negate,
@@ -2846,6 +2897,7 @@ public partial class MusicView : UserControl
                 && group.MainGenres.Contains(mainGenre)
                 && group.GenreCtrl.SelectedItems.Count == 0
                 && group.StyleCtrl.SelectedItems.Count == 0
+                && group.VersionCtrl.SelectedItems.Count == 0
                 && group.TagCtrl.SelectedItems.Count == 0
                 && group.LanguageCtrl.SelectedItems.Count == 0
                 && !group.EmotionalCharacters.Values.Any(value => value.IsActive)))
@@ -2858,6 +2910,7 @@ public partial class MusicView : UserControl
 
     private void ClearConditionBuilder()
     {
+        _conditionVersionCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         _conditionGenreCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         _conditionStyleCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
         _conditionTagCtrl?.SetSelectedItems(Array.Empty<string>(), notify: false);
@@ -2934,6 +2987,9 @@ public partial class MusicView : UserControl
             .ToList();
 
         CurrentSetGenresRow.IsVisible = genres.Count > 0;
+        var versions = _conditionVersionCtrl?.SelectedItems.ToList() ?? [];
+        CurrentSetVersionsRow.IsVisible = versions.Count > 0;
+        CurrentSetVersionsText.Text = FormatNaturalList(versions);
         CurrentSetStylesRow.IsVisible = styles.Count > 0;
         CurrentSetTagsRow.IsVisible = tags.Count > 0;
         CurrentSetLanguagesRow.IsVisible = languages.Count > 0;
@@ -2944,7 +3000,7 @@ public partial class MusicView : UserControl
         CurrentSetLanguagesText.Text = FormatNaturalList(languages);
         CurrentSetEmotionalText.Text = FormatNaturalList(emotional);
 
-        var hasSelection = genres.Count > 0 || styles.Count > 0 || tags.Count > 0 || languages.Count > 0 || emotional.Count > 0;
+        var hasSelection = versions.Count > 0 || genres.Count > 0 || styles.Count > 0 || tags.Count > 0 || languages.Count > 0 || emotional.Count > 0;
         CurrentSetEmptyText.IsVisible = !hasSelection;
         AddFilterGroupButton.IsEnabled = hasSelection;
     }
@@ -3012,6 +3068,7 @@ public partial class MusicView : UserControl
             .Select(DisplayGenreFilterName)
             .Concat(condition.MainGenres)
             .Concat(condition.StyleCtrl.SelectedItems)
+            .Concat(condition.VersionCtrl.SelectedItems)
             .Concat(condition.TagCtrl.SelectedItems.Select(DisplayTagFilterName))
             .Concat(condition.LanguageCtrl.SelectedItems.Select(DisplayLanguageFilterName))
             .Concat(condition.EmotionalCharacters
@@ -3482,6 +3539,13 @@ public partial class MusicView : UserControl
             FillGroups();
             FillChoices();
         });
+    }
+
+    private static MultiSelectFilterControl CreateVersionFilterControl()
+    {
+        var control = new MultiSelectFilterControl { Placeholder = "All versions" };
+        control.SetItems(new[] { "Original", "Edit" }.Concat(TrackVersions.Types.Select(type => type.Name)));
+        return control;
     }
 
     private FilterSection CreateStyleFilterSection(MultiSelectFilterControl styleCtrl)
@@ -4135,6 +4199,13 @@ public partial class MusicView : UserControl
         var deletedIndex = _filteredItems.FindIndex(item => item.Track.Id == trackId);
 
         _allItems.RemoveAll(item => item.Track.Id == trackId);
+        // SQLite detaches children when a parent is deleted; reflect that in cached tracks.
+        foreach (var child in _allItems.Where(item => item.Track.ParentTrackId == trackId).ToList())
+        {
+            var detached = child with { Track = child.Track with { ParentTrackId = null } };
+            ReplaceTrackDisplayItem(_allItems, child, detached);
+            ReplaceTrackDisplayItem(_filteredItems, child, detached);
+        }
         _filteredItems.RemoveAll(item => item.Track.Id == trackId);
         _visibleItems.RemoveAll(item => item.Track.Id == trackId);
         _allTrackStyleIds.Remove(trackId);
@@ -4980,7 +5051,8 @@ public partial class MusicView : UserControl
             return;
 
         CloseActiveTrackContextMenu();
-        EnsureLoadedPlaylistQueue(item.Track.Id);
+        if (!item.IsContextOnly)
+            EnsureLoadedPlaylistQueue(item.Track.Id);
         var trackId = item.Track.Id;
         var index = _playbackQueue.TrackIds.ToList().IndexOf(trackId);
         var currentIndex = _playbackQueue.CurrentTrackId is int currentTrackId
@@ -4998,6 +5070,8 @@ public partial class MusicView : UserControl
             new Separator { Classes = { "track-context-separator" } },
             CreateTrackMenuItem("Edit", true,
                 () => OpenTrackEditor(item.Track)),
+            CreateTrackMenuItem("Add version", item.Track.IsOriginal,
+                () => AddVersionOverlay.Open(item.Track)),
             CreateAddToCollectionMenuItem(item.Track)
         };
 
@@ -5013,15 +5087,15 @@ public partial class MusicView : UserControl
         menuItems.AddRange([
             new Separator { Classes = { "track-context-separator" } },
             CreateTrackMenuItem("Play next",
-                !isCurrent && index != currentIndex + 1,
+                !item.IsContextOnly && !isCurrent && index != currentIndex + 1,
                 () => ApplyTrackQueueMutation(() => _playbackQueue.MoveNext(trackId))),
             CreateTrackMenuItem("Move up",
-                !isCurrent && index > 0 && index - 1 != currentIndex,
+                !item.IsContextOnly && !isCurrent && index > 0 && index - 1 != currentIndex,
                 () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, -1))),
-            CreateTrackMenuItem("Move down", !isCurrent && index >= 0
+            CreateTrackMenuItem("Move down", !item.IsContextOnly && !isCurrent && index >= 0
                 && index < _playbackQueue.TrackIds.Count - 1 && index + 1 != currentIndex,
                 () => ApplyTrackQueueMutation(() => _playbackQueue.Move(trackId, 1))),
-            CreateTrackMenuItem("Remove from queue", !isCurrent,
+            CreateTrackMenuItem("Remove from queue", !item.IsContextOnly && !isCurrent,
                 () => ApplyTrackQueueMutation(() => _playbackQueue.Remove(trackId)))
         ]);
 

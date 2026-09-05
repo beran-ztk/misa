@@ -416,6 +416,9 @@ public sealed class MusicDatabaseImportWorkflowTests : IDisposable
                 status TEXT NOT NULL,
                 detail TEXT NULL,
                 track_id INTEGER NULL REFERENCES tracks(id) ON DELETE SET NULL,
+                is_original INTEGER NOT NULL DEFAULT 1,
+                parent_track_id INTEGER NULL REFERENCES tracks(id) ON DELETE SET NULL,
+                edit_types INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );

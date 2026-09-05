@@ -28,8 +28,9 @@ public sealed class TrackTitleTagPanel : Panel
             return default;
 
         var desiredWidth = Children[0].DesiredSize.Width;
-        if (Children.Count > 1 && Children[1].DesiredSize.Width > 0)
-            desiredWidth += Gap + Children[1].DesiredSize.Width;
+        for (var i = 1; i < Children.Count; i++)
+            if (Children[i].IsVisible && Children[i].DesiredSize.Width > 0)
+                desiredWidth += Gap + Children[i].DesiredSize.Width;
         var desiredHeight = 0d;
         foreach (var child in Children)
             desiredHeight = Math.Max(desiredHeight, child.DesiredSize.Height);
@@ -51,18 +52,23 @@ public sealed class TrackTitleTagPanel : Panel
             return finalSize;
         }
 
-        var tags = Children[1];
-        var hasTags = tags.DesiredSize.Width > 0;
-        var gap = hasTags ? Gap : 0;
-        var tagWidth = Math.Min(tags.DesiredSize.Width, Math.Max(0, finalSize.Width - gap));
-        var combinedWidth = title.DesiredSize.Width + gap + tagWidth;
-        var titleWidth = combinedWidth <= finalSize.Width
-            ? title.DesiredSize.Width
-            : Math.Max(0, finalSize.Width - gap - tagWidth);
-
+        var metadataWidth = 0d;
+        for (var i = 1; i < Children.Count; i++)
+            if (Children[i].IsVisible && Children[i].DesiredSize.Width > 0)
+                metadataWidth += Gap + Children[i].DesiredSize.Width;
+        var titleWidth = Math.Min(title.DesiredSize.Width,
+            Math.Max(Math.Min(100, finalSize.Width), finalSize.Width - metadataWidth));
         ArrangeCentered(title, 0, titleWidth, finalSize.Height);
-        if (hasTags)
-            ArrangeCentered(tags, titleWidth + gap, tagWidth, finalSize.Height);
+        var x = titleWidth;
+        for (var i = 1; i < Children.Count; i++)
+        {
+            var child = Children[i];
+            if (!child.IsVisible || child.DesiredSize.Width <= 0) continue;
+            x = Math.Min(finalSize.Width, x + Gap);
+            var width = Math.Min(child.DesiredSize.Width, Math.Max(0, finalSize.Width - x));
+            ArrangeCentered(child, x, width, finalSize.Height);
+            x += width;
+        }
         return finalSize;
     }
 

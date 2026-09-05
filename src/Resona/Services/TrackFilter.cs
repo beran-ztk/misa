@@ -13,7 +13,8 @@ public record FilterGroup(
     IReadOnlySet<string> LanguageCodes,
     IReadOnlyList<EmotionalCharacterRange> EmotionalCharacters,
     bool Negate = false,
-    IReadOnlySet<int>? AnyGenreIds = null);
+    IReadOnlySet<int>? AnyGenreIds = null,
+    IReadOnlySet<string>? Versions = null);
 
 public static class TrackFilter
 {
@@ -44,7 +45,7 @@ public static class TrackFilter
         // Negated groups remove matching tracks after the positive groups are evaluated.
         // Empty groups (nothing selected in any dimension) are ignored.
         var activeGroups = filterGroups
-            .Where(g => g.GenreIds.Count > 0 || (g.AnyGenreIds?.Count ?? 0) > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0 || g.LanguageCodes.Count > 0 || g.EmotionalCharacters.Count > 0)
+            .Where(g => g.GenreIds.Count > 0 || (g.AnyGenreIds?.Count ?? 0) > 0 || g.StyleIds.Count > 0 || g.TagIds.Count > 0 || g.LanguageCodes.Count > 0 || g.EmotionalCharacters.Count > 0 || (g.Versions?.Count ?? 0) > 0)
             .ToList();
         var includeGroups = activeGroups.Where(group => !group.Negate).ToList();
         var excludeGroups = activeGroups.Where(group => group.Negate).ToList();
@@ -71,6 +72,9 @@ public static class TrackFilter
         IReadOnlyDictionary<int, List<int>> trackTagIds,
         IReadOnlyDictionary<int, Dictionary<string, double>> trackMirexScores)
     {
+        if (group.Versions is { Count: > 0 } && !TrackVersions.Matches(track, group.Versions))
+            return false;
+
         if (group.GenreIds.Count > 0)
         {
             trackGenreIds.TryGetValue(track.Id, out var tGenres);

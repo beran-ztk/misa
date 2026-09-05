@@ -67,7 +67,11 @@ public static class CloudDeviceLibrarySnapshotBuilder
                     : emotional
                         .OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
                         .ToDictionary(item => item.Key, item => item.Value),
-                track.UpdatedAt);
+                track.UpdatedAt,
+                IsOriginal: track.IsOriginal,
+                ParentTrackKey: track.ParentTrackId is int parent ? trackKeys.GetValueOrDefault(parent) : null,
+                EditTypes: TrackVersions.Types.Where(type => track.EditTypes.HasFlag(type.Type))
+                    .Select(type => type.Name).ToList());
         }).OrderBy(track => track.TrackKey, StringComparer.Ordinal).ToList();
 
         var collections = library.GetCollections()

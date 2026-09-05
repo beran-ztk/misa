@@ -49,12 +49,15 @@ public partial class AddTrackOverlay : UserControl
         RatingBox.SelectionChanged += (_, _) => UpdateDownloadButton();
     }
 
-    public void Open()
+    public void Open(MusicTrack? original = null)
     {
         SetBusy(false);
         _showAllGenres = false;
         LoadLookups();
         ClearForm();
+        VersionFields.Configure(MusicLibraryService.Current.GetTracksForLibraryView(),
+            isOriginal: original is null, parentId: original?.Id);
+        VersionNameBox.Text = string.Empty;
         IsVisible = true;
         UpdateBodyWidth();
     }
@@ -285,12 +288,22 @@ public partial class AddTrackOverlay : UserControl
         if (_validCanonicalUrl is null)
             return;
 
+        if (VersionFields.ValidationError is { } error)
+        {
+            StatusText.Text = error;
+            return;
+        }
+
         SetBusy(true, _remoteTitle ?? _validCanonicalUrl);
         StatusText.Text = "";
 
         var request = new DownloadRequest
         {
             RawUrl = _validCanonicalUrl,
+            IsOriginal = VersionFields.IsOriginal,
+            ParentTrackId = VersionFields.ParentTrackId,
+            EditTypes = VersionFields.EditTypes,
+            VersionName = VersionNameBox.Text,
             GenreIds = [],
             RatingId = _ratings[RatingBox.SelectedIndex].Id,
             StyleIds = _styleChips

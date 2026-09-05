@@ -91,4 +91,7 @@ public sealed record CloudDeviceTrack(
     string UpdatedAt,
     bool AudioAvailable = false,
     long? AudioFileSizeBytes = null,
-    string? AudioSha256 = null);
+    string? AudioSha256 = null,
+    bool IsOriginal = true,
+    string? ParentTrackKey = null,
+    IReadOnlyList<string>? EditTypes = null);

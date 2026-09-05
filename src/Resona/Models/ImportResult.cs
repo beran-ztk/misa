@@ -18,7 +18,10 @@ public record ImportPreviewItem(
     int? DurationSeconds,
     long? EstimatedSizeBytes,
     ImportQueueStatus Status,
-    string? Detail = null);
+    string? Detail = null,
+    bool IsOriginal = true,
+    int? ParentTrackId = null,
+    TrackEditTypes EditTypes = TrackEditTypes.None);
 
 public record ImportPreview(
     IReadOnlyList<ImportPreviewItem> Items,
@@ -39,7 +42,19 @@ public record ImportQueueItem(
     long? EstimatedSizeBytes,
     ImportQueueStatus Status,
     string? Detail,
-    int? TrackId);
+    int? TrackId,
+    bool IsOriginal = true,
+    int? ParentTrackId = null,
+    TrackEditTypes EditTypes = TrackEditTypes.None)
+{
+    public DownloadRequest DownloadRequest => new()
+    {
+        RawUrl = CanonicalUrl,
+        IsOriginal = IsOriginal,
+        ParentTrackId = ParentTrackId,
+        EditTypes = EditTypes
+    };
+}
 
 public record ImportQueuePhase(int ItemId, ImportQueueStatus Status, DateTime StartedAtUtc);
 

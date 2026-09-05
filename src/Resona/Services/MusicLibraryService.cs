@@ -59,6 +59,12 @@ public class MusicLibraryService
     public List<int> GetTrackGenreIds(int trackId) => _db.GetTrackGenreIds(trackId);
     public List<TrackModelGenre> GetTrackModelGenres(int trackId) => _db.GetTrackModelGenres(trackId);
     public void SetTrackModelGenreEnabled(int trackId, int genreId, bool isEnabled) => _db.SetTrackModelGenreEnabled(trackId, genreId, isEnabled);
+    public void SetTrackVersion(int id, bool isOriginal, int? parentTrackId, TrackEditTypes editTypes)
+    {
+        _db.SetTrackVersion(id, isOriginal, parentTrackId, editTypes);
+        CloudLibrarySyncService.Current.RequestSynchronization();
+    }
+
     public void UpdateTrack(
         int id,
         string title,
@@ -96,7 +102,8 @@ public class MusicLibraryService
         _db.EstimateAnalysisDuration(trackDurationSeconds, fileSizeBytes);
     public TimeSpan? EstimateDownloadDuration(int? trackDurationSeconds, long? fileSizeBytes) =>
         _db.EstimateDownloadDuration(trackDurationSeconds, fileSizeBytes);
-    public int CreateImportBatch(string sourceUrl, IReadOnlyList<ImportPreviewItem> items) => _db.CreateImportBatch(sourceUrl, items);
+    public int CreateImportBatch(string sourceUrl, IReadOnlyList<ImportPreviewItem> items, bool rejectDuplicates = false) =>
+        _db.CreateImportBatch(sourceUrl, items, rejectDuplicates);
     public IReadOnlyList<MusicTrack> RecoverInterruptedImports()
     {
         var recoveredTracks = new List<MusicTrack>();
@@ -556,7 +563,7 @@ public class MusicLibraryService
             request.StyleIds,
             progress,
             BackgroundJobPriority.UserInitiated,
-            "Add track");
+            "Add track", request);
         if (!result.Success || result.Track is null)
             return new DownloadResult(false, result.Error, result.Warning);
 
@@ -568,7 +575,8 @@ public class MusicLibraryService
     public async Task<ImportResult> ImportFromYouTubeAsync(
         string rawUrl,
         IProgress<string>? progress = null,
-        Action<int>? trackCreated = null)
+        Action<int>? trackCreated = null,
+        DownloadRequest? version = null)
     {
         var videoId = YouTubeUrlNormalizer.ExtractVideoId(rawUrl);
         if (videoId is null)
@@ -587,7 +595,7 @@ public class MusicLibraryService
             [],
             progress,
             BackgroundJobPriority.Normal,
-            "Import queue");
+            "Import queue", version);
         if (result.Success && result.Track is not null)
             trackCreated?.Invoke(result.Track.Id);
         return result;
@@ -601,7 +609,8 @@ public class MusicLibraryService
         List<int> styleIds,
         IProgress<string>? progress,
         BackgroundJobPriority jobPriority,
-        string jobSource)
+        string jobSource,
+        DownloadRequest? version = null)
     {
         _downloader.DeleteDownloadArtifacts(videoId);
 
@@ -668,7 +677,11 @@ public class MusicLibraryService
                 fileSizeBytes,
                 (int)downloadStopwatch.ElapsedMilliseconds,
                 metadata,
-                thumbnail);
+                thumbnail,
+                version?.IsOriginal ?? true,
+                version?.ParentTrackId,
+                version?.EditTypes ?? TrackEditTypes.None,
+                version?.VersionName);
             var track = GetTrackById(trackId)
                 ?? throw new InvalidOperationException($"Track {trackId} was inserted but could not be reloaded.");
             ChannelHubBackgroundService.Current.RequestRefresh();

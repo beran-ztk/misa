@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:Resona.Views"
              x:Class="Resona.Views.EditTrackOverlay"
              Background="Transparent"
              ClipToBounds="True">
@@ -289,6 +290,13 @@
                                                TextTrimming="CharacterEllipsis" />
                                 </Grid>
 
+                                <Expander Header="Version / original assignment" HorizontalAlignment="Stretch">
+                                    <StackPanel Spacing="8" Margin="0,8">
+                                        <views:TrackVersionFields x:Name="VersionFields" />
+                                        <Button Content="Save version" Click="OnSaveVersionClicked" Padding="10,5" />
+                                        <TextBlock x:Name="VersionStatusText" FontSize="11" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Expander>
                                 <Grid ColumnDefinitions="104,*,30,30" RowDefinitions="30,30,30,30,30,30,30,30,30,30" ColumnSpacing="6">
                                     <TextBlock Grid.Row="0" Text="Artist" FontSize="10.5" Opacity="0.58" VerticalAlignment="Center" />
                                     <TextBlock x:Name="ArtistDisplayText" Grid.Row="0" Grid.Column="1" FontSize="11.5" FontWeight="SemiBold"

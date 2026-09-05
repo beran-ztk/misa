@@ -39,7 +39,10 @@ public record MusicTrack(
     string OriginalTitle = "",
     string? Artist = null,
     string? Remix = null,
-    RatingBand? RatingBand = null)
+    RatingBand? RatingBand = null,
+    bool IsOriginal = true,
+    int? ParentTrackId = null,
+    TrackEditTypes EditTypes = TrackEditTypes.None)
 {
     public string DisplayTitle => TrackTitleFormatter.Format(Artist, Title, Remix);
     public string? DisplayChannelName => ChannelNameFormatter.Format(ChannelName);

@@ -200,6 +200,9 @@ public partial class EditTrackOverlay : UserControl
         TitleBox.Text = track.Title;
         ArtistBox.Text = track.Artist;
         RemixBox.Text = track.Remix;
+        VersionFields.Configure(MusicLibraryService.Current.GetTracksForLibraryView(),
+            track.IsOriginal, track.ParentTrackId, track.EditTypes, track.Id);
+        VersionStatusText.Text = string.Empty;
         SetInformationEditing(false);
         UpdateInformationDisplay(track);
         SetPublicSelection(track.IsPublic);
@@ -936,6 +939,29 @@ public partial class EditTrackOverlay : UserControl
             _isDeletingTrack = false;
             DeleteButton.IsEnabled = true;
             ToastRequested?.Invoke($"Could not delete track: {exception.Message}");
+        }
+    }
+
+    private void OnSaveVersionClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_track is null) return;
+        if (VersionFields.ValidationError is { } error)
+        {
+            VersionStatusText.Text = error;
+            return;
+        }
+        try
+        {
+            MusicLibraryService.Current.SetTrackVersion(_track.Id, VersionFields.IsOriginal,
+                VersionFields.ParentTrackId, VersionFields.EditTypes);
+            _track = _track with { IsOriginal = VersionFields.IsOriginal,
+                ParentTrackId = VersionFields.ParentTrackId, EditTypes = VersionFields.EditTypes };
+            VersionStatusText.Text = "Version saved";
+            TrackSaved?.Invoke(_track.Id);
+        }
+        catch (Exception exception)
+        {
+            VersionStatusText.Text = exception.Message;
         }
     }
 
