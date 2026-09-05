@@ -3,6 +3,7 @@
   <base-config cleartextTrafficPermitted="false">
     <trust-anchors>
       <certificates src="system" />
+      <certificates src="@raw/resona_local_ca" />
     </trust-anchors>
   </base-config>
   <domain-config cleartextTrafficPermitted="false">

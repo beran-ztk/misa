@@ -66,28 +66,27 @@ app.MapPut("/api/v1/library-snapshot", async (
 });
 
 app.MapGet("/api/v1/library-media", async (
-    HttpRequest request,
-    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
     CloudMediaRepository media,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    if (userId is null)
+        return Results.NotFound();
 
-    return Results.Ok(await media.GetInventoryAsync(credentials.UserId, cancellationToken));
+    return Results.Ok(await media.GetInventoryAsync(userId.Value, cancellationToken));
 });
 
 app.MapPut("/api/v1/library-media/{trackKey}", async (
     string trackKey,
     HttpRequest request,
-    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
     CloudMediaRepository media,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    if (userId is null)
+        return Results.NotFound();
     if (!CloudMediaRepository.IsValidTrackKey(trackKey))
         return Results.BadRequest(new { error = "Track key is invalid." });
 
@@ -97,7 +96,7 @@ app.MapPut("/api/v1/library-media/{trackKey}", async (
     try
     {
         var stored = await media.StoreAsync(
-            credentials.UserId,
+            userId.Value,
             trackKey,
             fileName,
             request.ContentType ?? "application/octet-stream",
@@ -119,18 +118,17 @@ app.MapPut("/api/v1/library-media/{trackKey}", async (
 
 app.MapGet("/api/v1/library-media/{trackKey}", async (
     string trackKey,
-    HttpRequest request,
-    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
     CloudMediaRepository media,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    if (userId is null)
+        return Results.NotFound();
     if (!CloudMediaRepository.IsValidTrackKey(trackKey))
         return Results.BadRequest(new { error = "Track key is invalid." });
 
-    var stored = await media.FindAsync(credentials.UserId, trackKey, cancellationToken);
+    var stored = await media.FindAsync(userId.Value, trackKey, cancellationToken);
     if (stored is null || !File.Exists(stored.StoragePath))
         return Results.NotFound();
     return Results.File(
@@ -141,52 +139,45 @@ app.MapGet("/api/v1/library-media/{trackKey}", async (
 });
 
 app.MapPut("/api/v1/device-library-snapshot", async (
-    HttpRequest request,
     CloudDeviceLibrarySnapshot snapshot,
-    CloudSnapshotRepository snapshots,
     CloudDeviceLibraryRepository deviceLibrary,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
-    if (!string.Equals(credentials.UserId.ToString("D"), snapshot.UserId, StringComparison.OrdinalIgnoreCase))
-        return Results.BadRequest(new { error = "Authenticated user ID does not match snapshot." });
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    if (userId is null)
+        return Results.NotFound();
     if (snapshot.SchemaVersion != 1
         || snapshot.TrackCount != snapshot.Tracks.Count
         || snapshot.Tracks.Any(track => !CloudMediaRepository.IsValidTrackKey(track.TrackKey)))
         return Results.BadRequest(new { error = "Device library snapshot is invalid." });
 
-    var result = await deviceLibrary.ReplaceAsync(credentials.UserId, snapshot, cancellationToken);
+    var result = await deviceLibrary.ReplaceAsync(
+        userId.Value, snapshot with { UserId = userId.Value.ToString("D") }, cancellationToken);
     return result.Status == DeviceLibraryWriteStatus.Conflict
         ? Results.Conflict(result.Conflict)
         : Results.Ok(result.Snapshot);
 });
 
 app.MapGet("/api/v1/device-library-snapshot", async (
-    HttpRequest request,
-    CloudSnapshotRepository snapshots,
     CloudDeviceLibraryRepository deviceLibrary,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
-    var snapshot = await deviceLibrary.GetCurrentAsync(credentials.UserId, cancellationToken);
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    if (userId is null)
+        return Results.NotFound();
+    var snapshot = await deviceLibrary.GetCurrentAsync(userId.Value, cancellationToken);
     return snapshot is null ? Results.NotFound() : Results.Ok(snapshot);
 });
 
 app.MapPut("/api/v1/device-library/tracks/{trackKey}", async (
     string trackKey,
-    HttpRequest request,
     CloudTrackUpdateRequest update,
-    CloudSnapshotRepository snapshots,
     CloudDeviceLibraryRepository deviceLibrary,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    if (userId is null)
+        return Results.NotFound();
     if (!CloudMediaRepository.IsValidTrackKey(trackKey)
         || !string.Equals(trackKey, update.Track.TrackKey, StringComparison.Ordinal))
         return Results.BadRequest(new { error = "Track key is invalid or does not match the route." });
@@ -194,7 +185,7 @@ app.MapPut("/api/v1/device-library/tracks/{trackKey}", async (
         return Results.BadRequest(new { error = "A positive expectedRevision is required." });
 
     var result = await deviceLibrary.UpdateTrackAsync(
-        credentials.UserId, trackKey, update, cancellationToken);
+        userId.Value, trackKey, update, cancellationToken);
     return result.Status switch
     {
         DeviceLibraryWriteStatus.NotFound => Results.NotFound(),
@@ -204,20 +195,18 @@ app.MapPut("/api/v1/device-library/tracks/{trackKey}", async (
 });
 
 app.MapPut("/api/v1/device-library/presets", async (
-    HttpRequest request,
     CloudPresetsUpdateRequest update,
-    CloudSnapshotRepository snapshots,
     CloudDeviceLibraryRepository deviceLibrary,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    if (userId is null)
+        return Results.NotFound();
     if (update.ExpectedRevision <= 0
         || update.Presets.Any(preset => string.IsNullOrWhiteSpace(preset.Name)))
         return Results.BadRequest(new { error = "A positive expectedRevision and named presets are required." });
 
-    var result = await deviceLibrary.UpdatePresetsAsync(credentials.UserId, update, cancellationToken);
+    var result = await deviceLibrary.UpdatePresetsAsync(userId.Value, update, cancellationToken);
     return result.Status switch
     {
         DeviceLibraryWriteStatus.NotFound => Results.NotFound(),
@@ -227,31 +216,29 @@ app.MapPut("/api/v1/device-library/presets", async (
 });
 
 app.MapPost("/api/v1/downloads", async (
-    HttpRequest request,
     CloudDownloadRequest download,
-    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
     CloudDownloadRepository downloads,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    if (userId is null)
+        return Results.NotFound();
     if (CloudDownloadWorker.TrackKey(download.Url) is null)
         return Results.BadRequest(new { error = "Only individual YouTube video links are supported." });
     return Results.Accepted(
-        value: await downloads.EnqueueAsync(credentials.UserId, download, cancellationToken));
+        value: await downloads.EnqueueAsync(userId.Value, download, cancellationToken));
 });
 
 app.MapGet("/api/v1/downloads", async (
-    HttpRequest request,
-    CloudSnapshotRepository snapshots,
+    CloudDeviceLibraryRepository deviceLibrary,
     CloudDownloadRepository downloads,
     CancellationToken cancellationToken) =>
 {
-    if (!DeviceCredentialsReader.TryRead(request.Headers, out var credentials, out _)
-        || !await snapshots.AuthenticateDeviceAsync(credentials, cancellationToken))
-        return Results.Unauthorized();
-    return Results.Ok(await downloads.ListAsync(credentials.UserId, cancellationToken));
+    var userId = await deviceLibrary.GetLibraryOwnerAsync(cancellationToken);
+    return userId is null
+        ? Results.NotFound()
+        : Results.Ok(await downloads.ListAsync(userId.Value, cancellationToken));
 });
 
 app.Run();

@@ -753,11 +753,11 @@
                                 Content="Full sync now"
                                 Click="OnSynchronizeCloudClicked"
                                 Classes="settings-action"/>
-                        <Button Content="Copy Android connection code"
+                        <Button Content="Copy Android server URL"
                                 Click="OnCopyAndroidConnectionCodeClicked"
                                 Classes="settings-action"/>
                     </StackPanel>
-                    <TextBlock Text="Treat the connection code like a password. It gives the Android app access to your private library."
+                    <TextBlock Text="Android only needs this URL. Access is limited by your home network or VPN."
                                FontSize="10" Opacity="0.48" TextWrapping="Wrap"/>
                 </StackPanel>
             </ScrollViewer>

@@ -174,13 +174,13 @@ adb install -r com.beran.music.v2-Signed.apk
 To connect Android to your private library:
 
 1. In Resona Desktop, open **Settings → Cloud sync**.
-2. Select **Copy Android connection code**.
+2. Select **Copy Android server URL**.
 3. Open the cloud section in Resona Android.
-4. Paste the connection code and connect the device.
+4. Paste the URL and connect the device.
 5. Select **Sync metadata & presets**. On later launches, the cached library opens immediately and this check runs automatically in the background.
 6. Review the number and size of missing tracks, then start **Download missing audio**.
 
-The connection code contains the server address and private device credentials. Treat it like a password. Android can edit shared track metadata and presets with conflict protection, submit server downloads, and choose which tracks remain offline on the phone.
+The private server exposes one shared library to devices on your home network or VPN. Android only stores the server URL; it can edit shared track metadata and presets with conflict protection, submit server downloads, and choose which tracks remain offline on the phone.
 
 For a server inside the home network, the phone must be connected to that network or VPN. Do not use `localhost` as the Android server address: on the phone, `localhost` refers to the phone itself.
 

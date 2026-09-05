@@ -19,6 +19,18 @@ public sealed class CloudDeviceLibraryRepository
 
     public CloudDeviceLibraryRepository(NpgsqlDataSource dataSource) => _dataSource = dataSource;
 
+    public async Task<Guid?> GetLibraryOwnerAsync(CancellationToken cancellationToken)
+    {
+        await using var command = _dataSource.CreateCommand("""
+            SELECT user_id
+            FROM device_library_snapshots
+            ORDER BY synchronized_at DESC
+            LIMIT 1;
+            """);
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is Guid userId ? userId : null;
+    }
+
     public async Task<DeviceLibraryWriteResult> ReplaceAsync(
         Guid userId,
         CloudDeviceLibrarySnapshot incoming,

@@ -732,15 +732,11 @@ public partial class SettingsOverlay : UserControl
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard is null)
             return;
-        var identity = CloudIdentityStore.Current.GetOrCreate();
-        var code = CloudConnectionCode.Encode(new CloudConnectionPayload(
-            CloudConnectionCode.CurrentSchemaVersion,
-            serverUrl!,
-            identity.UserId,
-            identity.DeviceId,
-            identity.DeviceKey));
-        await clipboard.SetTextAsync(code);
-        ToastRequested?.Invoke("Android connection code copied");
+        var androidUrl = uri.Host.Equals("api.resona.home.arpa", StringComparison.OrdinalIgnoreCase)
+            ? new UriBuilder(uri) { Host = "192.168.178.102" }.Uri.ToString().TrimEnd('/')
+            : serverUrl;
+        await clipboard.SetTextAsync(androidUrl);
+        ToastRequested?.Invoke("Android server URL copied");
     }
 
     private async void OnSynchronizeCloudClicked(object? sender, RoutedEventArgs e)

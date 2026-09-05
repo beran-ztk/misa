@@ -36,8 +36,7 @@ public sealed class DeviceLibraryCloudClientTests
             var cached = Snapshot(userId, "2026-09-05T12:00:00Z", "Old") with { LibraryRevision = 4 };
             var remote = Snapshot(userId, "2026-09-05T12:00:00Z", "New") with { LibraryRevision = 5 };
             var client = new DeviceLibraryCloudClient(new HttpClient(new SnapshotHandler(remote)));
-            client.SaveConnection(new CompanionCloudConnection(
-                "https://api.resona.home.arpa", userId, Guid.NewGuid().ToString("D"), "device-key"));
+            client.SaveConnection(new CompanionCloudConnection("https://api.resona.home.arpa"));
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(client.SnapshotPath,
                 JsonSerializer.Serialize(cached, new JsonSerializerOptions(JsonSerializerDefaults.Web)));
@@ -70,11 +69,7 @@ public sealed class DeviceLibraryCloudClientTests
             var remote = Snapshot(userId, timestamp, "Remote preset");
             var handler = new SnapshotHandler(remote);
             var client = new DeviceLibraryCloudClient(new HttpClient(handler));
-            client.SaveConnection(new CompanionCloudConnection(
-                "https://api.resona.home.arpa",
-                userId,
-                Guid.NewGuid().ToString("D"),
-                "device-key"));
+            client.SaveConnection(new CompanionCloudConnection("https://api.resona.home.arpa"));
             await File.WriteAllTextAsync(
                 client.SnapshotPath,
                 JsonSerializer.Serialize(cached, new JsonSerializerOptions(JsonSerializerDefaults.Web)));

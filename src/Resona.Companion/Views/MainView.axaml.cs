@@ -1157,14 +1157,13 @@ public partial class MainView : UserControl
     {
         if (string.IsNullOrWhiteSpace(CloudConnectionCodeBox.Text))
         {
-            CloudOperationStatusText.Text = "Paste the connection code from Resona Desktop first.";
+            CloudOperationStatusText.Text = "Enter the Resona server URL first.";
             return;
         }
 
         try
         {
-            _cloud.SaveConnectionCode(CloudConnectionCodeBox.Text);
-            CloudConnectionCodeBox.Text = string.Empty;
+            _cloud.SaveServerUrl(CloudConnectionCodeBox.Text);
             await RefreshCloudMetadataAndLibraryAsync(isBackground: false);
             ShowToast("Cloud library connected");
         }
@@ -1446,6 +1445,8 @@ public partial class MainView : UserControl
         CloudConnectionSummaryText.Text = connection is null
             ? "Not connected"
             : $"Connected · {new Uri(connection.ServerUrl).Host}";
+        if (connection is not null && !CloudConnectionCodeBox.IsFocused)
+            CloudConnectionCodeBox.Text = connection.ServerUrl;
         CloudRefreshButton.IsEnabled = !_cloudBusy && connection is not null;
         CloudQueueDownloadButton.IsEnabled = !_cloudBusy && connection is not null;
         CloudRefreshJobsButton.IsEnabled = !_cloudBusy && connection is not null;

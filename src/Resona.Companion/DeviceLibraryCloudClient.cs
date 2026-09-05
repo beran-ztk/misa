@@ -9,11 +9,7 @@ using Resona.Models;
 
 namespace Resona.Companion;
 
-public sealed record CompanionCloudConnection(
-    string ServerUrl,
-    string UserId,
-    string DeviceId,
-    string DeviceKey);
+public sealed record CompanionCloudConnection(string ServerUrl);
 
 public sealed record MissingDeviceAudio(
     string TrackKey,
@@ -65,8 +61,16 @@ public sealed class DeviceLibraryCloudClient
             return null;
         try
         {
-            return JsonSerializer.Deserialize<CompanionCloudConnection>(
+            var connection = JsonSerializer.Deserialize<CompanionCloudConnection>(
                 File.ReadAllText(ConnectionPath), JsonOptions);
+            if (connection is not null
+                && Uri.TryCreate(connection.ServerUrl, UriKind.Absolute, out var uri)
+                && uri.Host.Equals("api.resona.home.arpa", StringComparison.OrdinalIgnoreCase))
+            {
+                connection = new CompanionCloudConnection("https://192.168.178.102");
+                SaveConnection(connection);
+            }
+            return connection;
         }
         catch
         {
@@ -86,11 +90,14 @@ public sealed class DeviceLibraryCloudClient
     public CompanionCloudConnection SaveConnectionCode(string code)
     {
         var payload = CloudConnectionCode.Decode(code);
-        var connection = new CompanionCloudConnection(
-            payload.ServerUrl,
-            payload.UserId,
-            payload.DeviceId,
-            payload.DeviceKey);
+        var connection = new CompanionCloudConnection(payload.ServerUrl);
+        SaveConnection(connection);
+        return connection;
+    }
+
+    public CompanionCloudConnection SaveServerUrl(string serverUrl)
+    {
+        var connection = new CompanionCloudConnection(serverUrl.Trim().TrimEnd('/'));
         SaveConnection(connection);
         return connection;
     }
@@ -434,20 +441,13 @@ public sealed class DeviceLibraryCloudClient
         var baseUri = new Uri(connection.ServerUrl.EndsWith('/')
             ? connection.ServerUrl
             : connection.ServerUrl + "/");
-        var request = new HttpRequestMessage(method, new Uri(baseUri, relativePath));
-        request.Headers.Add("X-Resona-User-Id", connection.UserId);
-        request.Headers.Add("X-Resona-Device-Id", connection.DeviceId);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Device", connection.DeviceKey);
-        return request;
+        return new HttpRequestMessage(method, new Uri(baseUri, relativePath));
     }
 
     private static void ValidateConnection(CompanionCloudConnection connection)
     {
         if (!Uri.TryCreate(connection.ServerUrl, UriKind.Absolute, out var uri)
-            || uri.Scheme is not ("http" or "https")
-            || !Guid.TryParse(connection.UserId, out _)
-            || !Guid.TryParse(connection.DeviceId, out _)
-            || string.IsNullOrWhiteSpace(connection.DeviceKey))
+            || uri.Scheme is not ("http" or "https"))
             throw new InvalidDataException("Cloud connection settings are invalid.");
     }
 
