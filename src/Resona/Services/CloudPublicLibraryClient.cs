@@ -85,11 +85,11 @@ public sealed class CloudPublicLibraryClient
 
     private Uri BuildUri(string relativePath)
     {
-        var serverUrl = _serverUrlProvider()?.Trim();
-        if (string.IsNullOrWhiteSpace(serverUrl))
+        var configuredServerUrl = _serverUrlProvider();
+        if (string.IsNullOrWhiteSpace(configuredServerUrl))
             throw new InvalidOperationException("Cloud server is not configured in Settings > Profile.");
-        if (!Uri.TryCreate(serverUrl, UriKind.Absolute, out var baseUri)
-            || baseUri.Scheme is not ("http" or "https"))
+        if (!ServerUrlNormalizer.TryNormalize(configuredServerUrl, out var serverUrl)
+            || !Uri.TryCreate(serverUrl, UriKind.Absolute, out var baseUri))
             throw new InvalidOperationException("Cloud server address is invalid.");
 
         var normalizedBase = baseUri.AbsoluteUri.EndsWith('/')

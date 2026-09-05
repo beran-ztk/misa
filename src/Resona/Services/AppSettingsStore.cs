@@ -101,7 +101,9 @@ public static class AppSettingsStore
     public static void SaveCloudServerUrl(string? serverUrl)
     {
         var settings = Load();
-        settings.CloudServerUrl = string.IsNullOrWhiteSpace(serverUrl) ? null : serverUrl.Trim();
+        settings.CloudServerUrl = ServerUrlNormalizer.TryNormalize(serverUrl, out var normalizedUrl)
+            ? normalizedUrl
+            : string.IsNullOrWhiteSpace(serverUrl) ? null : serverUrl.Trim();
         Save(settings);
     }
 

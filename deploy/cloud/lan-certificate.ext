@@ -1,0 +1,4 @@
+subjectAltName=IP:192.168.178.102,DNS:debian,DNS:debian.local
+basicConstraints=CA:FALSE
+keyUsage=digitalSignature,keyEncipherment
+extendedKeyUsage=serverAuth

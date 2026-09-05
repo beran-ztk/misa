@@ -50,6 +50,25 @@ public sealed class CloudPublicLibraryClientTests
         Assert.Null(image);
     }
 
+    [Fact]
+    public async Task Health_endpoint_is_normalized_to_server_base_address()
+    {
+        Uri? requestedUri = null;
+        using var httpClient = new HttpClient(new StubHandler(request =>
+        {
+            requestedUri = request.RequestUri;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new CloudPage<CloudPublicProfileSummary>([], 0, 100, 0))
+            };
+        }));
+        var client = new CloudPublicLibraryClient(httpClient, () => "http://192.168.178.102:5080/health");
+
+        await client.GetProfilesAsync();
+
+        Assert.Equal("http://192.168.178.102:5080/api/v1/public/profiles", requestedUri!.GetLeftPart(UriPartial.Path));
+    }
+
     private static CloudPublicProfileSummary Profile(int index) => new(
         Guid.NewGuid().ToString("D"),
         $"Listener {index}",

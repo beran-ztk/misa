@@ -174,19 +174,7 @@ public sealed class TrackAnalysisService : IDisposable
     }
 
     public static bool TryNormalizeServerUrl(string? value, out string normalizedUrl)
-    {
-        normalizedUrl = string.Empty;
-        if (string.IsNullOrWhiteSpace(value)
-            || !Uri.TryCreate(value.Trim(), UriKind.Absolute, out var uri)
-            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
-            || !string.IsNullOrEmpty(uri.UserInfo)
-            || !string.IsNullOrEmpty(uri.Query)
-            || !string.IsNullOrEmpty(uri.Fragment))
-            return false;
-
-        normalizedUrl = uri.GetLeftPart(UriPartial.Path).TrimEnd('/');
-        return normalizedUrl.Length > 0;
-    }
+        => ServerUrlNormalizer.TryNormalize(value, out normalizedUrl);
 
     public static TrackAnalysisResult ToTrackAnalysisResult(MusicAnalysisResult result)
     {

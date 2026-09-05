@@ -745,7 +745,15 @@ public partial class SettingsOverlay : UserControl
 
     private async void OnSynchronizeCloudClicked(object? sender, RoutedEventArgs e)
     {
-        AppSettingsStore.SaveCloudServerUrl(CloudServerUrlBox.Text);
+        if (!ServerUrlNormalizer.TryNormalize(CloudServerUrlBox.Text, out var serverUrl))
+        {
+            CloudServerStatusText.Text = "Invalid server address";
+            CloudServerStatusText.IsVisible = true;
+            return;
+        }
+
+        CloudServerUrlBox.Text = serverUrl;
+        AppSettingsStore.SaveCloudServerUrl(serverUrl);
         var status = await CloudLibrarySyncService.Current.SynchronizeAsync();
         RefreshCloudSyncStatus(status);
     }

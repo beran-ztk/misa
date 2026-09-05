@@ -7,6 +7,16 @@ namespace Resona.Tests;
 
 public sealed class TrackAnalysisServiceTests
 {
+    [Theory]
+    [InlineData("http://192.168.178.102:5081/health", "http://192.168.178.102:5081")]
+    [InlineData("https://analyzer.example.test/HEALTH/", "https://analyzer.example.test")]
+    [InlineData("https://analyzer.example.test/prefix/", "https://analyzer.example.test/prefix")]
+    public void Server_address_is_normalized(string value, string expected)
+    {
+        Assert.True(TrackAnalysisService.TryNormalizeServerUrl(value, out var normalized));
+        Assert.Equal(expected, normalized);
+    }
+
     [Fact]
     public async Task CheckHealthAsync_SendsConfiguredApiKey()
     {

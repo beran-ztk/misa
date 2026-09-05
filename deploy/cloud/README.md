@@ -58,3 +58,9 @@ Audio uploads are atomic and recorded only after the complete file has been writ
 The analyzer intentionally runs one analysis at a time by default because TensorFlow inference is memory intensive. It returns MAEST genre scores, BPM, EBU R128 loudness/dynamics, and the MIREX emotional-character clusters used by Resona. Increase `MAX_CONCURRENT_ANALYSES` only after checking memory usage on the server.
 
 `MUSIC_API_KEY` is optional. When it is configured, enter the same value under **Settings → Servers → Analysis server → API key** in Resona Desktop. The client sends it as `X-Api-Key`. If no key is configured, keep the analyzer behind a trusted proxy, VPN, or restricted network instead of exposing it openly to the internet.
+
+## Local HTTPS deployment
+
+The compose stack includes an nginx proxy for installations that use a locally trusted certificate. It publishes the cloud API on HTTPS port `443` and the analyzer on HTTPS port `444`; the backend HTTP ports `5080` and `5081` remain available only on the server loopback interface.
+
+Place the server certificate and private key at `deploy/cloud/tls/server.crt` and `deploy/cloud/tls/server.key`. The certificate must contain every hostname or IP address used by clients as a Subject Alternative Name. Trust its issuing CA on each client device, then configure Resona with base addresses such as `https://192.168.178.102` and `https://192.168.178.102:444`. Pasting either service's `/health` URL is also accepted by the desktop app and normalized to the base address.

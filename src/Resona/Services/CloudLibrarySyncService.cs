@@ -89,12 +89,12 @@ public sealed class CloudLibrarySyncService
 
     public async Task<CloudSyncStatus> SynchronizeAsync(CancellationToken cancellationToken = default)
     {
-        var serverUrl = AppSettingsStore.Load().CloudServerUrl?.Trim();
-        if (string.IsNullOrWhiteSpace(serverUrl))
+        var configuredServerUrl = AppSettingsStore.Load().CloudServerUrl;
+        if (string.IsNullOrWhiteSpace(configuredServerUrl))
             return SetStatus(new CloudSyncStatus(
                 CloudSyncState.NotConfigured, "Cloud server is not configured."));
-        if (!Uri.TryCreate(serverUrl, UriKind.Absolute, out var baseUri)
-            || baseUri.Scheme is not ("http" or "https"))
+        if (!ServerUrlNormalizer.TryNormalize(configuredServerUrl, out var serverUrl)
+            || !Uri.TryCreate(serverUrl, UriKind.Absolute, out var baseUri))
             return SetStatus(new CloudSyncStatus(
                 CloudSyncState.Failed, "Cloud server address must be an absolute HTTP or HTTPS URL."));
 

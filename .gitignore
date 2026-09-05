@@ -22,3 +22,5 @@ riderModule.iml
 /src/AnalysisServer/.env
 /src/AnalysisServer/*.tar
 /src/AnalysisServer/__pycache__/
+/deploy/cloud/.env
+/deploy/cloud/tls/
